@@ -7,7 +7,7 @@
 
 /* Estilos globais */
 body {
-  @apply bg-black text-white;
+  @apply bg-background text-foreground;
 }
 
 /* Resto do seu CSS global aqui */

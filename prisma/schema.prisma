@@ -1,51 +1,57 @@
-   datasource db {
-     provider = "postgresql"
-     url      = env("DATABASE_URL")
-   }
+generator client {
+  provider = "prisma-client-js"
+}
 
-   generator client {
-     provider = "prisma-client-js"
+   datasource db {
+     provider = "sqlite"
+     url      = "file:./dev.db"
    }
 
    model User {
-     id              String    @id @default(cuid())
-     name            String?
-     email           String    @unique
-     emailVerified   DateTime?
-     image           String?
-     password        String?
-     resetToken      String?   @unique
-     resetTokenExpiry DateTime?
-     verificationToken String?   @unique
-     isPremium       Boolean   @default(false)
-     isSuperPremium  Boolean   @default(false)
-     language        String?   // user's preferred language
-     region          String    @default("OTHER") // US, UK, EU, BR, OTHER
-     stripeCustomerId String?  @unique // Stripe Customer ID
-     createdAt       DateTime  @default(now())
-     updatedAt       DateTime  @updatedAt
-     accounts        Account[]
-     sessions        Session[]
-     subscriptions   Subscription[]
-     phone           String?
-     passwordResetToken   String?   @map("password_reset_token")
-     passwordResetExpires DateTime? @map("password_reset_expires")
+  id                   String             @id @default(cuid())
+  name                 String?
+  email                String             @unique
+  emailVerified        DateTime?
+  image                String?
+  password             String?
+  resetToken           String?            @unique
+  resetTokenExpiry     DateTime?
+  verificationToken    String?            @unique
+  isPremium            Boolean            @default(false)
+  isSuperPremium       Boolean            @default(false)
+  language             String?
+  region               String             @default("OTHER")
+  stripeCustomerId     String?            @unique
+  tokensUsedThisMonth  Int                @default(0)
+  freeTokensLimit      Int                @default(100000)
+  totalTokensUsed      Int                @default(0)
+  lastTokenReset       DateTime           @default(now())
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  phone                String?
+  passwordResetToken   String?            @map("password_reset_token")
+  passwordResetExpires DateTime?          @map("password_reset_expires")
+  accounts             Account[]
+  prayerRequests       PrayerRequest[]
+  sessions             Session[]
+  subscriptions        Subscription[]
+  whatsappInstances    WhatsAppInstance[]
    }
 
    model Account {
-     id                 String  @id @default(cuid())
-     userId             String
-     type               String
-     provider           String
-     providerAccountId  String
-     refresh_token      String?
-     access_token       String?
-     expires_at         Int?
-     token_type         String?
-     scope              String?
-     id_token           String?
-     session_state      String?
-     user               User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
      @@unique([provider, providerAccountId])
    }
@@ -67,41 +73,329 @@
    }
 
    model Plan {
-     id          String    @id @default(cuid())
+  id          String   @id @default(cuid())
      name        String
      description String
-     type        String    // 'premium' or 'super_premium'
-     features    String[]
+  type        String
+  features    String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
      prices      Price[]
-     createdAt   DateTime  @default(now())
-     updatedAt   DateTime  @updatedAt
    }
 
    model Price {
-     id          String    @id @default(cuid())
-     planId      String
-     plan        Plan      @relation(fields: [planId], references: [id])
-     amount      Int       // price in cents
-     currency    String    // e.g., 'usd', 'brl'
-     language    String    // e.g., 'en', 'pt'
-     interval    String    // 'month' or 'year'
-     stripeId    String    @unique // Stripe Price ID
-     createdAt   DateTime  @default(now())
-     updatedAt   DateTime  @updatedAt
+  id            String         @id @default(cuid())
+  planId        String
+  amount        Int
+  currency      String
+  language      String
+  interval      String
+  stripeId      String         @unique
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  plan          Plan           @relation(fields: [planId], references: [id])
      subscriptions Subscription[]
    }
 
    model Subscription {
-     id              String    @id @default(cuid())
-     userId          String
-     user            User      @relation(fields: [userId], references: [id])
-     priceId         String
-     price           Price     @relation(fields: [priceId], references: [id])
-     status          String    // 'active', 'canceled', 'past_due', etc.
-     stripeId        String    @unique // Stripe Subscription ID
+  id                 String   @id @default(cuid())
+  userId             String
+  priceId            String
+  status             String
+  stripeId           String   @unique
      currentPeriodStart DateTime
      currentPeriodEnd   DateTime
      cancelAtPeriodEnd  Boolean  @default(false)
-     createdAt       DateTime  @default(now())
-     updatedAt       DateTime  @updatedAt
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  price              Price    @relation(fields: [priceId], references: [id])
+  user               User     @relation(fields: [userId], references: [id])
    }
+
+   model PrayerRequest {
+  id        String   @id @default(cuid())
+  userId    String
+  request   String
+  response  String?
+  status    String   @default("pending")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id])
+}
+
+model WhatsAppInstance {
+  id                 String            @id @default(cuid())
+  userId             String
+  instanceName       String            @unique
+  instanceId         String?
+  status             String            @default("CREATED")
+  qrCode             String?
+  sessionToken       String?
+  connectedNumber    String?
+  webhookUrl         String?
+  webhookEnabled     Boolean           @default(false)
+  autoReconnect      Boolean           @default(true)
+  reconnectAttempts  Int               @default(0)
+  lastConnectedAt    DateTime?
+  lastDisconnectedAt DateTime?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  aiAgentConfig      AIAgentConfig?
+  chats              WhatsAppChat[]
+  contacts           WhatsAppContact[]
+  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  labels             WhatsAppLabel[]
+  messages           WhatsAppMessage[]
+
+  @@map("whatsapp_instances")
+}
+
+model WhatsAppContact {
+  id            String                 @id @default(cuid())
+  instanceId    String
+  jid           String
+  phone         String?
+  pushName      String?
+  profileName   String?
+  profilePicUrl String?
+  isMyContact   Boolean                @default(false)
+  isWABusiness  Boolean                @default(false)
+  businessName  String?
+  verifiedName  String?
+  isGroup       Boolean                @default(false)
+  groupMetadata String?
+  lastSeen      DateTime?
+  isOnline      Boolean                @default(false)
+  createdAt     DateTime               @default(now())
+  updatedAt     DateTime               @updatedAt
+  chats         WhatsAppChat[]
+  labels        WhatsAppContactLabel[]
+  instance      WhatsAppInstance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@unique([jid, instanceId])
+  @@index([phone])
+  @@index([instanceId])
+  @@map("whatsapp_contacts")
+}
+
+model WhatsAppChat {
+  id                 String            @id @default(cuid())
+  instanceId         String
+  contactId          String?
+  remoteJid          String
+  name               String?
+  isGroup            Boolean           @default(false)
+  unreadCount        Int               @default(0)
+  lastMessageTime    DateTime?
+  lastMessagePreview String?
+  isArchived         Boolean           @default(false)
+  isMuted            Boolean           @default(false)
+  isPinned           Boolean           @default(false)
+  metadata           String?
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  contact            WhatsAppContact?  @relation(fields: [contactId], references: [id])
+  instance           WhatsAppInstance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  messages           WhatsAppMessage[]
+
+  @@unique([remoteJid, instanceId])
+  @@index([instanceId])
+  @@index([lastMessageTime])
+  @@map("whatsapp_chats")
+}
+
+model WhatsAppMessage {
+  id              String           @id @default(cuid())
+  instanceId      String
+  chatId          String?
+  messageId       String
+  remoteJid       String
+  fromJid         String?
+  toJid           String?
+  messageType     String
+  content         String?
+  caption         String?
+  mediaUrl        String?
+  fileName        String?
+  fileSize        Int?
+  mimeType        String?
+  fromMe          Boolean          @default(false)
+  status          String           @default("PENDING")
+  timestamp       DateTime
+  quotedMessageId String?
+  isForwarded     Boolean          @default(false)
+  isDeleted       Boolean          @default(false)
+  reaction        String?
+  metadata        String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  chat            WhatsAppChat?    @relation(fields: [chatId], references: [id])
+  instance        WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, instanceId])
+  @@index([instanceId])
+  @@index([remoteJid])
+  @@index([timestamp])
+  @@index([fromMe])
+  @@map("whatsapp_messages")
+}
+
+model WhatsAppLabel {
+  id         String                 @id @default(cuid())
+  instanceId String
+  labelId    String
+  name       String
+  color      String?
+  predefined Boolean                @default(false)
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  contacts   WhatsAppContactLabel[]
+  instance   WhatsAppInstance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+
+  @@unique([labelId, instanceId])
+  @@index([instanceId])
+  @@map("whatsapp_labels")
+}
+
+model WhatsAppContactLabel {
+  id        String          @id @default(cuid())
+  contactId String
+  labelId   String
+  label     WhatsAppLabel   @relation(fields: [labelId], references: [id], onDelete: Cascade)
+  contact   WhatsAppContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  @@unique([contactId, labelId])
+  @@map("whatsapp_contact_labels")
+}
+
+model AIAgentConfig {
+  id                      String           @id @default(cuid())
+  instanceId              String           @unique
+  isActive                Boolean          @default(true)
+  model                   String           @default("gpt-3.5-turbo")
+  systemPrompt            String           @default("Você é um assistente virtual útil e amigável.")
+  maxTokens               Int              @default(150)
+  temperature             Float            @default(0.7)
+  maxMessagesPerMinute    Int              @default(5)
+  maxConsecutiveResponses Int              @default(3)
+  cooldownMinutes         Int              @default(30)
+  fallbackMessage         String           @default("Desculpe, não posso responder no momento.")
+  
+  // 🧱 CAMADA 1: Contexto Principal (campos guiados)
+  companyName             String?
+  product                 String?
+  mainPain                String?
+  successCase             String?
+  priceObjection          String?
+  goal                    AgentGoal        @default(SALES)
+  context                 String?          // auto-gerado com base nos campos acima
+  
+  lastUsedAt              DateTime?
+  createdAt               DateTime         @default(now())
+  updatedAt               DateTime         @updatedAt
+  instance                WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+  logs                    AIAgentLog[]
+  conversations           AIConversation[]
+  
+  // 🧠 CAMADA 2: Base de Conhecimento Adicional
+  knowledgeChunks         KnowledgeChunk[]
+
+  @@map("ai_agent_configs")
+}
+
+// 🎯 Enum para objetivos do agente
+enum AgentGoal {
+  SALES           // Vendas
+  SUPPORT         // Suporte
+  LEAD_GENERATION // Geração de leads
+  QUALIFICATION   // Qualificação
+  RETENTION       // Retenção
+  EDUCATION       // Educação
+  
+  @@map("agent_goals")
+}
+
+// 🧠 Modelo para chunks de conhecimento
+model KnowledgeChunk {
+  id          String          @id @default(cuid())
+  agentId     String
+  title       String
+  content     String          // removido @db.Text para compatibilidade com SQLite
+  tags        String?         // tags separadas por vírgula
+  type        KnowledgeType
+  isActive    Boolean         @default(true)
+  priority    Int             @default(1)  // 1-5, maior = mais importante
+  embedding   Bytes?          // para busca semântica futura
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
+  agent       AIAgentConfig   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@index([agentId])
+  @@index([type])
+  @@index([isActive])
+  @@map("knowledge_chunks")
+}
+
+// 📚 Tipos de conhecimento
+enum KnowledgeType {
+  OBJECTION   // Resposta a objeções
+  FAQ         // Perguntas frequentes
+  CASE        // Cases de sucesso
+  FEATURE     // Funcionalidades do produto
+  PROCESS     // Processos e procedimentos
+  SCRIPT      // Scripts de vendas
+  POLICY      // Políticas da empresa
+  MANUAL      // Conteúdo manual
+  
+  @@map("knowledge_types")
+}
+
+model AIConversation {
+  id                     String                  @id @default(cuid())
+  agentConfigId          String
+  remoteJid              String
+  lastMessageAt          DateTime?
+  lastAIResponseAt       DateTime?
+  consecutiveAIResponses Int                     @default(0)
+  totalMessages          Int                     @default(0)
+  totalAIResponses       Int                     @default(0)
+  avgResponseTime        Float?
+  isInCooldown           Boolean                 @default(false)
+  cooldownUntil          DateTime?
+  createdAt              DateTime                @default(now())
+  updatedAt              DateTime                @updatedAt
+  messages               AIConversationMessage[]
+  agentConfig            AIAgentConfig           @relation(fields: [agentConfigId], references: [id], onDelete: Cascade)
+
+  @@unique([agentConfigId, remoteJid])
+  @@map("ai_conversations")
+}
+
+model AIConversationMessage {
+  id             String         @id @default(cuid())
+  conversationId String
+  messageId      String?
+  role           String
+  content        String
+  tokens         Int            @default(0)
+  responseTime   Float?
+  timestamp      DateTime       @default(now())
+  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@map("ai_conversation_messages")
+}
+
+model AIAgentLog {
+  id            String        @id @default(cuid())
+  agentConfigId String
+  type          String
+  message       String
+  details       String?
+  remoteJid     String?
+  responseTime  Float?
+  tokens        Int?
+  timestamp     DateTime      @default(now())
+  agentConfig   AIAgentConfig @relation(fields: [agentConfigId], references: [id], onDelete: Cascade)
+
+  @@map("ai_agent_logs")
+}

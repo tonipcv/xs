@@ -6,6 +6,7 @@ import { ThemeProvider } from '../contexts/ThemeContext';
 import FacebookPixel from '../components/FacebookPixel';
 import { Providers } from './providers'
 import Script from 'next/script';
+import { Toaster } from 'sonner';
 
 const inter = Inter({ subsets: ['latin'] });
 const montserrat = Montserrat({
@@ -14,8 +15,8 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: 'VUOM',
-  description: 'Beauty & Self Care',
+  title: 'AwLov - AI-Powered Customer Experience',
+  description: 'AwLov',
   icons: {
     icon: '/splash.png',
     shortcut: '/splash.png',
@@ -44,6 +45,7 @@ export default function RootLayout({
           <ThemeProvider>
             <FacebookPixel />
             {children}
+            <Toaster position="top-right" richColors />
           </ThemeProvider>
         </Providers>
       </body>

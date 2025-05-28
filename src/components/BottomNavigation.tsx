@@ -2,58 +2,62 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, MessageCircle, BarChart2, User } from 'lucide-react';
+import { Home, Bot, Cross, User, MessageCircle } from 'lucide-react';
 
 export function BottomNavigation() {
   const pathname = usePathname();
 
-  const isActive = (path: string) => pathname === path;
-
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-[#111]/90 backdrop-blur-sm border-t border-gray-800 z-50">
-      <div className="max-w-md mx-auto px-4 py-2">
-        <div className="flex justify-around items-center">
-          <Link
-            href="/"
-            className={`flex flex-col items-center p-2 ${
-              isActive('/') ? 'text-rose-500' : 'text-gray-400'
-            }`}
-          >
-            <Home size={24} />
-            <span className="text-xs mt-1">Home</span>
-          </Link>
+    <nav className="fixed bottom-0 left-0 right-0 bg-background border-t border-border h-16 px-2 flex items-center justify-around">
+      <Link
+        href="/planos"
+        className={`flex flex-col items-center min-w-0 ${
+          pathname === '/planos' ? 'text-primary' : 'text-muted-foreground'
+        }`}
+      >
+        <Home size={20} />
+        <span className="text-xs">Início</span>
+      </Link>
 
-          <Link
-            href="/planos"
-            className={`flex flex-col items-center p-2 ${
-              isActive('/planos') ? 'text-rose-500' : 'text-gray-400'
-            }`}
-          >
-            <MessageCircle size={24} />
-            <span className="text-xs mt-1">Chat</span>
-          </Link>
+      <Link
+        href="/whatsapp"
+        className={`flex flex-col items-center min-w-0 ${
+          pathname === '/whatsapp' ? 'text-primary' : 'text-muted-foreground'
+        }`}
+      >
+        <MessageCircle size={20} />
+        <span className="text-xs">WhatsApp</span>
+      </Link>
 
-          <Link
-            href="/grafico"
-            className={`flex flex-col items-center p-2 ${
-              isActive('/grafico') ? 'text-rose-500' : 'text-gray-400'
-            }`}
-          >
-            <BarChart2 size={24} />
-            <span className="text-xs mt-1">Gráfico</span>
-          </Link>
+      <Link
+        href="/ai-agent"
+        className={`flex flex-col items-center min-w-0 ${
+          pathname?.startsWith('/ai-agent') ? 'text-primary' : 'text-muted-foreground'
+        }`}
+      >
+        <Bot size={20} />
+        <span className="text-xs">IA</span>
+      </Link>
 
-          <Link
-            href="/perfil"
-            className={`flex flex-col items-center p-2 ${
-              isActive('/perfil') ? 'text-rose-500' : 'text-gray-400'
-            }`}
-          >
-            <User size={24} />
-            <span className="text-xs mt-1">Perfil</span>
-          </Link>
-        </div>
-      </div>
+      <Link
+        href="/pedidos"
+        className={`flex flex-col items-center min-w-0 ${
+          pathname === '/pedidos' ? 'text-primary' : 'text-muted-foreground'
+        }`}
+      >
+        <Cross size={20} />
+        <span className="text-xs">Pedidos</span>
+      </Link>
+
+      <Link
+        href="/perfil"
+        className={`flex flex-col items-center min-w-0 ${
+          pathname === '/perfil' ? 'text-primary' : 'text-muted-foreground'
+        }`}
+      >
+        <User size={20} />
+        <span className="text-xs">Perfil</span>
+      </Link>
     </nav>
   );
 } 

@@ -3,26 +3,28 @@
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSession } from "next-auth/react";
+import { AppLayout } from '@/components/AppSidebar';
 
 export default function Home() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
 
   useEffect(() => {
-    const checkUser = async () => {
-      if (session) {
-        router.push('/planos');
-      } else {
-        router.push('/login');
-      }
-    };
+    if (status === 'loading') return; // Still loading
 
-    checkUser();
-  }, [router, session]);
+    if (session) {
+      router.push('/whatsapp');
+    } else {
+      router.push('/login');
+    }
+  }, [router, session, status]);
 
+  // Show loading while redirecting
   return (
-    <div className="flex justify-center items-center min-h-screen">
-      <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-300"></div>
-    </div>
+    <AppLayout>
+      <div className="flex justify-center items-center min-h-[400px]">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900"></div>
+      </div>
+    </AppLayout>
   );
 }

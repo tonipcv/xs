@@ -52,18 +52,10 @@ export default function Login() {
       }
 
       if (result?.ok) {
-        console.log('Login bem sucedido, verificando status premium...');
+        console.log('Login bem sucedido, redirecionando para WhatsApp...');
         
-        // Verifica se o usuário é premium
-        const response = await fetch('/api/user/premium-status');
-        const { isPremium } = await response.json();
-        
-        // Redireciona baseado no status premium
-        if (isPremium) {
-          router.push('/series-restrito');
-        } else {
-          router.push('/planos');
-        }
+        // Redireciona direto para a página das instâncias do WhatsApp
+        router.push('/whatsapp');
         router.refresh();
       }
     } catch (err) {
@@ -81,9 +73,15 @@ export default function Login() {
         <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex justify-between items-center">
             <div className="p-2">
-              <span className="text-[#1B2541] text-2xl font-light tracking-[-0.03em] uppercase">
-                VUOM
-              </span>
+              <div className="relative w-8 h-8">
+                <Image
+                  src="/logo.png"
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
             </div>
           </div>
         </div>

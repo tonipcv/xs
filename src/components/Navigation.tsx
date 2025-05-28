@@ -1,6 +1,6 @@
 import XLogo from './XLogo';
 import Link from 'next/link';
-import { Home, MessageSquare, LineChart } from 'lucide-react';
+import { Home, MessageSquare, LineChart, Brain } from 'lucide-react';
 
 export default function Navigation() {
   return (
@@ -12,7 +12,7 @@ export default function Navigation() {
           </Link>
           
           <div className="flex items-center">
-            <div className="flex-shrink-0 h-10 w-auto">
+            <div className="flex-shrink-0 h-10 w-auto flex space-x-4">
               <Link 
                 href="/" 
                 className="flex flex-col items-center p-2 text-gray-400 hover:text-green-300 transition-colors"
@@ -20,21 +20,13 @@ export default function Navigation() {
                 <Home className="h-6 w-6" />
                 <span className="text-xs mt-1">Início</span>
               </Link>
-              
+
               <Link 
-                href="/planos" 
+                href="/ia" 
                 className="flex flex-col items-center p-2 text-gray-400 hover:text-green-300 transition-colors"
               >
-                <MessageSquare className="h-6 w-6" />
-                <span className="text-xs mt-1">Chat</span>
-              </Link>
-              
-              <Link 
-                href="/relatorio" 
-                className="flex flex-col items-center p-2 text-green-300"
-              >
-                <LineChart className="h-6 w-6" />
-                <span className="text-xs mt-1">Relatório</span>
+                <Brain className="h-6 w-6" />
+                <span className="text-xs mt-1">IA Bíblica</span>
               </Link>
             </div>
           </div>

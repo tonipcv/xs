@@ -4,7 +4,7 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
+    --background: 60 4.8% 95.9%;
     --foreground: 20 14.3% 4.1%;
  
     --muted: 60 4.8% 95.9%;
@@ -45,7 +45,7 @@
  
     --chart-5: 27 87% 67%;
  
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 60 4.8% 95.9%;
  
     --sidebar-foreground: 240 5.3% 26.1%;
  
@@ -63,8 +63,8 @@
   }
  
   .dark {
-    --background: 20 14.3% 4.1%;
-    --foreground: 60 9.1% 97.8%;
+    --background: 60 4.8% 95.9%;
+    --foreground: 20 14.3% 4.1%;
  
     --muted: 12 6.5% 15.1%;
     --muted-foreground: 24 5.4% 63.9%;
@@ -104,9 +104,9 @@
  
     --chart-5: 340 75% 55%;
  
-    --sidebar-background: 240 5.9% 10%;
+    --sidebar-background: 60 4.8% 95.9%;
  
-    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-foreground: 240 5.3% 26.1%;
  
     --sidebar-primary: 224.3 76.3% 48%;
  

@@ -1,18 +1,22 @@
 import { PrismaClient } from '@prisma/client'
 
-const globalForPrisma = global as unknown as {
-  prisma: PrismaClient | undefined
+const prismaClientSingleton = () => {
+  return new PrismaClient()
 }
 
-export const prisma =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    log: ['query'],
-  })
+declare global {
+  var prisma: undefined | ReturnType<typeof prismaClientSingleton>
+}
 
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = prisma
+const prisma = globalThis.prisma ?? prismaClientSingleton()
+
+if (process.env.NODE_ENV !== 'production') {
+  globalThis.prisma = prisma
+}
+
+export { prisma }
 
 // Teste a conexão
 prisma.$connect()
-  .then(() => console.log('Conectado ao PostgreSQL'))
-  .catch((error) => console.error('Erro ao conectar ao PostgreSQL:', error)) 
+  .then(() => console.log('Conectado ao SQLite'))
+  .catch((error) => console.error('Erro ao conectar ao SQLite:', error)) 

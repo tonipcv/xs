@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useSession } from "next-auth/react";
-import { PlayIcon, UserCircleIcon } from 'lucide-react';
+import { PlayIcon, UserCircleIcon, Brain, BarChart2, MessageCircle, Heart } from 'lucide-react';
 import { satoshi } from '../fonts/fonts';
 
 export function Navigation() {
@@ -20,6 +20,26 @@ export function Navigation() {
       href: '/series-restrito',
       icon: PlayIcon,
       label: 'Programs'
+    },
+    {
+      href: '/planos',
+      icon: MessageCircle,
+      label: 'Chat'
+    },
+    {
+      href: '/ia',
+      icon: Brain,
+      label: 'IA Bíblica'
+    },
+    {
+      href: '/pedidos',
+      icon: Heart,
+      label: 'Pedidos'
+    },
+    {
+      href: '/grafico',
+      icon: BarChart2,
+      label: 'Gráfico'
     },
     {
       href: '/perfil',
