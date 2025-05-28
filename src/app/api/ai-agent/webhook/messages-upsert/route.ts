@@ -18,11 +18,14 @@ export async function POST(request: NextRequest) {
     // Log do webhook recebido
     console.log('🔔 Webhook MESSAGES_UPSERT recebido:', JSON.stringify(body, null, 2));
 
-    // Verificar se é um evento de mensagem
-    if (body.event !== 'messages.upsert') {
-      console.log('🔔 [DEBUG] Não é evento messages.upsert, ignorando');
-      return NextResponse.json({ status: 'ignored', reason: 'not_message_event' });
-    }
+    // TEMPORARIAMENTE COMENTADO PARA DEBUG - aceitar todos os eventos
+    // // Verificar se é um evento de mensagem (aceitar ambos os formatos)
+    // if (body.event !== 'MESSAGES_UPSERT' && body.event !== 'messages.upsert') {
+    //   console.log('🔔 [DEBUG] Não é evento de mensagem, ignorando. Evento recebido:', body.event);
+    //   return NextResponse.json({ status: 'ignored', reason: 'not_message_event' });
+    // }
+
+    console.log('🔔 [DEBUG] Evento recebido:', body.event, '- Processando...');
 
     // A Evolution API pode enviar dados em estruturas diferentes
     let messages = [];

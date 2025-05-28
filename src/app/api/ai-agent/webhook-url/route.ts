@@ -1,16 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { WEBHOOK_CONFIG } from '@/config/webhook';
 
 export async function GET(request: NextRequest) {
   try {
-    // Priorizar NGROK_URL se disponível
-    const ngrokUrl = process.env.NGROK_URL;
-    const baseUrl = ngrokUrl || process.env.NEXTAUTH_URL || request.headers.get('origin') || 'http://localhost:3000';
-    const webhookUrl = `${baseUrl}/api/ai-agent/webhook/messages-upsert`;
-
+    const debugInfo = WEBHOOK_CONFIG.getDebugInfo();
+    
     return NextResponse.json({
-      webhookUrl,
-      usingNgrok: !!ngrokUrl,
-      ngrokConfigured: !!process.env.NGROK_URL
+      webhookUrl: debugInfo.webhookUrl,
+      usingNgrok: debugInfo.usingNgrok,
+      isProduction: !debugInfo.isLocalDev,
+      baseUrl: debugInfo.usingNgrok ? debugInfo.ngrokUrl : debugInfo.productionUrl,
+      environment: debugInfo.environment
     });
   } catch (error) {
     console.error('Erro ao obter URL do webhook:', error);

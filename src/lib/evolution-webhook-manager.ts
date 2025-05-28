@@ -301,18 +301,29 @@ export class EvolutionWebhookManager {
    * Configurar apenas os eventos específicos para AI Agent
    */
   async setupAIAgentWebhook(instanceName: string, webhookUrl?: string): Promise<any> {
-    // Se não foi fornecida uma URL, usar a variável de ambiente NGROK_URL
-    const finalWebhookUrl = webhookUrl || `${process.env.NGROK_URL}/api/ai-agent/webhook/messages-upsert`;
-    
-    if (!finalWebhookUrl || finalWebhookUrl.includes('undefined')) {
-      throw new Error('URL do webhook não configurada. Configure NGROK_URL no .env.local ou forneça uma URL');
-    }
+    try {
+      // URL do webhook - sempre usar produção como padrão se não fornecida
+      const productionUrl = 'https://zp-bay.vercel.app';
+      
+      // Permitir override apenas para desenvolvimento local
+      const isLocalDev = process.env.NODE_ENV === 'development';
+      const ngrokUrl = isLocalDev ? process.env.NGROK_URL : null;
+      
+      const finalWebhookUrl = webhookUrl || `${ngrokUrl || productionUrl}/api/ai-agent/webhook/messages-upsert`;
 
-    return await this.setWebhook(instanceName, {
-      url: finalWebhookUrl,
-      webhook_by_events: true,
-      events: ['MESSAGES_UPSERT'] // Apenas mensagens novas para o AI Agent
-    });
+      if (!finalWebhookUrl || finalWebhookUrl.includes('undefined')) {
+        throw new Error('URL do webhook não configurada corretamente');
+      }
+
+      return await this.setWebhook(instanceName, {
+        url: finalWebhookUrl,
+        webhook_by_events: true,
+        events: ['MESSAGES_UPSERT'] // Apenas mensagens novas para o AI Agent
+      });
+    } catch (error) {
+      console.error(`❌ Erro ao configurar webhook:`, error);
+      throw error;
+    }
   }
 
   /**

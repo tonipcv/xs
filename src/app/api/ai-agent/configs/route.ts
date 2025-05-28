@@ -118,12 +118,17 @@ export async function POST(request: NextRequest) {
         if (evolutionApiUrl && evolutionApiKey) {
           const webhookManager = new EvolutionWebhookManager(evolutionApiUrl, evolutionApiKey);
           
-          // 🔗 Priorizar NGROK_URL se disponível (para desenvolvimento)
-          const ngrokUrl = process.env.NGROK_URL;
-          const baseUrl = ngrokUrl || process.env.NEXTAUTH_URL || request.headers.get('origin') || 'http://localhost:3000';
+          // URL do webhook - sempre usar produção como padrão
+          const productionUrl = 'https://zp-bay.vercel.app';
+          
+          // Permitir override apenas para desenvolvimento local
+          const isLocalDev = process.env.NODE_ENV === 'development';
+          const ngrokUrl = isLocalDev ? process.env.NGROK_URL : null;
+          
+          const baseUrl = ngrokUrl || productionUrl;
           const webhookUrl = `${baseUrl}/api/ai-agent/webhook/messages-upsert`;
 
-          console.log(`🔗 Configurando webhook na criação do agente: ${webhookUrl}${ngrokUrl ? ' (usando NGROK_URL)' : ' (usando baseUrl padrão)'}`);
+          console.log(`🔗 Configurando webhook na criação do agente: ${webhookUrl}${ngrokUrl ? ' (desenvolvimento com NGROK)' : ' (produção padrão)'}`);
 
           webhookResult = await webhookManager.setupBotMode(instance.instanceName, webhookUrl);
 

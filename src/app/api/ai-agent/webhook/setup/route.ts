@@ -3,6 +3,10 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { EvolutionWebhookManager } from '@/lib/evolution-webhook-manager';
+import { WEBHOOK_CONFIG } from '@/config/webhook';
+import { PrismaClient } from '@prisma/client';
+
+const prismaClient = new PrismaClient();
 
 export async function POST(request: NextRequest) {
   try {
@@ -47,12 +51,11 @@ export async function POST(request: NextRequest) {
 
     const webhookManager = new EvolutionWebhookManager(evolutionApiUrl, evolutionApiKey);
 
-    // URL do webhook - priorizar NGROK_URL se disponível
-    const ngrokUrl = process.env.NGROK_URL;
-    const baseUrl = ngrokUrl || process.env.NEXTAUTH_URL || request.headers.get('origin') || 'http://localhost:3000';
-    const webhookUrl = `${baseUrl}/api/ai-agent/webhook/messages-upsert`;
+    // URL do webhook usando configuração centralizada
+    const webhookUrl = WEBHOOK_CONFIG.getWebhookUrl();
+    const debugInfo = WEBHOOK_CONFIG.getDebugInfo();
 
-    console.log(`🔗 URL do webhook: ${webhookUrl}${ngrokUrl ? ' (usando NGROK_URL)' : ' (usando baseUrl padrão)'}`);
+    console.log(`🔗 URL do webhook: ${webhookUrl} (${debugInfo.usingNgrok ? 'desenvolvimento com NGROK' : 'produção padrão'})`);
 
     try {
       // Verificar se já está configurado (se não forçar)
