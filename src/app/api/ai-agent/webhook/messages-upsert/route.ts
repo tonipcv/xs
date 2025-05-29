@@ -159,6 +159,7 @@ async function processMessage(messageData: any, instanceName: string) {
     
     // Se o agente tem campos configurados, gerar contexto inteligente
     if (agentConfig.companyName || agentConfig.product || agentConfig.mainPain) {
+      console.log('🔔 [DEBUG] Gerando contexto inteligente...');
       const contextFields = {
         companyName: agentConfig.companyName,
         product: agentConfig.product,
@@ -168,11 +169,13 @@ async function processMessage(messageData: any, instanceName: string) {
         goal: agentConfig.goal
       };
       
+      console.log('🔔 [DEBUG] Chamando AIContextGenerator.generateMainContext...');
       const generatedContext = AIContextGenerator.generateMainContext(contextFields);
       systemPrompt = generatedContext;
       
       console.log('🧱 Contexto principal gerado automaticamente');
     } else {
+      console.log('🔔 [DEBUG] Gerando contexto mínimo...');
       // Usar contexto mínimo se não há configuração
       const minimalContext = AIContextGenerator.generateMinimalContext(agentConfig.goal);
       systemPrompt = minimalContext;
@@ -204,16 +207,32 @@ async function processMessage(messageData: any, instanceName: string) {
     console.log(`🤖 Sistema prompt final: ${systemPrompt.length} caracteres`);
     console.log(`📚 Histórico: ${conversationHistory.length} mensagens do Redis`);
 
+    console.log('🔔 [DEBUG] Verificando variáveis de ambiente...');
+    const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+    const hasEvolutionUrl = !!process.env.EVOLUTION_API_URL;
+    const hasEvolutionKey = !!process.env.EVOLUTION_API_KEY;
+    
+    console.log(`🔑 OpenAI Key: ${hasOpenAIKey ? 'OK' : 'MISSING'}`);
+    console.log(`🔗 Evolution URL: ${hasEvolutionUrl ? 'OK' : 'MISSING'}`);
+    console.log(`🔑 Evolution Key: ${hasEvolutionKey ? 'OK' : 'MISSING'}`);
+
+    if (!hasOpenAIKey) {
+      throw new Error('OPENAI_API_KEY não configurada');
+    }
+
     console.log('🔔 [DEBUG] Chamando OpenAI...');
     // Chamar OpenAI
     const startTime = Date.now();
     
+    console.log('🔔 [DEBUG] Marcando mensagem como lida...');
     // 1. Marcar mensagem como lida (remove os ✅✅ azuis)
     await markMessageAsRead(instance, messageData);
     
+    console.log('🔔 [DEBUG] Enviando presença de digitando...');
     // 2. Mostrar que está digitando
     await sendChatPresence(instance, remoteJid, 'composing');
     
+    console.log('🔔 [DEBUG] Criando completion OpenAI...');
     // 3. Gerar resposta com OpenAI
     const completion = await openai.chat.completions.create({
       model: agentConfig.model,
@@ -233,6 +252,8 @@ async function processMessage(messageData: any, instanceName: string) {
       await sendChatPresence(instance, remoteJid, 'paused');
       return;
     }
+
+    console.log(`🔔 [DEBUG] Resposta da OpenAI: "${aiResponse.substring(0, 100)}..."`);
 
     // Simular tempo de digitação baseado no tamanho da resposta
     // ~50 caracteres por segundo (velocidade humana realista)
