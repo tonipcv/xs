@@ -7,8 +7,12 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(request: NextRequest, { params }: { params: { event: string[] } }) {
+export async function POST(
+  request: NextRequest, 
+  context: { params: Promise<{ event: string[] }> }
+) {
   try {
+    const params = await context.params;
     const eventPath = params.event.join('/');
     console.log(`🔔 [DEBUG] Webhook genérico iniciado para evento: ${eventPath}`);
     
@@ -70,14 +74,18 @@ export async function POST(request: NextRequest, { params }: { params: { event: 
     console.log('🔔 [DEBUG] Webhook processado com sucesso');
     return NextResponse.json({ status: 'processed', event: eventPath });
   } catch (error) {
-    console.error(`❌ [DEBUG] Erro no webhook ${params.event.join('/')}:`, error instanceof Error ? error.message : String(error));
+    console.error(`❌ [DEBUG] Erro no webhook:`, error instanceof Error ? error.message : String(error));
     console.error('❌ [DEBUG] Stack trace:', error instanceof Error ? error.stack : 'N/A');
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
 
 // Método GET para testar o endpoint
-export async function GET(request: NextRequest, { params }: { params: { event: string[] } }) {
+export async function GET(
+  request: NextRequest, 
+  context: { params: Promise<{ event: string[] }> }
+) {
+  const params = await context.params;
   const eventPath = params.event.join('/');
   return NextResponse.json({ 
     status: 'ok',
