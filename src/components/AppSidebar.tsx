@@ -4,7 +4,6 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
-import Image from 'next/image';
 import {
   Sidebar,
   SidebarContent,
@@ -101,15 +100,7 @@ export function AppSidebar() {
     <Sidebar variant="inset" className="border-r border-gray-200/50 bg-gradient-to-b from-gray-100 to-gray-200/80 shadow-[1px_0_5px_rgba(0,0,0,0.05)]">
       <SidebarHeader className="border-b border-gray-200/50 bg-white/10">
         <div className="flex items-center justify-center px-3 py-2">
-          <div className="relative w-6 h-6">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              fill
-              className="object-contain"
-              priority
-            />
-          </div>
+          <span className="text-lg font-bold text-black">HTPS.io</span>
         </div>
       </SidebarHeader>
       

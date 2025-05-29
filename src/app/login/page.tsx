@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, FormEvent, useEffect } from 'react';
-import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { signIn } from "next-auth/react"
@@ -67,36 +66,14 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#D6D2D3] to-[#F8FFFF] font-normal tracking-[-0.03em]">
-      {/* Header */}
-      <header className="fixed w-full top-0 bg-[#D6D2D3]/80 backdrop-blur-lg z-50 border-b border-gray-100/20">
-        <div className="max-w-6xl mx-auto px-6 py-4">
-          <div className="flex justify-between items-center">
-            <div className="p-2">
-              <div className="relative w-8 h-8">
-                <Image
-                  src="/logo.png"
-                  alt="Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </header>
-
+    <div className="min-h-screen bg-black font-normal tracking-[-0.03em]">
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-[420px] bg-white rounded-2xl border border-gray-100 p-8 shadow-lg">
+        <div className="w-full max-w-[420px] bg-white rounded-2xl border border-gray-200 p-8 shadow-2xl">
           {/* Título */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2 text-[#35426A]">
-              {t.login.welcomeBack}
+            <h1 className="text-2xl font-bold mb-2 text-black">
+              HTPS.io
             </h1>
-            <p className="text-[#7286B2] text-sm">
-              {t.login.signInContinue}
-            </p>
           </div>
 
           {/* Mensagem de erro */}
@@ -107,7 +84,7 @@ export default function Login() {
           {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[#35426A] mb-2">
+              <label htmlFor="email" className="block text-sm font-medium text-black mb-2">
                 {t.login.email}
               </label>
               <input
@@ -116,13 +93,13 @@ export default function Login() {
                 name="email"
                 required
                 autoComplete="off"
-                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#35426A]/20 focus:border-[#35426A] transition-all duration-200 text-[#35426A]"
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black transition-all duration-200 text-black"
                 placeholder={t.login.emailPlaceholder}
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[#35426A] mb-2">
+              <label htmlFor="password" className="block text-sm font-medium text-black mb-2">
                 {t.login.password}
               </label>
               <input
@@ -131,14 +108,14 @@ export default function Login() {
                 name="password"
                 required
                 autoComplete="new-password"
-                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#35426A]/20 focus:border-[#35426A] transition-all duration-200 text-[#35426A]"
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black transition-all duration-200 text-black"
                 placeholder={t.login.passwordPlaceholder}
               />
             </div>
 
             <button 
               type="submit" 
-              className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-[#35426A] hover:bg-[#7286B2] rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-black hover:bg-gray-800 rounded-lg transition-all duration-300 flex items-center justify-center gap-2"
               disabled={isSubmitting}
             >
               {isSubmitting ? t.login.signingIn : t.login.signIn}
@@ -150,22 +127,11 @@ export default function Login() {
           <div className="mt-4 text-center">
             <Link 
               href="/forgot-password" 
-              className="text-sm text-[#7286B2] hover:text-[#35426A] transition-colors duration-200"
+              className="text-sm text-gray-600 hover:text-black transition-colors duration-200"
             >
               {t.login.forgotPassword}
             </Link>
           </div>
-
-          {/* Link para criar conta */}
-          <p className="mt-8 text-center text-sm text-[#7286B2]">
-            {t.login.noAccount}{' '}
-            <Link 
-              href="/register" 
-              className="text-[#35426A] hover:text-[#7286B2] transition-colors duration-200 font-medium"
-            >
-              {t.login.createAccount}
-            </Link>
-          </p>
         </div>
       </div>
     </div>

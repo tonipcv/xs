@@ -3,8 +3,7 @@
 import { useState, FormEvent } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowLeftIcon } from '@heroicons/react/24/outline';
-import { satoshi, euclidCircular } from '../fonts/fonts';
+import { ArrowLeft } from 'lucide-react';
 
 export default function ForgotPassword() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -43,34 +42,34 @@ export default function ForgotPassword() {
   };
 
   return (
-    <div className={`min-h-screen bg-gradient-to-br from-white to-gray-50 text-gray-900 ${satoshi.variable} ${euclidCircular.variable}`}>
+    <div className="min-h-screen bg-black font-normal tracking-[-0.03em]">
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-[380px] bg-white/70 backdrop-blur-lg rounded-xl border border-[#9d96fc]/10 p-6">
+        <div className="w-full max-w-[420px] bg-white rounded-2xl border border-gray-200 p-8 shadow-2xl">
           {/* Título */}
-          <div className="text-center mb-6">
-            <h1 className="text-[22px] leading-tight tracking-[-0.03em] font-bold mb-1.5 font-satoshi bg-gradient-to-r from-[#9d96fc] to-[#7b74fa] text-transparent bg-clip-text">
-              Recuperar senha
+          <div className="text-center mb-8">
+            <h1 className="text-2xl font-bold mb-2 text-black">
+              HTPS.io
             </h1>
-            <p className="text-[13px] text-gray-500 font-satoshi tracking-[-0.03em]">
+            <p className="text-gray-600 text-sm">
               Digite seu e-mail para receber as instruções
             </p>
           </div>
 
           {error && (
-            <div className="mb-4 text-red-500 text-center text-[13px] font-satoshi tracking-[-0.03em]">
+            <div className="mb-6 text-red-500 text-center text-sm">
               {error}
             </div>
           )}
           
           {success && (
-            <div className="mb-4 text-emerald-500 text-center text-[13px] font-satoshi tracking-[-0.03em]">
+            <div className="mb-6 text-green-600 text-center text-sm">
               {success}
             </div>
           )}
 
-          <form className="space-y-4" onSubmit={handleSubmit} autoComplete="off">
+          <form className="space-y-5" onSubmit={handleSubmit} autoComplete="off">
             <div>
-              <label htmlFor="email" className="block text-[13px] font-medium text-gray-700 mb-1 font-satoshi tracking-[-0.03em]">
+              <label htmlFor="email" className="block text-sm font-medium text-black mb-2">
                 E-mail
               </label>
               <input
@@ -79,16 +78,17 @@ export default function ForgotPassword() {
                 name="email"
                 required
                 autoComplete="off"
-                className="w-full px-3 py-2 text-[13px] bg-white border border-gray-200 rounded-lg focus:ring-1 focus:ring-[#9d96fc]/20 focus:border-[#9d96fc] transition-all duration-200 placeholder-gray-400 text-gray-900 font-satoshi tracking-[-0.03em]"
+                className="w-full px-4 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-black/20 focus:border-black transition-all duration-200 text-black"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                placeholder="Digite seu e-mail"
               />
             </div>
 
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full py-2 px-4 text-[13px] font-medium text-white bg-gradient-to-r from-[#9d96fc] to-[#7b74fa] rounded-lg hover:opacity-90 transition-all duration-200 font-satoshi tracking-[-0.03em] mt-1"
+              className="w-full py-2.5 px-4 text-sm font-semibold text-white bg-black hover:bg-gray-800 rounded-lg transition-all duration-300"
             >
               {isSubmitting ? 'Enviando...' : 'Enviar instruções'}
             </button>
@@ -98,9 +98,9 @@ export default function ForgotPassword() {
           <div className="mt-6 text-center">
             <Link 
               href="/login" 
-              className="text-[13px] text-gray-500 hover:text-[#9d96fc] transition-colors duration-200 inline-flex items-center gap-1 font-satoshi tracking-[-0.03em]"
+              className="text-sm text-gray-600 hover:text-black transition-colors duration-200 inline-flex items-center gap-2"
             >
-              <ArrowLeftIcon className="w-3 h-3" />
+              <ArrowLeft className="w-4 h-4" />
               Voltar para login
             </Link>
           </div>
