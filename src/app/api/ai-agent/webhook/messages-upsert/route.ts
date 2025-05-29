@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
-import { AIContextGenerator } from '@/lib/ai-context-generator';
-import { KnowledgeSearch } from '@/lib/knowledge-search';
-import { ConversationContext, RateLimiter } from '@/lib/redis';
+
+// TEMPORARIAMENTE COMENTADO PARA DEBUG - PODE ESTAR CAUSANDO ERRO
+// import { AIContextGenerator } from '@/lib/ai-context-generator';
+// import { KnowledgeSearch } from '@/lib/knowledge-search';
+// import { ConversationContext, RateLimiter } from '@/lib/redis';
 
 // Inicializar OpenAI com a chave do ambiente
 const openai = new OpenAI({
@@ -118,23 +120,6 @@ async function processMessage(messageData: any, instanceName: string) {
 
     console.log(`🤖 Processando mensagem de ${remoteJid}: "${messageContent}"`);
 
-    console.log('🔔 [DEBUG] Verificando rate limiting...');
-    // TEMPORARIAMENTE PULAR REDIS PARA TESTE
-    // const rateLimitResult = await RateLimiter.checkLimit(
-    //   agentConfig.id, 
-    //   remoteJid, 
-    //   agentConfig.maxMessagesPerMinute, 
-    //   60 // 1 minuto
-    // );
-
-    // if (!rateLimitResult.allowed) {
-    //   console.log(`⏰ Rate limit atingido para ${remoteJid}. Limite: ${agentConfig.maxMessagesPerMinute}/min`);
-    //   await sendFallbackMessage(instance, remoteJid, agentConfig.fallbackMessage);
-    //   return;
-    // }
-
-    console.log(`✅ Rate limit OK (pulado para debug)`);
-
     console.log('🔔 [DEBUG] Verificando tokens do usuário...');
     // Verificar tokens do usuário
     const user = await prisma.user.findUnique({
@@ -148,64 +133,18 @@ async function processMessage(messageData: any, instanceName: string) {
       return;
     }
 
-    console.log('🔔 [DEBUG] Buscando histórico da conversa...');
-    // TEMPORARIAMENTE PULAR REDIS PARA TESTE
-    // const conversationHistory = await ConversationContext.getMessages(agentConfig.id, remoteJid, 10);
-    const conversationHistory: Array<{role: string, content: string}> = []; // Array vazio para teste
+    console.log('🔔 [DEBUG] Definindo prompt do sistema...');
+    // Usar systemPrompt simples para teste
+    const systemPrompt = agentConfig.systemPrompt || 'Você é um assistente virtual útil e amigável.';
 
-    console.log('🔔 [DEBUG] Gerando contexto...');
-    // 🧱 CAMADA 1: Gerar contexto principal baseado nos campos guiados
-    let systemPrompt = agentConfig.systemPrompt;
-    
-    // Se o agente tem campos configurados, gerar contexto inteligente
-    if (agentConfig.companyName || agentConfig.product || agentConfig.mainPain) {
-      console.log('🔔 [DEBUG] Gerando contexto inteligente...');
-      const contextFields = {
-        companyName: agentConfig.companyName,
-        product: agentConfig.product,
-        mainPain: agentConfig.mainPain,
-        successCase: agentConfig.successCase,
-        priceObjection: agentConfig.priceObjection,
-        goal: agentConfig.goal
-      };
-      
-      console.log('🔔 [DEBUG] Chamando AIContextGenerator.generateMainContext...');
-      const generatedContext = AIContextGenerator.generateMainContext(contextFields);
-      systemPrompt = generatedContext;
-      
-      console.log('🧱 Contexto principal gerado automaticamente');
-    } else {
-      console.log('🔔 [DEBUG] Gerando contexto mínimo...');
-      // Usar contexto mínimo se não há configuração
-      const minimalContext = AIContextGenerator.generateMinimalContext(agentConfig.goal);
-      systemPrompt = minimalContext;
-      
-      console.log('⚠️ Usando contexto mínimo - configuração incompleta');
-    }
-
-    console.log('🔔 [DEBUG] Buscando conhecimento relevante...');
-    // TEMPORARIAMENTE PULAR KNOWLEDGE SEARCH PARA TESTE
-    // const relevantKnowledge = await KnowledgeSearch.searchRelevantChunks(
-    //   agentConfig.id, 
-    //   messageContent, 
-    //   3 // máximo 3 chunks mais relevantes
-    // );
-    const relevantKnowledge = []; // Array vazio para teste
-
-    console.log('📚 Nenhum conhecimento adicional encontrado (pulado para debug)');
-
-    // Preparar mensagens para OpenAI com o sistema inteligente
+    console.log('🔔 [DEBUG] Preparando mensagens para OpenAI...');
+    // Preparar mensagens para OpenAI de forma simples
     const messages = [
       { role: 'system', content: systemPrompt },
-      ...conversationHistory.map(msg => ({
-        role: msg.role as 'user' | 'assistant',
-        content: msg.content
-      })),
       { role: 'user', content: messageContent }
     ];
 
-    console.log(`🤖 Sistema prompt final: ${systemPrompt.length} caracteres`);
-    console.log(`📚 Histórico: ${conversationHistory.length} mensagens do Redis`);
+    console.log(`🤖 Sistema prompt: ${systemPrompt.length} caracteres`);
 
     console.log('🔔 [DEBUG] Verificando variáveis de ambiente...');
     const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
@@ -224,16 +163,8 @@ async function processMessage(messageData: any, instanceName: string) {
     // Chamar OpenAI
     const startTime = Date.now();
     
-    console.log('🔔 [DEBUG] Marcando mensagem como lida...');
-    // 1. Marcar mensagem como lida (remove os ✅✅ azuis)
-    await markMessageAsRead(instance, messageData);
-    
-    console.log('🔔 [DEBUG] Enviando presença de digitando...');
-    // 2. Mostrar que está digitando
-    await sendChatPresence(instance, remoteJid, 'composing');
-    
     console.log('🔔 [DEBUG] Criando completion OpenAI...');
-    // 3. Gerar resposta com OpenAI
+    // Gerar resposta com OpenAI
     const completion = await openai.chat.completions.create({
       model: agentConfig.model,
       messages: messages as any,
@@ -248,37 +179,10 @@ async function processMessage(messageData: any, instanceName: string) {
 
     if (!aiResponse) {
       console.log('❌ OpenAI não retornou resposta');
-      // Parar digitando mesmo se não houver resposta
-      await sendChatPresence(instance, remoteJid, 'paused');
       return;
     }
 
     console.log(`🔔 [DEBUG] Resposta da OpenAI: "${aiResponse.substring(0, 100)}..."`);
-
-    // Simular tempo de digitação baseado no tamanho da resposta
-    // ~50 caracteres por segundo (velocidade humana realista)
-    const typingTime = Math.max(1000, Math.min(5000, aiResponse.length * 20));
-    console.log(`⏱️ Simulando digitação por ${typingTime}ms para ${aiResponse.length} caracteres`);
-    
-    await new Promise(resolve => setTimeout(resolve, typingTime));
-
-    console.log('🔔 [DEBUG] Salvando mensagens no Redis...');
-    // TEMPORARIAMENTE PULAR REDIS PARA TESTE
-    // await ConversationContext.addMessage(
-    //   agentConfig.id,
-    //   remoteJid,
-    //   'user',
-    //   messageContent,
-    //   completion.usage?.prompt_tokens || 0
-    // );
-
-    // await ConversationContext.addMessage(
-    //   agentConfig.id,
-    //   remoteJid,
-    //   'assistant',
-    //   aiResponse,
-    //   completion.usage?.completion_tokens || 0
-    // );
 
     console.log('🔔 [DEBUG] Atualizando tokens do usuário...');
     // Atualizar tokens do usuário
