@@ -2,32 +2,37 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
 
-// TEMPORARIAMENTE COMENTADO PARA DEBUG - PODE ESTAR CAUSANDO ERRO
-// import { AIContextGenerator } from '@/lib/ai-context-generator';
-// import { KnowledgeSearch } from '@/lib/knowledge-search';
-// import { ConversationContext, RateLimiter } from '@/lib/redis';
-
 // Inicializar OpenAI com a chave do ambiente
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(request: NextRequest) {
+export async function POST(request: NextRequest, { params }: { params: { event: string[] } }) {
   try {
-    console.log('🔔 [DEBUG] Webhook MESSAGES_UPSERT iniciado');
+    const eventPath = params.event.join('/');
+    console.log(`🔔 [DEBUG] Webhook genérico iniciado para evento: ${eventPath}`);
+    
     const body = await request.json();
     
     // Log do webhook recebido
-    console.log('🔔 Webhook MESSAGES_UPSERT recebido:', JSON.stringify(body, null, 2));
+    console.log(`🔔 Webhook ${eventPath} recebido:`, JSON.stringify(body, null, 2));
 
-    // TEMPORARIAMENTE COMENTADO PARA DEBUG - aceitar todos os eventos
-    // // Verificar se é um evento de mensagem (aceitar ambos os formatos)
-    // if (body.event !== 'MESSAGES_UPSERT' && body.event !== 'messages.upsert') {
-    //   console.log('🔔 [DEBUG] Não é evento de mensagem, ignorando. Evento recebido:', body.event);
-    //   return NextResponse.json({ status: 'ignored', reason: 'not_message_event' });
-    // }
+    // Verificar se é um evento de mensagem que devemos processar
+    const messageEvents = ['messages-upsert', 'MESSAGES_UPSERT', 'messages.upsert'];
+    const isMessageEvent = messageEvents.some(event => 
+      eventPath.includes(event) || body.event === event
+    );
 
-    console.log('🔔 [DEBUG] Evento recebido:', body.event, '- Processando...');
+    if (!isMessageEvent) {
+      console.log(`🔔 [DEBUG] Evento ${eventPath} não é de mensagem, ignorando`);
+      return NextResponse.json({ 
+        status: 'ignored', 
+        reason: 'not_message_event',
+        event: eventPath 
+      });
+    }
+
+    console.log('🔔 [DEBUG] Evento de mensagem detectado, processando...');
 
     // A Evolution API pode enviar dados em estruturas diferentes
     let messages = [];
@@ -55,7 +60,7 @@ export async function POST(request: NextRequest) {
     for (const messageData of messages) {
       try {
         console.log('🔔 [DEBUG] Iniciando processamento de mensagem:', messageData.key?.id);
-      await processMessage(messageData, instanceName);
+        await processMessage(messageData, instanceName);
         console.log('🔔 [DEBUG] Mensagem processada com sucesso:', messageData.key?.id);
       } catch (msgError) {
         console.error('🔔 [DEBUG] Erro ao processar mensagem individual:', msgError);
@@ -63,21 +68,28 @@ export async function POST(request: NextRequest) {
     }
 
     console.log('🔔 [DEBUG] Webhook processado com sucesso');
-    return NextResponse.json({ status: 'processed' });
+    return NextResponse.json({ status: 'processed', event: eventPath });
   } catch (error) {
-    console.error('❌ [DEBUG] Erro no webhook MESSAGES_UPSERT:', error instanceof Error ? error.message : String(error));
+    console.error(`❌ [DEBUG] Erro no webhook ${params.event.join('/')}:`, error instanceof Error ? error.message : String(error));
     console.error('❌ [DEBUG] Stack trace:', error instanceof Error ? error.stack : 'N/A');
     return NextResponse.json({ error: 'Erro interno' }, { status: 500 });
   }
 }
 
 // Método GET para testar o endpoint
-export async function GET() {
+export async function GET(request: NextRequest, { params }: { params: { event: string[] } }) {
+  const eventPath = params.event.join('/');
   return NextResponse.json({ 
     status: 'ok',
-    message: 'AI Agent webhook endpoint funcionando',
+    message: `AI Agent webhook endpoint genérico funcionando para evento: ${eventPath}`,
     timestamp: new Date().toISOString(),
-    endpoint: '/api/ai-agent/webhook/messages-upsert'
+    endpoint: `/api/ai-agent/webhook/${eventPath}`,
+    supportedEvents: [
+      'messages-upsert',
+      'messages-update', 
+      'chats-upsert',
+      'presence-update'
+    ]
   });
 }
 
@@ -532,4 +544,4 @@ async function markMessageAsRead(instance: any, messageData: any) {
   } catch (error) {
     console.error('❌ Erro ao marcar mensagem como lida:', error);
   }
-}
+} 
