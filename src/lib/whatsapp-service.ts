@@ -34,51 +34,43 @@ export class WhatsAppService {
    */
   async createInstance(data: CreateWhatsAppInstanceData) {
     try {
-      // Gerar nome único da instância
-      const instanceName = data.instanceName || `wa_${data.userId}_${Date.now()}`;
-      
-      // Verificar se já existe uma instância com esse nome
-      const existingInstance = await prisma.whatsAppInstance.findUnique({
-        where: { instanceName },
-      });
+      const instanceName = data.instanceName || `instance_${Date.now()}`;
+      const webhookUrl = data.webhookUrl || `${process.env.NEXTAUTH_URL}/api/ai-agent/webhook`;
 
-      if (existingInstance) {
-        throw new Error('Nome da instância já existe');
-      }
+      console.log(`[CREATE] Iniciando criação da instância: ${instanceName}`);
 
-      // URL do webhook (usando NGROK_URL se disponível, senão NEXTAUTH_URL ou localhost)
-      const ngrokUrl = process.env.NGROK_URL;
-      const webhookUrl = data.webhookUrl || `${ngrokUrl || process.env.NEXTAUTH_URL || 'http://localhost:3000'}/api/whatsapp/webhook`;
-
-      // Criar instância no banco
+      // Criar no banco primeiro
       const dbInstance = await prisma.whatsAppInstance.create({
         data: {
           userId: data.userId,
           instanceName,
-          status: 'CREATED',
+          status: 'CREATING',
           webhookUrl,
           autoReconnect: data.autoReconnect ?? true,
         },
       });
 
-      // Criar instância na Evolution API (formato que funcionava antes)
+      // Preparar dados para Evolution API
       const evolutionRequest: CreateInstanceRequest = {
         instanceName,
         integration: 'WHATSAPP-BAILEYS',
         token: data.sessionToken,
         qrcode: true,
-        webhook_by_events: true,
-        webhook_base64: false,
-        events: [
-          'MESSAGES_UPSERT',
-          'MESSAGES_UPDATE', 
-          'MESSAGES_DELETE',
-          'CONTACTS_UPSERT',
-          'CHATS_UPSERT',
-          'CHATS_UPDATE',
-          'CONNECTION_UPDATE',
-          'NEW_JWT_TOKEN'
-        ],
+        webhook: {
+          url: webhookUrl,
+          events: [
+            'APPLICATION_STARTUP',
+            'CONNECTION_UPDATE',
+            'MESSAGES_UPSERT',
+            'MESSAGES_UPDATE',
+            'MESSAGES_DELETE',
+            'CONTACTS_UPSERT',
+            'CHATS_UPSERT',
+            'CHATS_UPDATE'
+          ],
+          byEvents: true,
+          base64: false,
+        },
         reject_call: false,
         groups_ignore: false,
         always_online: false,
@@ -92,22 +84,32 @@ export class WhatsAppService {
       const evolutionResponse = await this.evolutionApi.createInstance(evolutionRequest);
 
       // Atualizar com dados da Evolution API
-      await prisma.whatsAppInstance.update({
-        where: { id: dbInstance.id },
-        data: {
-          instanceId: evolutionResponse.instance.instanceName,
-          status: 'CONNECTING',
-          qrCode: evolutionResponse.qrcode?.base64 || evolutionResponse.qrcode?.code,
-        },
-      });
+      const updateData: any = {
+        instanceId: evolutionResponse.instance.instanceName,
+        status: 'CONNECTING',
+        qrCode: evolutionResponse.qrcode?.base64 || evolutionResponse.qrcode?.code,
+      };
 
-      // Configurar webhook explicitamente
+      // Tentar configurar webhook explicitamente
+      let webhookConfigured = false;
+      let webhookError = null;
+      
       try {
         await this.setupWebhook(instanceName, webhookUrl);
         console.log(`[CREATE] Webhook configurado com sucesso para ${instanceName}`);
-      } catch (webhookError) {
-        console.warn(`[CREATE] Erro ao configurar webhook para ${instanceName}:`, webhookError);
+        webhookConfigured = true;
+        updateData.webhookEnabled = true;
+      } catch (webhookErr) {
+        console.warn(`[CREATE] Erro ao configurar webhook para ${instanceName}:`, webhookErr);
+        webhookConfigured = false;
+        webhookError = webhookErr instanceof Error ? webhookErr.message : 'Erro desconhecido';
+        updateData.webhookEnabled = false;
       }
+
+      await prisma.whatsAppInstance.update({
+        where: { id: dbInstance.id },
+        data: updateData,
+      });
 
       return {
         ...dbInstance,
@@ -116,6 +118,8 @@ export class WhatsAppService {
         pairingCode: (evolutionResponse as any).pairingCode,
         status: 'CONNECTING',
         webhookUrl,
+        webhookConfigured,
+        webhookError,
       };
     } catch (error) {
       console.error('Erro ao criar instância:', error);
@@ -479,14 +483,14 @@ export class WhatsAppService {
       const webhookConfig = {
         url: webhookUrl,
         events: [
-          'MESSAGES_UPSERT',    // Mensagens novas (chegando ou enviadas)
-          'MESSAGES_UPDATE',    // Status (entregue, lido, etc.)
-          'MESSAGES_DELETE',    // Mensagens revogadas
-          'CONTACTS_UPSERT',    // Contatos criados/atualizados
-          'CHATS_UPSERT',       // Chats criados/atualizados
-          'CHATS_UPDATE',       // Chats atualizados
-          'CONNECTION_UPDATE',  // Status da conexão
-          'NEW_JWT_TOKEN',      // Token novo para reconexão
+          'APPLICATION_STARTUP',   // Status da aplicação
+          'CONNECTION_UPDATE',     // Status da conexão
+          'MESSAGES_UPSERT',      // Mensagens novas (chegando ou enviadas)
+          'MESSAGES_UPDATE',      // Status (entregue, lido, etc.)
+          'MESSAGES_DELETE',      // Mensagens revogadas
+          'CONTACTS_UPSERT',      // Contatos criados/atualizados
+          'CHATS_UPSERT',         // Chats criados/atualizados
+          'CHATS_UPDATE',         // Chats atualizados
         ],
         byEvents: true,
         base64: false,
@@ -691,11 +695,6 @@ export class WhatsAppService {
         case 'CONNECTION_UPDATE':
           console.log(`[WEBHOOK] Processando CONNECTION_UPDATE`);
           await this.processConnectionUpdate(instance.id, webhookData.data);
-          break;
-        
-        case 'NEW_JWT_TOKEN':
-          console.log(`[WEBHOOK] Processando NEW_JWT_TOKEN`);
-          await this.processNewToken(instance.id, webhookData.data);
           break;
         
         default:
@@ -1169,28 +1168,6 @@ export class WhatsAppService {
       } catch (error) {
         console.error(`[WEBHOOK] Erro ao atualizar chat:`, error);
       }
-    }
-  }
-
-  /**
-   * Processar novo token JWT para reconexão
-   */
-  private async processNewToken(instanceId: string, tokenData: any) {
-    try {
-      const newToken = tokenData.token || tokenData;
-      
-      if (newToken) {
-        await prisma.whatsAppInstance.update({
-          where: { id: instanceId },
-          data: {
-            sessionToken: newToken,
-          },
-        });
-
-        console.log(`[WEBHOOK] Token atualizado para instância ${instanceId}`);
-      }
-    } catch (error) {
-      console.error(`[WEBHOOK] Erro ao atualizar token:`, error);
     }
   }
 } 

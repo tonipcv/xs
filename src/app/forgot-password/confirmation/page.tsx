@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Suspense, useEffect, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Mail, ArrowLeft } from 'lucide-react';
+import Image from 'next/image';
 
 function ConfirmationContent() {
   const searchParams = useSearchParams();
@@ -43,14 +44,22 @@ function ConfirmationContent() {
   }, [email, emailSent]);
   
   return (
-    <div className="min-h-screen bg-black font-normal tracking-[-0.03em]">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 font-normal tracking-[-0.01em]">
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-[420px] bg-white rounded-2xl border border-gray-200 p-8 shadow-2xl">
-          {/* Título */}
+        <div className="w-full max-w-[380px] bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/50 p-8 shadow-lg">
+          {/* Logo */}
           <div className="text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2 text-black">
-              HTPS.io
-            </h1>
+            <div className="mb-4 flex justify-center">
+              <div className="relative w-16 h-16 grayscale">
+                <Image
+                  src="/logo.png"
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+            </div>
           </div>
           
           <div className="flex justify-center mb-6">
@@ -59,30 +68,37 @@ function ConfirmationContent() {
             </div>
           </div>
 
-          <h2 className="text-center text-lg font-semibold text-black mb-4">
+          <h2 className="text-center text-lg font-medium text-gray-900 mb-4">
             E-mail enviado com sucesso!
           </h2>
           
-          <p className="text-center text-gray-600 text-sm mb-2">
+          <p className="text-center text-gray-500 text-sm mb-2">
             Verifique seu e-mail:
           </p>
-          <p className="text-center text-black font-medium mb-6">
+          <p className="text-center text-gray-900 font-medium mb-6">
             {email}
           </p>
 
-          <p className="text-center text-gray-600 text-sm">
+          <p className="text-center text-gray-500 text-sm">
             Se você possui uma conta, receberá um e-mail com as instruções para redefinir sua senha.
           </p>
 
           <div className="mt-8 text-center">
             <Link 
               href="/login" 
-              className="text-sm text-gray-600 hover:text-black transition-colors duration-200 inline-flex items-center gap-2"
+              className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200 inline-flex items-center gap-2"
             >
               <ArrowLeft className="w-4 h-4" />
               Voltar para o login
             </Link>
           </div>
+        </div>
+        
+        {/* Footer minimalista */}
+        <div className="mt-8 text-center">
+          <p className="text-xs text-gray-400">
+            Secure authentication powered by HTPS.io
+          </p>
         </div>
       </div>
     </div>
@@ -92,8 +108,8 @@ function ConfirmationContent() {
 export default function ConfirmationPage() {
   return (
     <Suspense fallback={
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-white">Carregando...</div>
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 flex items-center justify-center">
+        <div className="text-gray-600">Carregando...</div>
       </div>
     }>
       <ConfirmationContent />

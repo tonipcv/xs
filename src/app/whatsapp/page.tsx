@@ -6,7 +6,7 @@ import { WhatsAppInstances } from '@/components/whatsapp/WhatsAppInstances';
 import { AppLayout } from '@/components/AppSidebar';
 
 export const metadata: Metadata = {
-  title: 'WhatsApp Business | VUOM',
+  title: 'Cxlus AI',
   description: 'Gerencie suas instâncias do WhatsApp Business',
 };
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut } from 'next-auth/react';
+import Image from 'next/image';
 import {
   Sidebar,
   SidebarContent,
@@ -97,17 +98,30 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar variant="inset" className="border-r border-gray-200/50 bg-gradient-to-b from-gray-100 to-gray-200/80 shadow-[1px_0_5px_rgba(0,0,0,0.05)]">
-      <SidebarHeader className="border-b border-gray-200/50 bg-white/10">
-        <div className="flex items-center justify-center px-3 py-2">
-          <span className="text-lg font-bold text-black">HTPS.io</span>
+    <Sidebar variant="inset" className="border-r border-gray-200/50 bg-gradient-to-b from-gray-50 to-gray-100 shadow-[1px_0_5px_rgba(0,0,0,0.05)]">
+      <SidebarHeader className="border-b border-gray-200/50 bg-white/20 backdrop-blur-sm">
+        <div className="flex items-center justify-center px-3 py-3">
+          <div className="flex items-center gap-3">
+            <div className="relative w-8 h-8 grayscale">
+              <Image
+                src="/logo.png"
+                alt="Logo"
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <span className="text-sm font-medium text-gray-900 tracking-tight group-data-[collapsible=icon]:hidden">
+              HTPS.io
+            </span>
+          </div>
         </div>
       </SidebarHeader>
       
       <SidebarContent className="bg-transparent py-2">
         {menuItems.map((group) => (
           <SidebarGroup key={group.title} className="px-2 py-1">
-            <SidebarGroupLabel className="text-[10px] font-semibold text-[#2d5568]/70 uppercase tracking-wider px-2 mb-1">
+            <SidebarGroupLabel className="text-[10px] font-semibold text-gray-600/70 uppercase tracking-wider px-2 mb-1">
               {group.title}
             </SidebarGroupLabel>
             <SidebarGroupContent>
@@ -117,7 +131,7 @@ export function AppSidebar() {
                     <SidebarMenuButton 
                       asChild
                       isActive={pathname ? (pathname === item.url || pathname.startsWith(item.url + '/')) : false}
-                      className="h-7 px-2 rounded-md text-xs font-medium tracking-[-0.01em] font-inter transition-all duration-200 data-[active=true]:bg-white/90 data-[active=true]:text-[#2d5568] data-[active=true]:shadow-sm hover:bg-white/20 text-[#2d5568]/90"
+                      className="h-7 px-2 rounded-md text-xs font-medium tracking-[-0.01em] transition-all duration-200 data-[active=true]:bg-white/90 data-[active=true]:text-gray-900 data-[active=true]:shadow-sm hover:bg-white/40 text-gray-700"
                     >
                       <Link href={item.url} className="flex items-center gap-2">
                         <item.icon className="h-3.5 w-3.5 stroke-[1.5] flex-shrink-0" />
@@ -132,11 +146,11 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
       
-      <SidebarFooter className="border-t border-gray-200/50 bg-white/10 p-2">
+      <SidebarFooter className="border-t border-gray-200/50 bg-white/20 p-2">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton 
-              className="h-7 px-2 rounded-md text-xs font-medium tracking-[-0.01em] font-inter text-red-600 hover:bg-red-50/80 hover:text-red-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="h-7 px-2 rounded-md text-xs font-medium tracking-[-0.01em] text-red-600 hover:bg-red-50/80 hover:text-red-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
               onClick={handleLogout}
               disabled={isLoggingOut}
             >
@@ -159,17 +173,34 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-gray-100">
+      <div className="flex min-h-screen w-full bg-gray-50">
         <AppSidebar />
         <main className="flex-1 flex flex-col">
-          <header className="flex h-10 items-center gap-4 border-b border-gray-200/50 bg-gradient-to-r from-gray-100 to-gray-200/80 shadow-[0_1px_5px_rgba(0,0,0,0.05)] px-4">
-            <SidebarTrigger />
+          <header className="flex h-12 items-center gap-4 border-b border-gray-200/50 bg-gradient-to-r from-gray-50 to-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.05)] px-4">
+            <SidebarTrigger className="md:hidden" />
+            
+            {/* Logo no mobile */}
+            <div className="flex items-center gap-2 md:hidden">
+              <div className="relative w-6 h-6 grayscale">
+                <Image
+                  src="/logo.png"
+                  alt="Logo"
+                  fill
+                  className="object-contain"
+                  priority
+                />
+              </div>
+              <span className="text-sm font-medium text-gray-900 tracking-tight">
+                HTPS.io
+              </span>
+            </div>
+            
             <div className="flex-1" />
-            <Button variant="ghost" size="icon" className="hover:bg-white/20 h-7 w-7">
-              <Settings className="h-3.5 w-3.5 text-[#2d5568]" />
+            <Button variant="ghost" size="icon" className="hover:bg-white/40 h-8 w-8">
+              <Settings className="h-4 w-4 text-gray-600" />
             </Button>
           </header>
-          <div className="flex-1 p-3 bg-gray-100">
+          <div className="flex-1 p-4 bg-gray-50">
             {children}
           </div>
         </main>

@@ -404,22 +404,61 @@ export class EvolutionApiClient {
    */
   async setWebhook(instanceName: string, webhookConfig: WebhookConfig): Promise<any> {
     try {
-      // Estrutura correta descoberta nos testes
+      // Formato correto descoberto nos testes - deve ser aninhado em "webhook"
       const payload = {
         webhook: {
           enabled: true,
           url: webhookConfig.url,
-          byEvents: webhookConfig.byEvents || true,
-          events: webhookConfig.events || ['MESSAGES_UPSERT'],
+          byEvents: webhookConfig.byEvents !== false, // Default true
+          events: webhookConfig.events || [
+            'APPLICATION_STARTUP',
+            'CONNECTION_UPDATE',
+            'MESSAGES_UPSERT',
+            'MESSAGES_UPDATE',
+            'MESSAGES_DELETE',
+            'CONTACTS_UPSERT',
+            'CHATS_UPSERT',
+            'CHATS_UPDATE'
+          ],
           base64: webhookConfig.base64 || false
         }
       };
       
+      console.log(`Evolution API Request: POST /webhook/set/${instanceName}`);
+      console.log('Webhook Payload:', JSON.stringify(payload, null, 2));
+      
       const response = await this.client.post(`/webhook/set/${instanceName}`, payload);
+      
+      console.log(`Evolution API Response: ${response.status}`);
+      console.log('Webhook Response:', JSON.stringify(response.data, null, 2));
+      
       return response.data;
-    } catch (error) {
-      console.error('Erro ao configurar webhook:', error);
-      throw new Error(`Falha ao configurar webhook: ${error instanceof Error ? error.message : 'Erro desconhecido'}`);
+    } catch (error: any) {
+      console.error(`Erro ao configurar webhook para ${instanceName}:`, error.response?.data || error.message);
+      throw error;
+    }
+  }
+
+  /**
+   * Buscar configuração do webhook
+   */
+  async getWebhook(instanceName: string): Promise<any> {
+    try {
+      console.log(`Evolution API Request: GET /webhook/find/${instanceName}`);
+      
+      const response = await this.client.get(`/webhook/find/${instanceName}`);
+      
+      console.log(`Evolution API Response: ${response.status}`);
+      console.log('Webhook Config:', JSON.stringify(response.data, null, 2));
+      
+      return response.data;
+    } catch (error: any) {
+      if (error.response?.status === 404) {
+        console.log(`Nenhum webhook configurado para ${instanceName}`);
+        return null;
+      }
+      console.error(`Erro ao buscar webhook para ${instanceName}:`, error.response?.data || error.message);
+      throw error;
     }
   }
 
