@@ -15,7 +15,7 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: 'CXLUS AI',
+  title: 'Cxlus AI',
   description: 'CX-AI',
   icons: {
     icon: '/splash.png',

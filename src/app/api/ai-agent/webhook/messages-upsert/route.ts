@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import OpenAI from 'openai';
-
-// TEMPORARIAMENTE COMENTADO PARA DEBUG - PODE ESTAR CAUSANDO ERRO
-// import { AIContextGenerator } from '@/lib/ai-context-generator';
-// import { KnowledgeSearch } from '@/lib/knowledge-search';
-// import { ConversationContext, RateLimiter } from '@/lib/redis';
+import { AIContextGenerator } from '@/lib/ai-context-generator';
+import { KnowledgeSearch } from '@/lib/knowledge-search';
+import { ConversationContext, RateLimiter } from '@/lib/redis';
 
 // Inicializar OpenAI com a chave do ambiente
 const openai = new OpenAI({
@@ -120,6 +118,20 @@ async function processMessage(messageData: any, instanceName: string) {
 
     console.log(`🤖 Processando mensagem de ${remoteJid}: "${messageContent}"`);
 
+    // 🚦 SISTEMA DE RATE LIMITING ATIVADO
+    console.log('🚦 Verificando rate limiting...');
+    const rateLimitResult = await RateLimiter.checkLimit(
+      agentConfig.id,
+      remoteJid, 
+      agentConfig.maxMessagesPerMinute || 5
+    );
+    
+    if (!rateLimitResult.allowed) {
+      console.log('🚫 Rate limit atingido para:', remoteJid);
+      await sendFallbackMessage(instance, remoteJid, 'Por favor, aguarde um momento antes de enviar outra mensagem.');
+      return;
+    }
+
     // Marcar mensagem como lida
     await markMessageAsRead(instance, messageData);
 
@@ -136,18 +148,91 @@ async function processMessage(messageData: any, instanceName: string) {
       return;
     }
 
+    // 🧠 SISTEMA DE MEMÓRIA/CONVERSA ATIVADO
+    console.log('🧠 Carregando contexto da conversa...');
+    const conversationHistory = await ConversationContext.getMessages(agentConfig.id, remoteJid, 10);
+    
+    // Adicionar mensagem atual ao contexto
+    await ConversationContext.addMessage(
+      agentConfig.id,
+      remoteJid,
+      'user',
+      messageContent
+    );
+
+    console.log(`💭 Histórico carregado: ${conversationHistory.length} mensagens`);
+
     console.log('🔔 [DEBUG] Definindo prompt do sistema...');
-    // Usar systemPrompt simples para teste
-    const systemPrompt = agentConfig.systemPrompt || 'Você é um assistente virtual útil e amigável.';
+    
+    // 🧠 SISTEMA DE CONTEXTO INTELIGENTE ATIVADO
+    let systemPrompt: string;
+    
+    if (agentConfig.systemPrompt && agentConfig.systemPrompt.trim() !== '' && 
+        agentConfig.systemPrompt !== 'Você é um assistente virtual útil e amigável.') {
+      // Usar prompt customizado se fornecido
+      systemPrompt = agentConfig.systemPrompt;
+      console.log('🎯 Usando prompt customizado fornecido pelo usuário');
+    } else {
+      // Gerar contexto inteligente baseado nos campos configurados
+      console.log('🧠 Gerando contexto inteligente automaticamente...');
+      
+      const contextFields = {
+        companyName: agentConfig.companyName,
+        product: agentConfig.product,
+        mainPain: agentConfig.mainPain,
+        successCase: agentConfig.successCase,
+        priceObjection: agentConfig.priceObjection,
+        goal: agentConfig.goal
+      };
+      
+      // Verificar se tem informações suficientes para contexto completo
+      const hasBasicInfo = contextFields.companyName || contextFields.product;
+      
+      if (hasBasicInfo) {
+        systemPrompt = AIContextGenerator.generateMainContext(contextFields);
+        console.log('✅ Contexto principal gerado com base nas informações da empresa');
+      } else {
+        systemPrompt = AIContextGenerator.generateMinimalContext(agentConfig.goal);
+        console.log('⚠️ Contexto mínimo gerado - configure informações da empresa para melhor performance');
+      }
+    }
+
+    // 📚 SISTEMA DE BASE DE CONHECIMENTO ATIVADO
+    console.log('📚 Buscando conhecimento relevante...');
+    let knowledgeContext = '';
+    
+    try {
+      const relevantChunks = await KnowledgeSearch.searchRelevantChunks(
+        agentConfig.id,
+        messageContent,
+        3 // Buscar top 3 chunks mais relevantes
+      );
+      
+      if (relevantChunks.length > 0) {
+        knowledgeContext = '\n\n📚 CONHECIMENTO RELEVANTE:\n' + 
+          relevantChunks.map((result: any) => `• ${result.chunk.content}`).join('\n');
+        console.log(`✅ ${relevantChunks.length} chunks de conhecimento encontrados`);
+      } else {
+        console.log('⚠️ Nenhum conhecimento relevante encontrado');
+      }
+    } catch (knowledgeError) {
+      console.error('❌ Erro ao buscar conhecimento:', knowledgeError);
+    }
+
+    // Combinar prompt do sistema com conhecimento
+    const finalSystemPrompt = systemPrompt + knowledgeContext;
 
     console.log('🔔 [DEBUG] Preparando mensagens para OpenAI...');
-    // Preparar mensagens para OpenAI de forma simples
+    // Preparar mensagens para OpenAI com contexto completo
     const messages = [
-      { role: 'system', content: systemPrompt },
+      { role: 'system', content: finalSystemPrompt },
+      ...conversationHistory, // Incluir histórico da conversa
       { role: 'user', content: messageContent }
     ];
 
-    console.log(`🤖 Sistema prompt: ${systemPrompt.length} caracteres`);
+    console.log(`🤖 Sistema prompt: ${finalSystemPrompt.length} caracteres`);
+    console.log(`🎯 Objetivo do agente: ${agentConfig.goal}`);
+    console.log(`💭 Mensagens no contexto: ${messages.length}`);
 
     console.log('🔔 [DEBUG] Verificando variáveis de ambiente...');
     const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
@@ -187,6 +272,15 @@ async function processMessage(messageData: any, instanceName: string) {
 
     console.log(`🔔 [DEBUG] Resposta da OpenAI: "${aiResponse.substring(0, 100)}..."`);
 
+    // 🧠 ADICIONAR RESPOSTA AO CONTEXTO DA CONVERSA
+    await ConversationContext.addMessage(
+      agentConfig.id,
+      remoteJid,
+      'assistant',
+      aiResponse,
+      tokensUsed
+    );
+
     console.log('🔔 [DEBUG] Atualizando tokens do usuário...');
     // Atualizar tokens do usuário
     await prisma.user.update({
@@ -212,7 +306,9 @@ async function processMessage(messageData: any, instanceName: string) {
           remoteJid,
           tokensUsed,
           responseTime,
-          model: agentConfig.model
+          model: agentConfig.model,
+          hasKnowledge: knowledgeContext.length > 0,
+          conversationLength: conversationHistory.length
         }),
         remoteJid,
         responseTime,
