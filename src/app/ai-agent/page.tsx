@@ -97,6 +97,12 @@ export default function AIAgentPage() {
   const [webhookStatus, setWebhookStatus] = useState<Record<string, WebhookReadiness>>({});
   const [webhookSetupLoading, setWebhookSetupLoading] = useState<Record<string, boolean>>({});
 
+  // Estados para templates
+  const [templates, setTemplates] = useState<any[]>([]);
+  const [selectedTemplate, setSelectedTemplate] = useState<string>('');
+  const [promptMode, setPromptMode] = useState<'auto' | 'template' | 'custom'>('auto');
+  const [loadingTemplates, setLoadingTemplates] = useState(false);
+
   // Form state
   const [formData, setFormData] = useState({
     instanceId: '',
@@ -141,11 +147,31 @@ export default function AIAgentPage() {
     goal: 'SALES' as 'SALES' | 'SUPPORT' | 'LEAD_GENERATION' | 'QUALIFICATION' | 'RETENTION' | 'EDUCATION'
   });
 
+  // Estados para templates no formulário de edição
+  const [editTemplates, setEditTemplates] = useState<any[]>([]);
+  const [editSelectedTemplate, setEditSelectedTemplate] = useState<string>('');
+  const [editPromptMode, setEditPromptMode] = useState<'auto' | 'template' | 'custom'>('auto');
+  const [editLoadingTemplates, setEditLoadingTemplates] = useState(false);
+
   useEffect(() => {
     loadData();
     loadInstances();
     loadWebhookUrl();
   }, []);
+
+  // Carregar templates quando o objetivo mudar
+  useEffect(() => {
+    if (formData.goal) {
+      loadTemplates(formData.goal);
+    }
+  }, [formData.goal]);
+
+  // Carregar templates quando o objetivo mudar no formulário de edição
+  useEffect(() => {
+    if (editFormData.goal && showEditForm) {
+      loadEditTemplates(editFormData.goal);
+    }
+  }, [editFormData.goal, showEditForm]);
 
   const loadData = async () => {
     try {
@@ -307,6 +333,10 @@ export default function AIAgentPage() {
           priceObjection: '',
           goal: 'SALES' as 'SALES' | 'SUPPORT' | 'LEAD_GENERATION' | 'QUALIFICATION' | 'RETENTION' | 'EDUCATION'
         });
+        // Reset template states
+        setPromptMode('auto');
+        setSelectedTemplate('');
+        setTemplates([]);
       } else {
         toast.error(result.error || 'Erro ao criar agente');
       }
@@ -339,6 +369,9 @@ export default function AIAgentPage() {
   const editAgent = async () => {
     if (!editingAgent) return;
     
+    console.log('🔄 Iniciando edição do agente:', editingAgent.id);
+    console.log('📝 Dados a serem enviados:', JSON.stringify(editFormData, null, 2));
+    
     setLoading(true);
     try {
       const response = await fetch(`/api/ai-agent/configs/${editingAgent.id}`, {
@@ -347,15 +380,24 @@ export default function AIAgentPage() {
         body: JSON.stringify(editFormData)
       });
 
-      if (!response.ok) throw new Error('Erro ao atualizar agente');
+      console.log('📡 Resposta da API:', response.status, response.statusText);
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        console.error('❌ Erro da API:', errorData);
+        throw new Error(errorData.error || 'Erro ao atualizar agente');
+      }
+
+      const result = await response.json();
+      console.log('✅ Agente atualizado com sucesso:', result);
 
       await loadData();
       setShowEditForm(false);
       setEditingAgent(null);
       toast.success('Agente atualizado com sucesso!');
     } catch (error) {
-      console.error('Erro ao atualizar agente:', error);
-      toast.error('Erro ao atualizar agente');
+      console.error('❌ Erro ao atualizar agente:', error);
+      toast.error(error instanceof Error ? error.message : 'Erro ao atualizar agente');
     } finally {
       setLoading(false);
     }
@@ -380,6 +422,18 @@ export default function AIAgentPage() {
       priceObjection: agent.priceObjection || '',
       goal: agent.goal
     });
+
+    // Determinar modo do prompt
+    if (agent.systemPrompt && agent.systemPrompt.trim() !== '' && 
+        agent.systemPrompt !== 'Você é um assistente virtual útil e amigável.') {
+      setEditPromptMode('custom');
+    } else {
+      setEditPromptMode('auto');
+    }
+
+    // Carregar templates para o objetivo
+    loadEditTemplates(agent.goal);
+    
     setShowEditForm(true);
   };
 
@@ -411,6 +465,94 @@ export default function AIAgentPage() {
   const availableInstances = instances.filter(instance => 
     !agents.some(agent => agent.instanceId === instance.id)
   );
+
+  const loadTemplates = async (goal: string) => {
+    try {
+      setLoadingTemplates(true);
+      const response = await fetch(`/api/ai-agent/templates?goal=${goal}`);
+      if (response.ok) {
+        const data = await response.json();
+        setTemplates(data.templates || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar templates:', error);
+    } finally {
+      setLoadingTemplates(false);
+    }
+  };
+
+  const applyTemplate = async (templateId: string) => {
+    try {
+      const variables = {
+        companyName: formData.companyName || '[Nome da Empresa]',
+        product: formData.product || '[Produto/Serviço]',
+        mainPain: formData.mainPain || '[Principal Problema]',
+        successCase: formData.successCase || '[Case de Sucesso]',
+        priceObjection: formData.priceObjection || '[Resposta para Objeção de Preço]'
+      };
+
+      const response = await fetch('/api/ai-agent/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, variables })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setFormData(prev => ({ ...prev, systemPrompt: data.prompt }));
+        toast.success('Template aplicado com sucesso!');
+      } else {
+        toast.error('Erro ao aplicar template');
+      }
+    } catch (error) {
+      console.error('Erro ao aplicar template:', error);
+      toast.error('Erro ao aplicar template');
+    }
+  };
+
+  const loadEditTemplates = async (goal: string) => {
+    try {
+      setEditLoadingTemplates(true);
+      const response = await fetch(`/api/ai-agent/templates?goal=${goal}`);
+      if (response.ok) {
+        const data = await response.json();
+        setEditTemplates(data.templates || []);
+      }
+    } catch (error) {
+      console.error('Erro ao carregar templates de edição:', error);
+    } finally {
+      setEditLoadingTemplates(false);
+    }
+  };
+
+  const applyEditTemplate = async (templateId: string) => {
+    try {
+      const variables = {
+        companyName: editFormData.companyName || '[Nome da Empresa]',
+        product: editFormData.product || '[Produto/Serviço]',
+        mainPain: editFormData.mainPain || '[Principal Problema]',
+        successCase: editFormData.successCase || '[Case de Sucesso]',
+        priceObjection: editFormData.priceObjection || '[Resposta para Objeção de Preço]'
+      };
+
+      const response = await fetch('/api/ai-agent/templates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ templateId, variables })
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setEditFormData(prev => ({ ...prev, systemPrompt: data.prompt }));
+        toast.success('Template aplicado com sucesso!');
+      } else {
+        toast.error('Erro ao aplicar template');
+      }
+    } catch (error) {
+      console.error('Erro ao aplicar template:', error);
+      toast.error('Erro ao aplicar template');
+    }
+  };
 
   if (loading) {
     return (
@@ -766,62 +908,182 @@ export default function AIAgentPage() {
                       </div>
                     </div>
 
-                    <div className="space-y-1.5">
-                      <div className="flex items-center gap-2 mb-2">
+                    <div className="space-y-4">
+                      <div className="flex items-center gap-2 mb-3">
                         <div className="w-5 h-5 bg-gray-400 text-white rounded-full flex items-center justify-center text-xs font-bold">2</div>
-                        <Label className="text-gray-900 font-medium text-xs">Prompt do Sistema (Opcional)</Label>
+                        <Label className="text-gray-900 font-medium text-xs">Configuração do Prompt</Label>
                       </div>
-                      <p className="text-xs text-gray-600 mb-2 tracking-[-0.03em] font-inter">
-                        Se deixar vazio, será gerado automaticamente com base nas informações acima.
-                      </p>
-                      <Textarea
-                        value={formData.systemPrompt}
-                        onChange={(e) => setFormData({...formData, systemPrompt: e.target.value})}
-                        placeholder="Deixe vazio para usar contexto automático inteligente..."
-                        className="min-h-[80px] text-xs"
+
+                      {/* Seletor de Modo */}
+                      <div className="space-y-2">
+                        <Label className="text-gray-900 font-medium text-xs">Modo de Configuração</Label>
+                        <div className="grid grid-cols-3 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPromptMode('auto')}
+                            className={`p-2 text-xs rounded-lg border transition-all ${
+                              promptMode === 'auto' 
+                                ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            <div className="font-medium">Automático</div>
+                            <div className="text-xs opacity-75">Baseado nos campos</div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPromptMode('template')}
+                            className={`p-2 text-xs rounded-lg border transition-all ${
+                              promptMode === 'template' 
+                                ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            <div className="font-medium">Template</div>
+                            <div className="text-xs opacity-75">Pré-configurado</div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setPromptMode('custom')}
+                            className={`p-2 text-xs rounded-lg border transition-all ${
+                              promptMode === 'custom' 
+                                ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                            }`}
+                          >
+                            <div className="font-medium">Customizado</div>
+                            <div className="text-xs opacity-75">Escrever próprio</div>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Seleção de Template */}
+                      {promptMode === 'template' && (
+                        <div className="space-y-3">
+                          <Label className="text-gray-900 font-medium text-xs">Escolha um Template</Label>
+                          {loadingTemplates ? (
+                            <div className="flex items-center gap-2 text-xs text-gray-500">
+                              <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
+                              Carregando templates...
+                            </div>
+                          ) : (
+                            <div className="space-y-2">
+                              {templates.map((template) => (
+                                <div
+                                  key={template.id}
+                                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                                    selectedTemplate === template.id
+                                      ? 'bg-blue-50 border-blue-200'
+                                      : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                                  }`}
+                                  onClick={() => {
+                                    setSelectedTemplate(template.id);
+                                    applyTemplate(template.id);
+                                  }}
+                                >
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <h4 className="font-medium text-xs text-gray-900">{template.name}</h4>
+                                      <p className="text-xs text-gray-600 mt-1">{template.description}</p>
+                                      <div className="flex flex-wrap gap-1 mt-2">
+                                        {template.variables.map((variable: string) => (
+                                          <span key={variable} className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs">
+                                            {variable}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                    {selectedTemplate === template.id && (
+                                      <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0 ml-2" />
+                                    )}
+                                  </div>
+                                </div>
+                              ))}
+                              {templates.length === 0 && (
+                                <p className="text-xs text-gray-500 text-center py-4">
+                                  Nenhum template disponível para este objetivo
+                                </p>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Campo de Prompt Customizado */}
+                      {promptMode === 'custom' && (
+                        <div className="space-y-2">
+                          <Label className="text-gray-900 font-medium text-xs">Prompt Customizado</Label>
+                          <Textarea
+                            value={formData.systemPrompt}
+                            onChange={(e) => setFormData({...formData, systemPrompt: e.target.value})}
+                            placeholder="Escreva seu prompt personalizado aqui..."
+                            className="min-h-[120px] text-xs"
+                          />
+                        </div>
+                      )}
+
+                      {/* Modo Automático - Apenas informativo */}
+                      {promptMode === 'auto' && (
+                        <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                          <p className="text-xs text-green-700">
+                            ✅ O prompt será gerado automaticamente com base nas informações preenchidas acima. 
+                            Preencha os campos da empresa para obter o melhor resultado.
+                          </p>
+                        </div>
+                      )}
+
+                      {/* Preview do Prompt (quando template ou custom) */}
+                      {(promptMode === 'template' || promptMode === 'custom') && formData.systemPrompt && (
+                        <div className="space-y-2">
+                          <Label className="text-gray-900 font-medium text-xs">Preview do Prompt</Label>
+                          <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
+                            <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                              {formData.systemPrompt.substring(0, 500)}
+                              {formData.systemPrompt.length > 500 && '...'}
+                            </pre>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-900 font-medium text-xs">Máximo de Tokens</Label>
+                      <Input
+                        id="maxTokens"
+                        type="number"
+                        value={formData.maxTokens}
+                        onChange={(e) => setFormData({...formData, maxTokens: parseInt(e.target.value)})}
+                        min={50}
+                        max={1000}
+                        className="h-8"
                       />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                      <div className="space-y-1.5">
-                        <Label className="text-gray-900 font-medium text-xs">Máximo de Tokens</Label>
-                        <Input
-                          id="maxTokens"
-                          type="number"
-                          value={formData.maxTokens}
-                          onChange={(e) => setFormData({...formData, maxTokens: parseInt(e.target.value)})}
-                          min={50}
-                          max={1000}
-                          className="h-8"
-                        />
-                      </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-900 font-medium text-xs">Temperatura (0-1)</Label>
+                      <Input
+                        id="temperature"
+                        type="number"
+                        step="0.1"
+                        value={formData.temperature}
+                        onChange={(e) => setFormData({...formData, temperature: parseFloat(e.target.value)})}
+                        min={0}
+                        max={1}
+                        className="h-8"
+                      />
+                    </div>
 
-                      <div className="space-y-1.5">
-                        <Label className="text-gray-900 font-medium text-xs">Temperatura (0-1)</Label>
-                        <Input
-                          id="temperature"
-                          type="number"
-                          step="0.1"
-                          value={formData.temperature}
-                          onChange={(e) => setFormData({...formData, temperature: parseFloat(e.target.value)})}
-                          min={0}
-                          max={1}
-                          className="h-8"
-                        />
-                      </div>
-
-                      <div className="space-y-1.5">
-                        <Label className="text-gray-900 font-medium text-xs">Mensagens por Minuto</Label>
-                        <Input
-                          id="maxMessagesPerMinute"
-                          type="number"
-                          value={formData.maxMessagesPerMinute}
-                          onChange={(e) => setFormData({...formData, maxMessagesPerMinute: parseInt(e.target.value)})}
-                          min={1}
-                          max={20}
-                          className="h-8"
-                        />
-                      </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-gray-900 font-medium text-xs">Mensagens por Minuto</Label>
+                      <Input
+                        id="maxMessagesPerMinute"
+                        type="number"
+                        value={formData.maxMessagesPerMinute}
+                        onChange={(e) => setFormData({...formData, maxMessagesPerMinute: parseInt(e.target.value)})}
+                        min={1}
+                        max={20}
+                        className="h-8"
+                      />
                     </div>
 
                     <div className="flex items-center space-x-2">
@@ -1229,9 +1491,14 @@ export default function AIAgentPage() {
                   <Label className="text-gray-900 font-medium">Objetivo do Agente</Label>
                   <Select 
                     value={editFormData.goal} 
-                    onValueChange={(value: 'SALES' | 'SUPPORT' | 'LEAD_GENERATION' | 'QUALIFICATION' | 'RETENTION' | 'EDUCATION') => 
-                      setEditFormData(prev => ({ ...prev, goal: value }))
-                    }
+                    onValueChange={(value: 'SALES' | 'SUPPORT' | 'LEAD_GENERATION' | 'QUALIFICATION' | 'RETENTION' | 'EDUCATION') => {
+                      setEditFormData(prev => ({ ...prev, goal: value }));
+                      // Carregar templates para o novo objetivo se estiver no modo template
+                      if (editPromptMode === 'template') {
+                        loadEditTemplates(value);
+                        setEditSelectedTemplate(''); // Reset template selection
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue />
@@ -1271,6 +1538,148 @@ export default function AIAgentPage() {
               </div>
             </div>
 
+            {/* Configuração do Prompt - Seção 2 */}
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 mb-3">
+                <div className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
+                <Label className="text-gray-900 font-medium text-base">Configuração do Prompt</Label>
+              </div>
+
+              {/* Seletor de Modo */}
+              <div className="space-y-2">
+                <Label className="text-gray-900 font-medium text-sm">Modo de Configuração</Label>
+                <div className="grid grid-cols-3 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditPromptMode('auto')}
+                    className={`p-2 text-xs rounded-lg border transition-all ${
+                      editPromptMode === 'auto' 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="font-medium">Automático</div>
+                    <div className="text-xs opacity-75">Baseado nos campos</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEditPromptMode('template');
+                      loadEditTemplates(editFormData.goal);
+                    }}
+                    className={`p-2 text-xs rounded-lg border transition-all ${
+                      editPromptMode === 'template' 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="font-medium">Template</div>
+                    <div className="text-xs opacity-75">Pré-configurado</div>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEditPromptMode('custom')}
+                    className={`p-2 text-xs rounded-lg border transition-all ${
+                      editPromptMode === 'custom' 
+                        ? 'bg-blue-50 border-blue-200 text-blue-700' 
+                        : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <div className="font-medium">Customizado</div>
+                    <div className="text-xs opacity-75">Escrever próprio</div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Seleção de Template */}
+              {editPromptMode === 'template' && (
+                <div className="space-y-3">
+                  <Label className="text-gray-900 font-medium text-sm">Escolha um Template</Label>
+                  {editLoadingTemplates ? (
+                    <div className="flex items-center gap-2 text-xs text-gray-500">
+                      <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-gray-400"></div>
+                      Carregando templates...
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {editTemplates.map((template) => (
+                        <div
+                          key={template.id}
+                          className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                            editSelectedTemplate === template.id
+                              ? 'bg-blue-50 border-blue-200'
+                              : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                          }`}
+                          onClick={() => {
+                            setEditSelectedTemplate(template.id);
+                            applyEditTemplate(template.id);
+                          }}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h4 className="font-medium text-xs text-gray-900">{template.name}</h4>
+                              <p className="text-xs text-gray-600 mt-1">{template.description}</p>
+                              <div className="flex flex-wrap gap-1 mt-2">
+                                {template.variables.map((variable: string) => (
+                                  <span key={variable} className="px-2 py-1 bg-gray-200 text-gray-700 rounded text-xs">
+                                    {variable}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                            {editSelectedTemplate === template.id && (
+                              <CheckCircle className="h-4 w-4 text-blue-600 flex-shrink-0 ml-2" />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      {editTemplates.length === 0 && (
+                        <p className="text-xs text-gray-500 text-center py-4">
+                          Nenhum template disponível para este objetivo
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Campo de Prompt Customizado */}
+              {editPromptMode === 'custom' && (
+                <div className="space-y-2">
+                  <Label className="text-gray-900 font-medium text-sm">Prompt Customizado</Label>
+                  <Textarea
+                    value={editFormData.systemPrompt}
+                    onChange={(e) => setEditFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
+                    placeholder="Escreva seu prompt personalizado aqui..."
+                    className="min-h-[120px] text-xs"
+                  />
+                </div>
+              )}
+
+              {/* Modo Automático - Apenas informativo */}
+              {editPromptMode === 'auto' && (
+                <div className="p-3 bg-green-50 border border-green-200 rounded-lg">
+                  <p className="text-xs text-green-700">
+                    ✅ O prompt será gerado automaticamente com base nas informações preenchidas acima. 
+                    Preencha os campos da empresa para obter o melhor resultado.
+                  </p>
+                </div>
+              )}
+
+              {/* Preview do Prompt (quando template ou custom) */}
+              {(editPromptMode === 'template' || editPromptMode === 'custom') && editFormData.systemPrompt && (
+                <div className="space-y-2">
+                  <Label className="text-gray-900 font-medium text-sm">Preview do Prompt</Label>
+                  <div className="p-3 bg-gray-50 border border-gray-200 rounded-lg max-h-32 overflow-y-auto">
+                    <pre className="text-xs text-gray-700 whitespace-pre-wrap font-mono">
+                      {editFormData.systemPrompt.substring(0, 500)}
+                      {editFormData.systemPrompt.length > 500 && '...'}
+                    </pre>
+                  </div>
+                </div>
+              )}
+            </div>
+
             {/* Modelo */}
             <div className="space-y-2">
               <Label className="text-gray-900 font-medium">Modelo de IA</Label>
@@ -1284,23 +1693,6 @@ export default function AIAgentPage() {
                   <SelectItem value="gpt-4-turbo">GPT-4 Turbo (Balanceado)</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-
-            {/* Prompt do Sistema */}
-            <div className="space-y-2">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-6 h-6 bg-gray-400 text-white rounded-full flex items-center justify-center text-sm font-bold">2</div>
-                <Label className="text-gray-900 font-medium">Prompt do Sistema (Opcional)</Label>
-              </div>
-              <p className="text-sm text-gray-600 mb-2 tracking-[-0.03em] font-inter">
-                Se deixar vazio, será gerado automaticamente com base nas informações acima.
-              </p>
-              <Textarea
-                value={editFormData.systemPrompt}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, systemPrompt: e.target.value }))}
-                placeholder="Deixe vazio para usar contexto automático inteligente..."
-                className="min-h-[100px]"
-              />
             </div>
 
             {/* Configurações Avançadas */}

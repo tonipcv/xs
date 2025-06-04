@@ -370,39 +370,118 @@ async function processMessage(messageData: any, instanceName: string) {
 }
 
 function splitIntoSentences(text: string): string[] {
-  // Dividir por pontos finais, exclamações, interrogações
-  const sentences = text.split(/(?<=[.!?])\s+/)
-    .filter(sentence => sentence.trim().length > 0);
+  // Para mensagens curtas (até 200 chars), enviar tudo de uma vez
+  if (text.length <= 200) {
+    return [text];
+  }
   
-  // Se não houver pontuação, dividir por vírgulas ou por tamanho
-  if (sentences.length === 1 && text.length > 100) {
-    const parts = text.split(/,\s+/);
-    if (parts.length > 1) {
-      return parts;
-    }
+  // Para mensagens médias (até 400 chars), dividir no máximo em 2 partes
+  if (text.length <= 400) {
+    // Procurar um ponto natural para dividir (ponto final, exclamação, interrogação)
+    const midPoint = text.length / 2;
+    const punctuationRegex = /[.!?]/g;
+    let bestSplit = -1;
+    let match;
     
-    // Dividir por palavras se muito longo
-    const words = text.split(' ');
-    const chunks = [];
-    let currentChunk = '';
-    
-    for (const word of words) {
-      if ((currentChunk + ' ' + word).length > 100 && currentChunk) {
-        chunks.push(currentChunk.trim());
-        currentChunk = word;
-      } else {
-        currentChunk += (currentChunk ? ' ' : '') + word;
+    while ((match = punctuationRegex.exec(text)) !== null) {
+      const position = match.index;
+      // Verificar se não está no meio de um email ou URL
+      const beforeChar = text[position - 1];
+      const afterChar = text[position + 1];
+      
+      // Pular se for ponto em email (@gmail.com) ou URL (www.site.com)
+      if (beforeChar && afterChar && 
+          (text.substring(Math.max(0, position - 10), position + 10).includes('@') ||
+           text.substring(Math.max(0, position - 5), position + 5).match(/\w\.\w/))) {
+        continue;
+      }
+      
+      if (position > midPoint * 0.6 && position < midPoint * 1.4) {
+        bestSplit = position + 1;
+        break;
       }
     }
     
-    if (currentChunk) {
-      chunks.push(currentChunk.trim());
+    if (bestSplit > 0) {
+      const part1 = text.substring(0, bestSplit).trim();
+      const part2 = text.substring(bestSplit).trim();
+      
+      // Verificar se a divisão não cortou uma palavra
+      if (part1.length > 0 && part2.length > 0 && 
+          !part1.endsWith(' ') && !part2.startsWith(' ') &&
+          part1[part1.length - 1].match(/\w/) && part2[0].match(/\w/)) {
+        // Se cortou uma palavra, não dividir
+        return [text];
+      }
+      
+      return [part1, part2].filter(part => part.length > 0);
     }
     
-    return chunks;
+    return [text]; // Se não encontrar bom ponto, enviar tudo
   }
   
-  return sentences;
+  // Para mensagens longas, dividir por parágrafos primeiro
+  const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+  if (paragraphs.length > 1) {
+    return paragraphs.map(p => p.trim());
+  }
+  
+  // Dividir por pontos finais, mas com cuidado para não cortar emails/URLs
+  const sentences = [];
+  let currentSentence = '';
+  let i = 0;
+  
+  while (i < text.length) {
+    const char = text[i];
+    currentSentence += char;
+    
+    // Se encontrar ponto, exclamação ou interrogação
+    if (['.', '!', '?'].includes(char)) {
+      // Verificar se não é parte de email ou URL
+      const context = text.substring(Math.max(0, i - 10), Math.min(text.length, i + 10));
+      const isEmailOrUrl = context.includes('@') || context.match(/\w\.\w/);
+      
+      // Se não for email/URL e tiver espaço depois (ou fim do texto)
+      if (!isEmailOrUrl && (i === text.length - 1 || text[i + 1] === ' ')) {
+        // Adicionar próximo caractere se for espaço
+        if (i < text.length - 1 && text[i + 1] === ' ') {
+          i++;
+          currentSentence += text[i];
+        }
+        
+        sentences.push(currentSentence.trim());
+        currentSentence = '';
+      }
+    }
+    
+    i++;
+  }
+  
+  // Adicionar última frase se sobrou algo
+  if (currentSentence.trim()) {
+    sentences.push(currentSentence.trim());
+  }
+  
+  // Agrupar frases muito curtas
+  const grouped = [];
+  let currentGroup = '';
+  
+  for (const sentence of sentences) {
+    if ((currentGroup + ' ' + sentence).length <= 300 && currentGroup) {
+      currentGroup += ' ' + sentence;
+    } else {
+      if (currentGroup) {
+        grouped.push(currentGroup.trim());
+      }
+      currentGroup = sentence;
+    }
+  }
+  
+  if (currentGroup) {
+    grouped.push(currentGroup.trim());
+  }
+  
+  return grouped.length > 0 ? grouped : [text];
 }
 
 async function sendMessage(instance: any, remoteJid: string, message: string) {
@@ -427,10 +506,10 @@ async function sendMessage(instance: any, remoteJid: string, message: string) {
       // Simular "digitando..." antes de cada frase usando o endpoint correto para chat
       await sendChatPresence(instance, remoteJid, 'composing');
       
-      // Delay baseado no tamanho da frase (simular tempo de digitação)
-      const typingDelay = Math.min(sentence.length * 50, 3000); // Min 50ms por char, máx 3s
-      const baseDelay = 800; // Delay base
-      const totalDelay = baseDelay + typingDelay + Math.random() * 1000; // Adicionar variação
+      // Delay baseado no tamanho da frase (simular tempo de digitação mais realista)
+      const typingDelay = Math.min(sentence.length * 15, 1500); // 15ms por char, máx 1.5s
+      const baseDelay = 300; // Delay base menor
+      const totalDelay = baseDelay + typingDelay + Math.random() * 500; // Menos variação
       
       console.log(`⏱️ Simulando digitação por ${Math.round(totalDelay)}ms para ${sentence.length} caracteres`);
       await new Promise(resolve => setTimeout(resolve, totalDelay));
@@ -514,7 +593,7 @@ async function sendMessage(instance: any, remoteJid: string, message: string) {
       
       // Pequena pausa entre frases (exceto na última)
       if (i < sentences.length - 1) {
-        await new Promise(resolve => setTimeout(resolve, 1000)); // Aumentar pausa entre frases
+        await new Promise(resolve => setTimeout(resolve, 500)); // Pausa menor entre frases
       }
     }
 

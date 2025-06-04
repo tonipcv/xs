@@ -24,7 +24,13 @@ export async function PUT(
       maxMessagesPerMinute,
       maxConsecutiveResponses,
       cooldownMinutes,
-      fallbackMessage
+      fallbackMessage,
+      companyName,
+      product,
+      mainPain,
+      successCase,
+      priceObjection,
+      goal
     } = body;
 
     // Verificar se o agente pertence ao usuário
@@ -41,25 +47,42 @@ export async function PUT(
       return NextResponse.json({ error: 'Agente não encontrado' }, { status: 404 });
     }
 
+    // Preparar dados para atualização (apenas campos que foram enviados)
+    const updateData: any = {
+      lastUsedAt: isActive ? new Date() : existingAgent.lastUsedAt
+    };
+
+    // Campos técnicos básicos
+    if (isActive !== undefined) updateData.isActive = isActive;
+    if (model !== undefined) updateData.model = model;
+    if (systemPrompt !== undefined) updateData.systemPrompt = systemPrompt;
+    if (maxTokens !== undefined) updateData.maxTokens = maxTokens;
+    if (temperature !== undefined) updateData.temperature = temperature;
+    if (maxMessagesPerMinute !== undefined) updateData.maxMessagesPerMinute = maxMessagesPerMinute;
+    if (maxConsecutiveResponses !== undefined) updateData.maxConsecutiveResponses = maxConsecutiveResponses;
+    if (cooldownMinutes !== undefined) updateData.cooldownMinutes = cooldownMinutes;
+    if (fallbackMessage !== undefined) updateData.fallbackMessage = fallbackMessage;
+
+    // 🧱 CAMPOS DO FORMULÁRIO GUIADO (CAMADA 1)
+    if (companyName !== undefined) updateData.companyName = companyName;
+    if (product !== undefined) updateData.product = product;
+    if (mainPain !== undefined) updateData.mainPain = mainPain;
+    if (successCase !== undefined) updateData.successCase = successCase;
+    if (priceObjection !== undefined) updateData.priceObjection = priceObjection;
+    if (goal !== undefined) updateData.goal = goal;
+
+    console.log('🔄 Atualizando agente com dados:', JSON.stringify(updateData, null, 2));
+
     const agent = await prisma.aIAgentConfig.update({
       where: { id: resolvedParams.id },
-      data: {
-        isActive,
-        model,
-        systemPrompt,
-        maxTokens,
-        temperature,
-        maxMessagesPerMinute,
-        maxConsecutiveResponses,
-        cooldownMinutes,
-        fallbackMessage,
-        lastUsedAt: isActive ? new Date() : existingAgent.lastUsedAt
-      }
+      data: updateData
     });
+
+    console.log('✅ Agente atualizado com sucesso:', agent.id);
 
     return NextResponse.json({ agent });
   } catch (error) {
-    console.error('Erro ao atualizar configuração de agente:', error instanceof Error ? error.message : String(error));
+    console.error('❌ Erro ao atualizar configuração de agente:', error instanceof Error ? error.message : String(error));
     return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });
   }
 }
