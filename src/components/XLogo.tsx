@@ -5,8 +5,8 @@ export default function XLogo() {
   return (
     <div className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">
       <Image
-        src="/katsu.png"
-        alt="Katsu Logo"
+        src="/logo.png"
+        alt="Cxlus Logo"
         width={80}
         height={24}
         className="h-auto"
