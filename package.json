@@ -11,7 +11,8 @@
     "ngrok:update": "node scripts/update-ngrok-url.js",
     "ngrok:set": "node scripts/update-ngrok-url.js",
     "dev:ngrok": "echo '🚀 Inicie o ngrok em outro terminal: ngrok http 3000' && echo '📝 Depois execute: npm run ngrok:update' && npm run dev",
-    "redis": "node scripts/redis-manager.js"
+    "redis": "node scripts/redis-manager.js",
+    "test:external-api": "node scripts/test-external-api.js"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",

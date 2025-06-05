@@ -435,25 +435,36 @@ export class WhatsAppService {
       // Formatar número corretamente
       let formattedNumber = number;
       
-      // Se já tem @s.whatsapp.net, usar como está
-      if (!number.includes('@')) {
-        // Remover caracteres especiais e garantir que é apenas números
-        formattedNumber = number.replace(/\D/g, '');
-        
-        // Se não começar com código do país, adicionar 55 (Brasil)
-        if (!formattedNumber.startsWith('55') && formattedNumber.length <= 11) {
-          formattedNumber = '55' + formattedNumber;
-        }
-        
-        // Adicionar @s.whatsapp.net
-        formattedNumber = formattedNumber + '@s.whatsapp.net';
+      // Se já tem @s.whatsapp.net, remover para usar apenas números
+      if (number.includes('@')) {
+        formattedNumber = number.replace('@s.whatsapp.net', '');
+      }
+      
+      // Remover caracteres especiais e garantir que é apenas números
+      formattedNumber = formattedNumber.replace(/\D/g, '');
+      
+      // Se não começar com código do país, adicionar 55 (Brasil)
+      if (!formattedNumber.startsWith('55') && formattedNumber.length <= 11) {
+        formattedNumber = '55' + formattedNumber;
       }
 
-      console.log(`[SEND] Enviando mensagem para: ${formattedNumber} (original: ${number})`);
+      console.log(`[SEND] Enviando mensagem para: ${formattedNumber.replace(/\d(?=\d{4})/g, '*')} via instância ${instance.instanceName}`);
 
-      // Enviar através da Evolution API usando formato correto
+      // Verificar se a instância realmente existe na Evolution API
+      try {
+        const connectionState = await this.evolutionApi.getConnectionState(instance.instanceName);
+        
+        if (connectionState.instance.state !== 'open') {
+          throw new Error(`Instância '${instance.instanceName}' não está conectada na Evolution API (status: ${connectionState.instance.state})`);
+        }
+      } catch (connectionError) {
+        console.error(`[SEND] Erro ao verificar status da instância:`, connectionError);
+        throw new Error(`Instância '${instanceId}' não encontrada ou não está conectada`);
+      }
+
+      // Enviar através da Evolution API
       const response = await this.evolutionApi.sendTextMessage(instance.instanceName, {
-        number: formattedNumber,
+        number: formattedNumber, // Apenas números, sem @s.whatsapp.net
         text: text,
         options: {
           delay: 1000,
@@ -462,15 +473,21 @@ export class WhatsAppService {
         }
       });
       
-      console.log(`[SEND] Resposta da Evolution API:`, response);
-
-      // NÃO salvar manualmente - a mensagem voltará via webhook MESSAGES_UPSERT
-      // com fromMe: true, garantindo que seja processada automaticamente
-      console.log(`[SEND] Mensagem enviada com sucesso. Aguardando webhook para persistir no banco.`);
+      console.log(`[SEND] Mensagem enviada com sucesso. ID: ${response.key?.id}`);
 
       return response;
     } catch (error) {
       console.error('[SEND] Erro ao enviar mensagem:', error);
+      
+      // Melhorar mensagens de erro
+      if (error instanceof Error) {
+        if (error.message.includes('404') || error.message.includes('not found')) {
+          throw new Error(`Instância '${instanceId}' não encontrada ou não está conectada`);
+        } else if (error.message.includes('not connected') || error.message.includes('desconectada')) {
+          throw new Error(`Instância '${instanceId}' não está conectada ao WhatsApp`);
+        }
+      }
+      
       throw error;
     }
   }
@@ -707,6 +724,19 @@ export class WhatsAppService {
 
   // Métodos auxiliares
   private async getInstanceByIdOrName(identifier: string, userId?: string) {
+    // Se for chamada da API Externa, buscar sem filtro de userId
+    if (userId === 'external-system') {
+      return await prisma.whatsAppInstance.findFirst({ 
+        where: {
+          OR: [
+            { id: identifier },
+            { instanceName: identifier }
+          ]
+        }
+      });
+    }
+
+    // Lógica original para chamadas internas
     const where = userId
       ? { 
           OR: [

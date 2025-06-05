@@ -11,6 +11,41 @@ Sistema completo de gestão de membros com integração WhatsApp e agentes de IA
 - **Dashboard Analytics**: Estatísticas em tempo real
 - **Sistema de Tokens**: Controle de uso com limites mensais
 - **Rate Limiting**: Proteção contra spam e uso excessivo
+- **🔌 API Externa**: Integração com outros sistemas Next.js para envio de mensagens
+
+## 🔌 API Externa para Integração
+
+### Novo! Integre com Outros Sistemas
+
+Agora você pode integrar facilmente outros sistemas Next.js ou qualquer aplicação com o ZAP Membership para enviar mensagens WhatsApp sem gerenciar a Evolution API diretamente.
+
+**Endpoints disponíveis:**
+- `GET /api/external/send-message` - Status da API
+- `GET /api/external/instances` - Listar instâncias WhatsApp
+- `POST /api/external/send-message` - Enviar mensagens
+
+**Exemplo de uso:**
+```javascript
+const response = await fetch('https://seu-zap-membership.com/api/external/send-message', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json',
+    'x-api-key': 'sua-api-key'
+  },
+  body: JSON.stringify({
+    instanceId: 'sua-instancia',
+    number: '11999887766',
+    message: 'Olá mundo!'
+  })
+});
+```
+
+**📚 Documentação completa:** [docs/EXTERNAL_API.md](docs/EXTERNAL_API.md)
+
+**🧪 Teste a integração:**
+```bash
+npm run test:external-api
+```
 
 ## 🛡️ Segurança
 
@@ -47,12 +82,45 @@ OPENAI_API_KEY=sk-your_openai_api_key
 EVOLUTION_API_URL=your_evolution_api_url
 EVOLUTION_API_KEY=your_evolution_api_key
 
+# API Externa (NOVO!)
+EXTERNAL_API_KEY=sua-chave-super-segura-para-integracao
+
 # Stripe (para pagamentos)
 STRIPE_SECRET_KEY=sk_your_stripe_secret_key
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_your_stripe_publishable_key
 
 # Redis (para cache e rate limiting)
 REDIS=redis://your_redis_connection_string
+```
+
+### 🔑 Configuração da API Externa
+
+A `EXTERNAL_API_KEY` é **obrigatória** para usar os endpoints de integração externa:
+
+1. **Gere uma chave segura:**
+```bash
+# Exemplo de chave forte
+EXTERNAL_API_KEY=zap-membership-api-$(openssl rand -hex 16)
+```
+
+2. **Configure no .env.local:**
+```env
+EXTERNAL_API_KEY=sua-chave-super-segura-aqui
+```
+
+3. **⚠️ NUNCA exponha esta chave:**
+   - Não commite no Git
+   - Use apenas em variáveis de ambiente
+   - Rotacione periodicamente
+
+4. **Teste a configuração:**
+```bash
+npm run test:external-api
+```
+
+Se a chave não estiver configurada, você verá o erro:
+```
+❌ EXTERNAL_API_KEY não configurada no arquivo .env
 ```
 
 ## 📋 Pré-requisitos
@@ -92,6 +160,11 @@ cp .env.example .env
 5. **Execute o projeto**
 ```bash
 npm run dev
+```
+
+6. **Teste a API Externa (opcional)**
+```bash
+npm run test:external-api
 ```
 
 ## 🤖 Sistema de AI-Agent
@@ -180,52 +253,6 @@ POST /instance/create
    - Verifique limite mensal do usuário
    - Configure `freeTokensLimit` adequadamente
 
-## 🔒 Boas Práticas de Segurança
-
-1. **Nunca commite arquivos .env**
-2. **Use HTTPS em produção**
-3. **Configure rate limiting adequadamente**
-4. **Monitore uso de tokens**
-5. **Faça backup regular do banco**
-6. **Use Redis para cache em produção**
-
-## 📝 Estrutura do Projeto
-
-```
-src/
-├── app/                    # Next.js App Router
-│   ├── api/               # API Routes
-│   │   ├── ai-agent/      # Endpoints do AI Agent
-│   │   └── whatsapp/      # Endpoints WhatsApp
-│   ├── ai-agent/          # Dashboard do AI Agent
-│   └── dashboard/         # Dashboard principal
-├── lib/                   # Bibliotecas e utilitários
-│   ├── evolution-api.ts   # Cliente Evolution API
-│   ├── ai-context-generator.ts # Gerador de contexto IA
-│   ├── knowledge-search.ts # Busca na base de conhecimento
-│   └── redis.ts          # Cliente Redis
-└── components/           # Componentes React
-```
-
-## 🤝 Contribuição
-
-1. Fork o projeto
-2. Crie uma branch para sua feature
-3. Commit suas mudanças
-4. Push para a branch
-5. Abra um Pull Request
-
-## 📄 Licença
-
-Este projeto está sob a licença MIT. Veja o arquivo LICENSE para mais detalhes.
-
-## 🆘 Suporte
-
-Para suporte técnico:
-- Abra uma issue no GitHub
-- Consulte a documentação da Evolution API
-- Verifique os logs do sistema
-
----
-
-**⚠️ LEMBRE-SE**: Mantenha suas chaves de API seguras e nunca as exponha publicamente! 
+5. **API Externa não funciona**:
+   - Verifique se `EXTERNAL_API_KEY` está configurada
+   - Execute `
