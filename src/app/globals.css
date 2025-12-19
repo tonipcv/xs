@@ -1,14 +1,26 @@
-@import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@300&display=swap');
 @import 'react-day-picker/dist/style.css';
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Estilos globais */
-body {
-  @apply bg-background text-foreground;
+/* SF Pro Font (Apple System Font) */
+@layer base {
+  * {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body {
+    @apply bg-[#0a0a0a] text-white;
+  }
+  
+  /* Remove default margins */
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
 }
-
-/* Resto do seu CSS global aqui */
 

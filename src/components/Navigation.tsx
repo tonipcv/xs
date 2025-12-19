@@ -28,6 +28,14 @@ export default function Navigation() {
                 <Brain className="h-6 w-6" />
                 <span className="text-xs mt-1">IA Bíblica</span>
               </Link>
+
+              <Link 
+                href="/xase/dashboard" 
+                className="flex flex-col items-center p-2 text-gray-400 hover:text-green-300 transition-colors"
+              >
+                <LineChart className="h-6 w-6" />
+                <span className="text-xs mt-1">Trust</span>
+              </Link>
             </div>
           </div>
         </div>

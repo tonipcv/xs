@@ -7,7 +7,21 @@ import { type Region } from '@/lib/prices';
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password, region } = await req.json();
+    const body = await req.json().catch(() => null as any);
+
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json(
+        { error: 'Invalid request body' },
+        { status: 400 }
+      );
+    }
+
+    const { name, email, password, region } = body as {
+      name?: string;
+      email?: string;
+      password?: string;
+      region?: string;
+    };
 
     // Validar campos obrigatórios
     if (!name || !email || !password || !region) {
@@ -20,6 +34,7 @@ export async function POST(req: Request) {
     // Verificar se o email já está em uso
     const existingUser = await prisma.user.findUnique({
       where: { email },
+      select: { id: true }
     });
 
     if (existingUser) {
@@ -46,6 +61,12 @@ export async function POST(req: Request) {
           verificationToken,
           emailVerified: null
         },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          region: true
+        }
       });
 
       // Enviar email de confirmação
@@ -82,16 +103,20 @@ export async function POST(req: Request) {
         },
       });
     } catch (dbError) {
-      console.error('Database error:', dbError);
+      const dbErrMsg = dbError instanceof Error ? dbError.message : String(dbError ?? 'Unknown database error');
+      console.error('Database error:', dbErrMsg);
+      const isDev = process.env.NODE_ENV !== 'production';
       return NextResponse.json(
-        { error: 'Error creating user' },
+        { error: 'Error creating user', ...(isDev ? { debug: dbErrMsg } : {}) },
         { status: 500 }
       );
     }
   } catch (error) {
-    console.error('Registration error:', error);
+    const errMsg = error instanceof Error ? error.message : String(error ?? 'Unknown registration error');
+    console.error('Registration error:', errMsg);
+    const isDev = process.env.NODE_ENV !== 'production';
     return NextResponse.json(
-      { error: 'Error creating user' },
+      { error: 'Error creating user', ...(isDev ? { debug: errMsg } : {}) },
       { status: 500 }
     );
   } finally {

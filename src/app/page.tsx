@@ -13,7 +13,7 @@ export default function Home() {
     if (status === 'loading') return; // Still loading
 
     if (session) {
-      router.push('/whatsapp');
+      router.push('/xase');
     } else {
       router.push('/login');
     }

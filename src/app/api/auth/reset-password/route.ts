@@ -23,7 +23,8 @@ export async function POST(request: Request) {
         passwordResetExpires: {
           gt: new Date()
         }
-      }
+      },
+      select: { id: true, email: true }
     })
 
     if (!user) {

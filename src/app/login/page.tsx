@@ -1,19 +1,25 @@
 'use client';
 
-import { useState, FormEvent, useEffect } from 'react';
+import { useState, FormEvent, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
 import { signIn } from "next-auth/react"
 import { ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { translations } from '@/lib/i18n';
 import Image from 'next/image';
 
-export default function Login() {
+function LoginContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [locale, setLocale] = useState('pt-BR');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const callbackUrl = searchParams?.get('callbackUrl') ?? null;
+  const registerHref = callbackUrl !== null
+    ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
+    : '/register';
 
   useEffect(() => {
     // Detecta o idioma do navegador
@@ -51,6 +57,7 @@ export default function Login() {
         return;
       }
 
+
       if (result?.ok) {
         console.log('Login bem sucedido, redirecionando para WhatsApp...');
         
@@ -67,38 +74,26 @@ export default function Login() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-gray-100 to-gray-200 font-normal tracking-[-0.01em]">
+    <div className="min-h-screen bg-[#1c1d20] font-normal tracking-[-0.01em]">
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-[380px] bg-white/80 backdrop-blur-sm rounded-xl border border-gray-200/50 p-8 shadow-lg">
-          {/* Logo */}
+        <div className="w-full max-w-[380px] bg-[#1c1d20] p-8">
           <div className="text-center mb-8">
-            <div className="mb-4 flex justify-center">
-              <div className="relative w-16 h-16 grayscale">
-                <Image
-                  src="/logo.png"
-                  alt="Logo"
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </div>
-            <h1 className="text-xl font-medium text-gray-900 tracking-tight">
+            <h1 className="text-xl font-medium text-[#f5f5f7] tracking-tight">
               Sign in to your account
             </h1>
           </div>
 
           {/* Mensagem de erro */}
           {error && (
-            <div className="mb-6 p-3 bg-red-50 border border-red-200 rounded-lg">
-              <p className="text-red-600 text-sm text-center">{error}</p>
+            <div className="mb-6 p-3">
+              <p className="text-red-400 text-sm text-center">{error}</p>
             </div>
           )}
           
           {/* Formulário */}
-          <form onSubmit={handleSubmit} className="space-y-4" autoComplete="off">
+          <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="email" className="block text-sm font-medium text-[#f5f5f7]/80 mb-1.5">
                 {t.login.email}
               </label>
               <input
@@ -107,13 +102,13 @@ export default function Login() {
                 name="email"
                 required
                 autoComplete="off"
-                className="w-full px-3 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all duration-200 text-gray-900 placeholder-gray-400"
+                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
                 placeholder={t.login.emailPlaceholder}
               />
             </div>
             
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">
+              <label htmlFor="password" className="block text-sm font-medium text-[#f5f5f7]/80 mb-1.5">
                 {t.login.password}
               </label>
               <input
@@ -122,14 +117,14 @@ export default function Login() {
                 name="password"
                 required
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 text-sm bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-gray-900/10 focus:border-gray-900 transition-all duration-200 text-gray-900 placeholder-gray-400"
+                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
                 placeholder={t.login.passwordPlaceholder}
               />
             </div>
 
             <button 
               type="submit" 
-              className="w-full py-2.5 px-4 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 rounded-lg transition-all duration-200 flex items-center justify-center gap-2 mt-6"
+              className="w-full py-2.5 px-4 text-sm font-medium text-[#f5f5f7] bg-[#2a2b2d] hover:bg-[#3a3b3d] rounded transition-colors duration-200 flex items-center justify-center gap-2 mt-6"
               disabled={isSubmitting}
             >
               {isSubmitting ? t.login.signingIn : t.login.signIn}
@@ -141,20 +136,37 @@ export default function Login() {
           <div className="mt-6 text-center">
             <Link 
               href="/forgot-password" 
-              className="text-sm text-gray-500 hover:text-gray-700 transition-colors duration-200"
+              className="text-sm text-[#f5f5f7]/60 hover:text-[#f5f5f7]/90 transition-colors duration-200"
             >
               {t.login.forgotPassword}
+            </Link>
+          </div>
+          <div className="mt-4 text-center text-sm text-[#f5f5f7]/60">
+            {t.login.noAccount} {' '}
+            <Link
+              href={registerHref}
+              className="text-[#f5f5f7] hover:text-white transition-colors duration-200 font-medium"
+            >
+              {t.login.createAccount}
             </Link>
           </div>
         </div>
         
         {/* Footer minimalista */}
         <div className="mt-8 text-center">
-          <p className="text-xs text-gray-400">
+          <p className="text-xs text-[#f5f5f7]/40">
             Secure authentication powered by HTPS.io
           </p>
         </div>
       </div>
     </div>
+  );
+}
+
+export default function Login() {
+  return (
+    <Suspense fallback={<div className="min-h-screen" />}> 
+      <LoginContent />
+    </Suspense>
   );
 }

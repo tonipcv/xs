@@ -31,11 +31,17 @@ datasource db {
   phone                String?
   passwordResetToken   String?            @map("password_reset_token")
   passwordResetExpires DateTime?          @map("password_reset_expires")
+  
+  // 🎯 XASE CORE: Link opcional para Tenant
+  tenantId             String?            // Acesso ao console Xase
+  xaseRole             XaseRole?          // Papel no Xase (OWNER, ADMIN, VIEWER)
+  
   accounts             Account[]
-  prayerRequests       PrayerRequest[]
   sessions             Session[]
   subscriptions        Subscription[]
-  whatsappInstances    WhatsAppInstance[]
+  tenant               Tenant?            @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId])
    }
 
    model Account {
@@ -112,290 +118,639 @@ datasource db {
   user               User     @relation(fields: [userId], references: [id])
    }
 
-   model PrayerRequest {
-  id        String   @id @default(cuid())
-  userId    String
-  request   String
-  response  String?
-  status    String   @default("pending")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  user      User     @relation(fields: [userId], references: [id])
-}
+ 
 
-model WhatsAppInstance {
-  id                 String            @id @default(cuid())
-  userId             String
-  instanceName       String            @unique
-  instanceId         String?
-  status             String            @default("CREATED")
-  qrCode             String?
-  sessionToken       String?
-  connectedNumber    String?
-  webhookUrl         String?
-  webhookEnabled     Boolean           @default(false)
-  autoReconnect      Boolean           @default(true)
-  reconnectAttempts  Int               @default(0)
-  lastConnectedAt    DateTime?
-  lastDisconnectedAt DateTime?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  aiAgentConfig      AIAgentConfig?
-  chats              WhatsAppChat[]
-  contacts           WhatsAppContact[]
-  user               User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  labels             WhatsAppLabel[]
-  messages           WhatsAppMessage[]
+ 
 
-  @@map("whatsapp_instances")
-}
+ 
 
-model WhatsAppContact {
-  id            String                 @id @default(cuid())
-  instanceId    String
-  jid           String
-  phone         String?
-  pushName      String?
-  profileName   String?
-  profilePicUrl String?
-  isMyContact   Boolean                @default(false)
-  isWABusiness  Boolean                @default(false)
-  businessName  String?
-  verifiedName  String?
-  isGroup       Boolean                @default(false)
-  groupMetadata String?
-  lastSeen      DateTime?
-  isOnline      Boolean                @default(false)
-  createdAt     DateTime               @default(now())
-  updatedAt     DateTime               @updatedAt
-  chats         WhatsAppChat[]
-  labels        WhatsAppContactLabel[]
-  instance      WhatsAppInstance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
+ 
 
-  @@unique([jid, instanceId])
-  @@index([phone])
-  @@index([instanceId])
-  @@map("whatsapp_contacts")
-}
+ 
 
-model WhatsAppChat {
-  id                 String            @id @default(cuid())
-  instanceId         String
-  contactId          String?
-  remoteJid          String
-  name               String?
-  isGroup            Boolean           @default(false)
-  unreadCount        Int               @default(0)
-  lastMessageTime    DateTime?
-  lastMessagePreview String?
-  isArchived         Boolean           @default(false)
-  isMuted            Boolean           @default(false)
-  isPinned           Boolean           @default(false)
-  metadata           String?
-  createdAt          DateTime          @default(now())
-  updatedAt          DateTime          @updatedAt
-  contact            WhatsAppContact?  @relation(fields: [contactId], references: [id])
-  instance           WhatsAppInstance  @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  messages           WhatsAppMessage[]
+ 
 
-  @@unique([remoteJid, instanceId])
-  @@index([instanceId])
-  @@index([lastMessageTime])
-  @@map("whatsapp_chats")
-}
+ 
 
-model WhatsAppMessage {
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+// ============================================
+// 🎯 XASE CORE - IMMUTABLE DECISION LEDGER
+// ============================================
+// Módulo de evidência forense para decisões de IA
+// Coexiste com o sistema existente sem conflitos
+
+// 🏢 TENANT - Empresas clientes do Xase Core
+model Tenant {
   id              String           @id @default(cuid())
-  instanceId      String
-  chatId          String?
-  messageId       String
-  remoteJid       String
-  fromJid         String?
-  toJid           String?
-  messageType     String
-  content         String?
-  caption         String?
-  mediaUrl        String?
-  fileName        String?
-  fileSize        Int?
-  mimeType        String?
-  fromMe          Boolean          @default(false)
-  status          String           @default("PENDING")
-  timestamp       DateTime
-  quotedMessageId String?
-  isForwarded     Boolean          @default(false)
-  isDeleted       Boolean          @default(false)
-  reaction        String?
-  metadata        String?
+  name            String
+  email           String           @unique
+  companyName     String?
+  industry        String?
+  website         String?
+  
+  // Status e billing
+  status          TenantStatus     @default(ACTIVE)
+  plan            String           @default("free")
+  
+  // Timestamps
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
-  chat            WhatsAppChat?    @relation(fields: [chatId], references: [id])
-  instance        WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-
-  @@unique([messageId, instanceId])
-  @@index([instanceId])
-  @@index([remoteJid])
-  @@index([timestamp])
-  @@index([fromMe])
-  @@map("whatsapp_messages")
-}
-
-model WhatsAppLabel {
-  id         String                 @id @default(cuid())
-  instanceId String
-  labelId    String
-  name       String
-  color      String?
-  predefined Boolean                @default(false)
-  createdAt  DateTime               @default(now())
-  updatedAt  DateTime               @updatedAt
-  contacts   WhatsAppContactLabel[]
-  instance   WhatsAppInstance       @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-
-  @@unique([labelId, instanceId])
-  @@index([instanceId])
-  @@map("whatsapp_labels")
-}
-
-model WhatsAppContactLabel {
-  id        String          @id @default(cuid())
-  contactId String
-  labelId   String
-  label     WhatsAppLabel   @relation(fields: [labelId], references: [id], onDelete: Cascade)
-  contact   WhatsAppContact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-
-  @@unique([contactId, labelId])
-  @@map("whatsapp_contact_labels")
-}
-
-model AIAgentConfig {
-  id                      String           @id @default(cuid())
-  instanceId              String           @unique
-  isActive                Boolean          @default(true)
-  model                   String           @default("gpt-3.5-turbo")
-  systemPrompt            String           @default("Você é um assistente virtual útil e amigável.")
-  maxTokens               Int              @default(150)
-  temperature             Float            @default(0.7)
-  maxMessagesPerMinute    Int              @default(5)
-  maxConsecutiveResponses Int              @default(3)
-  cooldownMinutes         Int              @default(30)
-  fallbackMessage         String           @default("Desculpe, não posso responder no momento.")
   
-  // 🧱 CAMADA 1: Contexto Principal (campos guiados)
-  companyName             String?
-  product                 String?
-  mainPain                String?
-  successCase             String?
-  priceObjection          String?
-  goal                    AgentGoal        @default(SALES)
-  context                 String?          // auto-gerado com base nos campos acima
+  // Relações
+  users             User[]             // Usuários com acesso a este tenant
+  apiKeys           ApiKey[]
+  policies          Policy[]
+  decisionRecords   DecisionRecord[]
+  checkpointRecords CheckpointRecord[]
+  evidenceBundles   EvidenceBundle[]
+  interventions     HumanIntervention[]
+  modelCards        ModelCard[]
+  driftRecords      DriftRecord[]
+  alerts            Alert[]
+  metricsSnapshots  MetricsSnapshot[]
+  alertRules        AlertRule[]
   
-  lastUsedAt              DateTime?
-  createdAt               DateTime         @default(now())
-  updatedAt               DateTime         @updatedAt
-  instance                WhatsAppInstance @relation(fields: [instanceId], references: [id], onDelete: Cascade)
-  logs                    AIAgentLog[]
-  conversations           AIConversation[]
-  
-  // 🧠 CAMADA 2: Base de Conhecimento Adicional
-  knowledgeChunks         KnowledgeChunk[]
-
-  @@map("ai_agent_configs")
+  @@map("xase_tenants")
 }
 
-// 🎯 Enum para objetivos do agente
-enum AgentGoal {
-  SALES           // Vendas
-  SUPPORT         // Suporte
-  LEAD_GENERATION // Geração de leads
-  QUALIFICATION   // Qualificação
-  RETENTION       // Retenção
-  EDUCATION       // Educação
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
   
-  @@map("agent_goals")
+  @@map("xase_tenant_status")
 }
 
-// 🧠 Modelo para chunks de conhecimento
-model KnowledgeChunk {
-  id          String          @id @default(cuid())
-  agentId     String
-  title       String
-  content     String          // removido @db.Text para compatibilidade com SQLite
-  tags        String?         // tags separadas por vírgula
-  type        KnowledgeType
-  isActive    Boolean         @default(true)
-  priority    Int             @default(1)  // 1-5, maior = mais importante
-  embedding   Bytes?          // para busca semântica futura
-  createdAt   DateTime        @default(now())
-  updatedAt   DateTime        @updatedAt
-  agent       AIAgentConfig   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+// 👤 Papéis de usuários no Xase Core
+enum XaseRole {
+  OWNER    // Dono do tenant, acesso total
+  ADMIN    // Administrador, pode gerenciar usuários e ver todas as provas
+  VIEWER   // Visualizador, apenas lê provas
+  
+  @@map("xase_roles")
+}
 
-  @@index([agentId])
-  @@index([type])
+// 📋 POLICY - Versionamento de políticas de decisão
+model Policy {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Identificação da política
+  policyId        String    @map("policy_id") // Ex: "credit_policy", "fraud_detection"
+  version         String    // Ex: "v1", "2025-01-15", "1.2.3"
+  
+  // Documento da política
+  document        String    @db.Text // JSON ou texto completo da política
+  documentHash    String    @map("document_hash") // SHA-256 do documento
+  
+  // Metadata
+  name            String?   // Nome amigável
+  description     String?   @db.Text
+  
+  // Status
+  isActive        Boolean   @default(true) @map("is_active")
+  activatedAt     DateTime  @default(now()) @map("activated_at")
+  deactivatedAt   DateTime? @map("deactivated_at")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, policyId, version])
+  @@index([tenantId])
+  @@index([policyId])
   @@index([isActive])
-  @@map("knowledge_chunks")
+  @@map("xase_policies")
 }
 
-// 📚 Tipos de conhecimento
-enum KnowledgeType {
-  OBJECTION   // Resposta a objeções
-  FAQ         // Perguntas frequentes
-  CASE        // Cases de sucesso
-  FEATURE     // Funcionalidades do produto
-  PROCESS     // Processos e procedimentos
-  SCRIPT      // Scripts de vendas
-  POLICY      // Políticas da empresa
-  MANUAL      // Conteúdo manual
+// 🔑 API KEY - Autenticação para ingestão de decisões
+model ApiKey {
+  id          String    @id @default(cuid())
+  tenantId    String
+  name        String    // Ex: "Production API", "Development"
+  keyHash     String    @unique // bcrypt hash da chave
+  keyPrefix   String    // Primeiros 8 chars para identificação
   
-  @@map("knowledge_types")
+  // Permissões e limites
+  isActive    Boolean   @default(true)
+  permissions String    @default("ingest,verify") // Comma-separated: ingest,export,verify
+  rateLimit   Int       @default(1000) // requests por hora
+  
+  // Metadata
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relações
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([keyHash])
+  @@map("xase_api_keys")
 }
 
-model AIConversation {
-  id                     String                  @id @default(cuid())
-  agentConfigId          String
-  remoteJid              String
-  lastMessageAt          DateTime?
-  lastAIResponseAt       DateTime?
-  consecutiveAIResponses Int                     @default(0)
-  totalMessages          Int                     @default(0)
-  totalAIResponses       Int                     @default(0)
-  avgResponseTime        Float?
-  isInCooldown           Boolean                 @default(false)
-  cooldownUntil          DateTime?
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
-  messages               AIConversationMessage[]
-  agentConfig            AIAgentConfig           @relation(fields: [agentConfigId], references: [id], onDelete: Cascade)
-
-  @@unique([agentConfigId, remoteJid])
-  @@map("ai_conversations")
+// 📜 DECISION RECORD - Ledger imutável de decisões de IA
+model DecisionRecord {
+  id              String    @id @default(cuid())
+  tenantId        String
+  
+  // Identificação da decisão
+  transactionId   String    @unique // ID público para recibo
+  policyId        String?   // ID da política/modelo usado
+  policyVersion   String?   // Versão da política
+  policyHash      String?   @map("policy_hash") // Hash da política no momento da decisão
+  
+  // Metadata do modelo de IA
+  modelId         String?   @map("model_id") // Ex: "credit_model", "fraud_detector"
+  modelVersion    String?   @map("model_version") // Ex: "2025-01-15", "v2.1"
+  modelHash       String?   @map("model_hash") // Hash dos pesos/artefatos do modelo
+  featureSchemaHash String? @map("feature_schema_hash") // Hash do schema de features usado
+  explanationJson String?   @db.Text @map("explanation_json") // SHAP, LIME, ou explicação custom (JSON)
+  
+  // Hashes criptográficos (SHA-256)
+  inputHash       String    // Hash do input da decisão
+  outputHash      String    // Hash do output/resultado
+  contextHash     String?   // Hash do contexto adicional
+  recordHash      String    @unique // Hash encadeado (prev + current)
+  previousHash    String?   // Hash do record anterior (chain)
+  
+  // Metadata da decisão
+  decisionType    String?   // Ex: "loan_approval", "content_moderation"
+  confidence      Float?    // Confiança da IA (0-1)
+  processingTime  Int?      // Tempo de processamento em ms
+  
+  // Payload opcional (se cliente quiser armazenar)
+  inputPayload    String?   @db.Text // JSON stringificado
+  outputPayload   String?   @db.Text // JSON stringificado
+  contextPayload  String?   @db.Text // JSON stringificado
+  
+  // Storage externo (S3/R2)
+  storageUrl      String?   // URL do payload completo em storage
+  
+  // Verificação de integridade
+  isVerified      Boolean   @default(true)
+  verifiedAt      DateTime  @default(now())
+  
+  // Human-in-the-Loop (campos derivados para facilitar queries)
+  hasHumanIntervention Boolean @default(false) @map("hasHumanIntervention")
+  finalDecisionSource  String  @default("AI") @map("finalDecisionSource") // AI, HUMAN_APPROVED, HUMAN_REJECTED, HUMAN_OVERRIDE
+  
+  // Timestamps
+  timestamp       DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bundles         EvidenceBundle[]
+  interventions   HumanIntervention[]
+  
+  @@index([tenantId])
+  @@index([transactionId])
+  @@index([timestamp])
+  @@index([policyId])
+  @@index([recordHash])
+  @@map("xase_decision_records")
 }
 
-model AIConversationMessage {
-  id             String         @id @default(cuid())
-  conversationId String
-  messageId      String?
-  role           String
-  content        String
-  tokens         Int            @default(0)
-  responseTime   Float?
-  timestamp      DateTime       @default(now())
-  conversation   AIConversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  @@map("ai_conversation_messages")
+// 🔐 CHECKPOINT RECORD - Âncora externa de integridade
+// Checkpoint periódico (horário/diário) com assinatura KMS e TSA
+model CheckpointRecord {
+  id                String    @id @default(cuid())
+  tenantId          String
+  
+  // Identificação do checkpoint
+  checkpointId      String    @unique // ID público
+  checkpointType    String    @default("PERIODIC") // PERIODIC, MANUAL, EMERGENCY
+  checkpointNumber  Int       // Número sequencial por tenant (monotônico)
+  
+  // Dados do checkpoint
+  lastRecordHash    String    // Hash do último record incluído
+  recordCount       Int       // Quantidade de records desde último checkpoint
+  merkleRoot        String?   // Merkle root (se múltiplos tenants)
+  checkpointHash    String    @unique // Hash do checkpoint completo
+  
+  // Assinatura criptográfica (KMS/HSM)
+  signature         String?   @db.Text // Assinatura do checkpointHash
+  signatureAlgo     String?   // Ex: "RSA-SHA256", "ECDSA-SHA256"
+  keyId             String?   // ID da chave no KMS
+  
+  // Carimbo de tempo externo (TSA - RFC3161)
+  tsaToken          String?   @db.Text // Token TSA em base64
+  tsaUrl            String?   // URL do TSA usado
+  tsaTimestamp      DateTime? // Timestamp retornado pelo TSA
+  
+  // Metadata
+  previousCheckpointId String? // Link para checkpoint anterior
+  isVerified        Boolean   @default(false)
+  verifiedAt        DateTime?
+  
+  // Timestamps
+  timestamp         DateTime  @default(now())
+  createdAt         DateTime  @default(now())
+  
+  // Relações
+  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([timestamp])
+  @@index([checkpointHash])
+  @@index([tenantId, checkpointNumber])
+  @@unique([tenantId, checkpointNumber])
+  @@map("xase_checkpoint_records")
 }
 
-model AIAgentLog {
-  id            String        @id @default(cuid())
-  agentConfigId String
-  type          String
-  message       String
-  details       String?
-  remoteJid     String?
-  responseTime  Float?
-  tokens        Int?
-  timestamp     DateTime      @default(now())
-  agentConfig   AIAgentConfig @relation(fields: [agentConfigId], references: [id], onDelete: Cascade)
+// 📋 AUDIT LOG - Trilha imutável de ações administrativas
+model AuditLog {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  userId        String?
+  
+  // Ação realizada
+  action        String    // Ex: "KEY_ROTATED", "EXPORT_CREATED", "PAYLOAD_ACCESSED"
+  resourceType  String    // Ex: "API_KEY", "DECISION_RECORD", "CHECKPOINT"
+  resourceId    String?   // ID do recurso afetado
+  
+  // Contexto
+  metadata      String?   @db.Text // JSON com detalhes adicionais
+  ipAddress     String?
+  userAgent     String?
+  
+  // Resultado
+  status        String    @default("SUCCESS") // SUCCESS, FAILED, DENIED
+  errorMessage  String?
+  
+  // Timestamps (IMUTÁVEL via trigger)
+  timestamp     DateTime  @default(now())
+  
+  @@index([tenantId])
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("xase_audit_logs")
+}
 
-  @@map("ai_agent_logs")
+// 📦 EVIDENCE BUNDLE - Bundles exportados e armazenados
+// IMUTÁVEL: EvidenceBundle é somente-criação (create-only).
+// Nunca é atualizado ou deletado após criado. Acessos são registrados em AuditLog.
+model EvidenceBundle {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  recordId        String    @map("record_id") // FK para DecisionRecord
+  
+  // Identificação
+  bundleId        String    @unique @map("bundle_id") // ID público do bundle
+  transactionId   String    @map("transaction_id") // Cópia do transactionId do record
+  
+  // Armazenamento
+  storageUrl      String?   @map("storage_url") // S3/R2 URL do ZIP
+  storageKey      String?   @map("storage_key") // Chave no bucket
+  bundleHash      String    @map("bundle_hash") // SHA-256 do ZIP completo
+  bundleSize      Int?      @map("bundle_size") // Tamanho em bytes
+  
+  // Metadata
+  format          String    @default("zip") // zip, tar.gz
+  includesPdf     Boolean   @default(false) @map("includes_pdf")
+  includesPayloads Boolean  @default(true) @map("includes_payloads")
+  
+  // Retenção e compliance
+  retentionUntil  DateTime? @map("retention_until") // Data de expiração (WORM/legal hold)
+  legalHold       Boolean   @default(false) @map("legal_hold")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  accessedAt      DateTime? @map("accessed_at") // Última vez que foi baixado
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  record          DecisionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([recordId])
+  @@index([transactionId])
+  @@index([bundleId])
+  @@map("xase_evidence_bundles")
+}
+
+// 👤 HUMAN INTERVENTION - Registro de intervenções humanas em decisões de IA
+// IMUTÁVEL: Nunca é atualizado ou deletado após criado (via trigger SQL)
+enum InterventionAction {
+  REVIEW_REQUESTED  // Decisão marcada para revisão humana
+  APPROVED          // Humano aprovou decisão da IA
+  REJECTED          // Humano rejeitou decisão da IA
+  OVERRIDE          // Humano alterou o resultado da IA
+  ESCALATED         // Decisão escalada para nível superior
+  
+  @@map("xase_intervention_action")
+}
+
+model HumanIntervention {
+  id              String    @id @default(cuid())
+  tenantId        String
+  recordId        String    @map("record_id")
+  
+  // Ação e ator
+  action          InterventionAction
+  actorUserId     String?   @map("actorUserId")  // ID do usuário que interveio
+  actorName       String?   @map("actorName")    // Nome do ator (snapshot)
+  actorEmail      String?   @map("actorEmail")   // Email do ator (snapshot)
+  actorRole       String?   @map("actorRole")    // Papel do ator no momento (snapshot)
+  
+  // Contexto da intervenção
+  reason          String?   // Justificativa da intervenção
+  notes           String?   @db.Text // Notas adicionais
+  metadata        String?   @db.Text // JSON com contexto adicional
+  
+  // Resultado (para OVERRIDE)
+  newOutcome      String?   @db.Text @map("newOutcome")      // JSON com novo resultado (se OVERRIDE)
+  previousOutcome String?   @db.Text @map("previousOutcome") // JSON com resultado anterior da IA
+  
+  // Rastreabilidade
+  ipAddress       String?   @map("ipAddress")
+  userAgent       String?   @map("userAgent")
+  timestamp       DateTime  @default(now())
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  record          DecisionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([recordId])
+  @@index([action])
+  @@index([actorUserId])
+  @@index([timestamp])
+  @@map("xase_human_interventions")
+}
+
+// 📊 MODEL CARD - Ficha técnica dos modelos de IA
+model ModelCard {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Identificação do modelo
+  modelId         String    @map("model_id")
+  modelVersion    String    @map("model_version")
+  modelHash       String    @map("model_hash") // SHA-256 dos pesos/artefatos
+  
+  // Metadata do modelo
+  modelName       String?   @map("model_name")
+  modelType       String?   @map("model_type") // Ex: "random_forest", "neural_network"
+  framework       String?   // Ex: "scikit-learn", "tensorflow", "pytorch"
+  description     String?   @db.Text
+  
+  // Treinamento
+  trainingDate    DateTime? @map("training_date")
+  datasetHash     String?   @map("dataset_hash")
+  datasetSize     Int?      @map("dataset_size")
+  trainingDuration Int?     @map("training_duration_seconds")
+  
+  // Performance Metrics (JSON)
+  performanceMetrics String? @db.Text @map("performance_metrics")
+  fairnessMetrics    String? @db.Text @map("fairness_metrics")
+  validationMetrics  String? @db.Text @map("validation_metrics")
+  
+  // Uso pretendido
+  intendedUse            String? @db.Text @map("intended_use")
+  limitations            String? @db.Text
+  ethicalConsiderations  String? @db.Text @map("ethical_considerations")
+  
+  // Feature Schema
+  featureSchemaHash String? @map("feature_schema_hash")
+  featureSchema     String? @db.Text @map("feature_schema")
+  featureImportance String? @db.Text @map("feature_importance")
+  
+  // Status
+  isActive      Boolean   @default(true) @map("is_active")
+  deployedAt    DateTime? @map("deployed_at")
+  deprecatedAt  DateTime? @map("deprecated_at")
+  
+  // Timestamps
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // Relações
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, modelId, modelVersion])
+  @@index([tenantId])
+  @@index([modelId])
+  @@index([modelHash])
+  @@index([isActive])
+  @@map("xase_model_cards")
+}
+
+// 📈 DRIFT DETECTION - Monitoramento de drift de modelos
+model DriftRecord {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  modelId         String    @map("model_id")
+  modelVersion    String    @map("model_version")
+  
+  // Tipo de drift
+  driftType       String    @map("drift_type") // DATA_DRIFT, CONCEPT_DRIFT, PREDICTION_DRIFT
+  severity        String    // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // Métricas de drift
+  driftScore      Float     @map("drift_score")
+  threshold       Float
+  metricName      String?   @map("metric_name")
+  
+  // Detalhes
+  affectedFeatures      String?   @db.Text @map("affected_features")
+  baselinePeriodStart   DateTime? @map("baseline_period_start")
+  baselinePeriodEnd     DateTime? @map("baseline_period_end")
+  detectionPeriodStart  DateTime? @map("detection_period_start")
+  detectionPeriodEnd    DateTime? @map("detection_period_end")
+  
+  // Estatísticas
+  baselineStats   String?   @db.Text @map("baseline_stats")
+  currentStats    String?   @db.Text @map("current_stats")
+  sampleSize      Int?      @map("sample_size")
+  
+  // Ações
+  alertSent       Boolean   @default(false) @map("alert_sent")
+  alertSentAt     DateTime? @map("alert_sent_at")
+  resolved        Boolean   @default(false)
+  resolvedAt      DateTime? @map("resolved_at")
+  resolutionNotes String?   @db.Text @map("resolution_notes")
+  
+  // Timestamps
+  detectedAt      DateTime  @default(now()) @map("detected_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([modelId])
+  @@index([severity])
+  @@index([detectedAt])
+  @@index([resolved])
+  @@map("xase_drift_records")
+}
+
+// 🔔 ALERTS - Sistema de alertas proativos
+model Alert {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Tipo e severidade
+  alertType       String    @map("alert_type")
+  severity        String
+  status          String    @default("OPEN")
+  
+  // Contexto
+  title           String
+  message         String    @db.Text
+  resourceType    String?   @map("resource_type")
+  resourceId      String?   @map("resource_id")
+  
+  // Métricas relacionadas
+  metricName      String?   @map("metric_name")
+  metricValue     Float?    @map("metric_value")
+  thresholdValue  Float?    @map("threshold_value")
+  
+  // Detalhes
+  details         String?   @db.Text
+  recommendations String?   @db.Text
+  
+  // Notificações
+  notificationSent     Boolean   @default(false) @map("notification_sent")
+  notificationSentAt   DateTime? @map("notification_sent_at")
+  notificationChannels String?   @db.Text @map("notification_channels")
+  
+  // Resolução
+  acknowledgedBy  String?   @map("acknowledged_by")
+  acknowledgedAt  DateTime? @map("acknowledged_at")
+  resolvedBy      String?   @map("resolved_by")
+  resolvedAt      DateTime? @map("resolved_at")
+  resolutionNotes String?   @db.Text @map("resolution_notes")
+  
+  // Timestamps
+  triggeredAt     DateTime  @default(now()) @map("triggered_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([alertType])
+  @@index([severity])
+  @@index([status])
+  @@index([triggeredAt])
+  @@map("xase_alerts")
+}
+
+// 📊 METRICS SNAPSHOT - Snapshots periódicos de métricas
+model MetricsSnapshot {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Período
+  snapshotType    String    @map("snapshot_type")
+  periodStart     DateTime  @map("period_start")
+  periodEnd       DateTime  @map("period_end")
+  
+  // Métricas agregadas
+  totalDecisions      Int   @default(0) @map("total_decisions")
+  aiDecisions         Int   @default(0) @map("ai_decisions")
+  humanInterventions  Int   @default(0) @map("human_interventions")
+  overrideCount       Int   @default(0) @map("override_count")
+  approvalCount       Int   @default(0) @map("approval_count")
+  rejectionCount      Int   @default(0) @map("rejection_count")
+  
+  // Taxas calculadas
+  overrideRate      Float?  @map("override_rate")
+  interventionRate  Float?  @map("intervention_rate")
+  approvalRate      Float?  @map("approval_rate")
+  
+  // Performance
+  avgConfidence         Float?  @map("avg_confidence")
+  avgProcessingTimeMs   Float?  @map("avg_processing_time_ms")
+  p95ProcessingTimeMs   Float?  @map("p95_processing_time_ms")
+  p99ProcessingTimeMs   Float?  @map("p99_processing_time_ms")
+  
+  // Por modelo (JSON)
+  metricsByModel        String? @db.Text @map("metrics_by_model")
+  metricsByPolicy       String? @db.Text @map("metrics_by_policy")
+  metricsByDecisionType String? @db.Text @map("metrics_by_decision_type")
+  
+  // Top motivos de override
+  topOverrideReasons    String? @db.Text @map("top_override_reasons")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, snapshotType, periodStart])
+  @@index([tenantId])
+  @@index([periodStart, periodEnd])
+  @@index([snapshotType])
+  @@map("xase_metrics_snapshots")
+}
+
+// 🎯 ALERT RULES - Regras configuráveis de alertas
+model AlertRule {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Identificação
+  ruleName        String    @map("rule_name")
+  ruleType        String    @map("rule_type")
+  description     String?   @db.Text
+  
+  // Condições
+  metricName          String  @map("metric_name")
+  operator            String
+  thresholdValue      Float   @map("threshold_value")
+  timeWindowMinutes   Int?    @map("time_window_minutes")
+  
+  // Filtros
+  modelId         String?   @map("model_id")
+  policyId        String?   @map("policy_id")
+  decisionType    String?   @map("decision_type")
+  
+  // Ações
+  severity                String  @map("severity")
+  notificationChannels    String? @db.Text @map("notification_channels")
+  notificationTemplate    String? @db.Text @map("notification_template")
+  
+  // Status
+  isActive            Boolean   @default(true) @map("is_active")
+  lastTriggeredAt     DateTime? @map("last_triggered_at")
+  triggerCount        Int       @default(0) @map("trigger_count")
+  
+  // Cooldown
+  cooldownMinutes     Int       @default(60) @map("cooldown_minutes")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([metricName])
+  @@map("xase_alert_rules")
 }
