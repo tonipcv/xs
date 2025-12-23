@@ -118,12 +118,7 @@ export default function ForgotPassword() {
           </div>
         </div>
         
-        {/* Footer minimalista */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-gray-400">
-            Secure authentication powered by HTPS.io
-          </p>
-        </div>
+        
       </div>
     </div>
   );

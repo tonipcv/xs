@@ -78,6 +78,14 @@ function LoginContent() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-[380px] bg-[#1c1d20] p-8">
           <div className="text-center mb-8">
+            <Image
+              src="/logo.png"
+              alt="Logo"
+              width={48}
+              height={48}
+              className="mx-auto mb-3 w-10 h-10"
+              priority
+            />
             <h1 className="text-xl font-medium text-[#f5f5f7] tracking-tight">
               Sign in to your account
             </h1>
@@ -152,12 +160,7 @@ function LoginContent() {
           </div>
         </div>
         
-        {/* Footer minimalista */}
-        <div className="mt-8 text-center">
-          <p className="text-xs text-[#f5f5f7]/40">
-            Secure authentication powered by HTPS.io
-          </p>
-        </div>
+        
       </div>
     </div>
   );
