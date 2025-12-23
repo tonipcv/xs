@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { signOut, useSession } from 'next-auth/react';
 import Image from 'next/image';
+import BrandLogo from '@/components/BrandLogo';
 import {
   Sidebar,
   SidebarContent,
@@ -63,16 +64,7 @@ export function AppSidebar() {
   return (
     <Sidebar variant="inset" className="border-r border-white/[0.08] bg-[#0a0a0a] w-60">
       <SidebarHeader className="border-none bg-[#0a0a0a] h-14 flex items-center px-4">
-        <div className="flex items-center gap-2">
-          <Image
-            src="/logo.png"
-            alt="Xase"
-            width={28}
-            height={28}
-            className="w-8 h-8 rounded-lg object-contain"
-            priority
-          />
-        </div>
+        <BrandLogo />
       </SidebarHeader>
 
       <SidebarContent className="bg-transparent py-2">

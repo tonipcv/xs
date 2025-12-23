@@ -9,7 +9,7 @@ import { ArrowRight } from 'lucide-react';
 import { REGION_NAMES, type Region } from '@/lib/prices';
 import { detectUserRegion } from '@/lib/geo';
 import { translations } from '@/lib/i18n';
-import Image from 'next/image';
+import BrandLogo from '@/components/BrandLogo';
 
 function RegisterContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -109,7 +109,7 @@ function RegisterContent() {
       }
 
       // Após o login bem-sucedido, redireciona para o callbackUrl (ou fallback)
-      router.push(callbackUrl || '/whatsapp');
+      router.push(callbackUrl || '/xase');
       router.refresh();
     } catch (err) {
       console.error('Registration error:', err);
@@ -124,14 +124,9 @@ function RegisterContent() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-[380px] bg-[#1c1d20] p-8">
           <div className="text-center mb-8">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              width={48}
-              height={48}
-              className="mx-auto mb-3 w-10 h-10"
-              priority
-            />
+            <div className="flex justify-center mb-3">
+              <BrandLogo />
+            </div>
             <h1 className="text-xl font-medium text-[#f5f5f7] tracking-tight">
               {t.register.createAccount}
             </h1>

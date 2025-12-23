@@ -8,7 +8,7 @@ import { signIn } from "next-auth/react"
 import { ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { translations } from '@/lib/i18n';
-import Image from 'next/image';
+import BrandLogo from '@/components/BrandLogo';
 
 function LoginContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -62,7 +62,7 @@ function LoginContent() {
         console.log('Login bem sucedido, redirecionando para WhatsApp...');
         
         // Redireciona direto para a página das instâncias do WhatsApp
-        router.push('/whatsapp');
+        router.push('/xase');
         router.refresh();
       }
     } catch (err) {
@@ -78,14 +78,9 @@ function LoginContent() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="w-full max-w-[380px] bg-[#1c1d20] p-8">
           <div className="text-center mb-8">
-            <Image
-              src="/logo.png"
-              alt="Logo"
-              width={48}
-              height={48}
-              className="mx-auto mb-3 w-10 h-10"
-              priority
-            />
+            <div className="flex justify-center mb-3">
+              <BrandLogo />
+            </div>
             <h1 className="text-xl font-medium text-[#f5f5f7] tracking-tight">
               Sign in to your account
             </h1>
