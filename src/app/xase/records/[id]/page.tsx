@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma';
 import { RecordDetails } from '@/components/xase/RecordDetails';
 
 export const metadata: Metadata = {
-  title: 'XASE AI - Record Details',
+  title: 'Xase',
   description: 'Decision record details and evidence',
 };
 

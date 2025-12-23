@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma';
 import ApiKeyCreatorModal from './ApiKeyCreatorModal';
 
 export const metadata: Metadata = {
-  title: 'XASE AI - API Keys',
+  title: 'Xase',
   description: 'Manage API keys',
 };
 

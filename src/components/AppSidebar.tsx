@@ -43,6 +43,10 @@ export function AppSidebar() {
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const { data: session } = useSession();
 
+  const user = (session?.user as any) || {};
+  const displayName: string = user.name || (user.email ? String(user.email).split('@')[0] : 'Account');
+  const initial: string = (displayName?.[0] || 'U').toUpperCase();
+
   const handleLogout = async () => {
     try {
       setIsLoggingOut(true);
@@ -60,8 +64,14 @@ export function AppSidebar() {
     <Sidebar variant="inset" className="border-r border-white/[0.08] bg-[#0a0a0a] w-60">
       <SidebarHeader className="border-none bg-[#0a0a0a] h-14 flex items-center px-4">
         <div className="flex items-center gap-2">
-          <div className="w-8 h-8 rounded-lg bg-white/[0.06] flex items-center justify-center text-white text-sm font-semibold">X</div>
-          <span className="text-sm text-white/70">XASE AI</span>
+          <Image
+            src="/logo.png"
+            alt="Xase"
+            width={28}
+            height={28}
+            className="w-8 h-8 rounded-lg object-contain"
+            priority
+          />
         </div>
       </SidebarHeader>
 
@@ -92,8 +102,13 @@ export function AppSidebar() {
 
       <SidebarFooter className="border-t border-white/[0.06] bg-[#0a0a0a] p-2">
         <div className="flex items-center justify-between px-2">
-          <div className="truncate text-xs text-white/50 max-w-[180px]" title={(session?.user as any)?.email || 'account'}>
-            {(session?.user as any)?.email || 'xppsalvador@gmail.com'}
+          <div className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-white/[0.08] text-white/80 flex items-center justify-center text-[10px] font-semibold">
+              {initial}
+            </div>
+            <div className="text-xs text-white/80">
+              {displayName}
+            </div>
           </div>
           <SidebarMenu>
             <SidebarMenuItem>

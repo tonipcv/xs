@@ -256,12 +256,12 @@ export async function generateMetadata({ params }: Props) {
   
   if (!record) {
     return {
-      title: 'Decision Not Found - Xase Core',
+      title: 'Xase',
     };
   }
   
   return {
-    title: `Decision Receipt ${record.transactionId} - Xase Core`,
+    title: 'Xase',
     description: `Cryptographically sealed decision record issued by ${record.tenant.companyName || record.tenant.name} on ${new Date(record.timestamp).toLocaleDateString()}`,
   };
 }

@@ -15,12 +15,16 @@ const montserrat = Montserrat({
 });
 
 export const metadata: Metadata = {
-  title: 'Xase AI',
+  title: 'Xase',
   description: 'CX-AI',
   icons: {
-    icon: '/splash.png',
-    shortcut: '/splash.png',
-    apple: '/splash.png',
+    icon: [
+      { url: '/favicon.ico', rel: 'icon', type: 'image/x-icon' },
+      { url: '/icon0.svg', rel: 'icon', type: 'image/svg+xml' },
+      { url: '/icon1.png', rel: 'icon', type: 'image/png' },
+    ],
+    shortcut: ['/favicon.ico'],
+    apple: '/apple-icon.png',
   },
 };
 
@@ -34,8 +38,10 @@ export default function RootLayout({
       <head>
         <meta name="theme-color" content="#111111" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <link rel="icon" href="/splash.png" />
-        <link rel="apple-touch-icon" href="/splash.png" />
+        <link rel="icon" href="/favicon.ico" sizes="any" />
+        <link rel="icon" type="image/svg+xml" href="/icon0.svg" />
+        <link rel="icon" type="image/png" href="/icon1.png" />
+        <link rel="apple-touch-icon" href="/apple-icon.png" />
         <Script src="https://js.stripe.com/v3/" strategy="beforeInteractive" />
         <link rel="preconnect dns-prefetch" href="https://api.config-security.com/" crossOrigin="" />
         <link rel="preconnect dns-prefetch" href="https://conf.config-security.com/" crossOrigin="" />

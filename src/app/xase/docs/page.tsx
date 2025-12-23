@@ -6,7 +6,7 @@ import { AppLayout } from '@/components/AppSidebar';
 import { FileText, Code, Shield, Zap } from 'lucide-react';
 
 export const metadata: Metadata = {
-  title: 'XASE AI - Documentação',
+  title: 'Xase',
   description: 'Guia de uso da API',
 };
 

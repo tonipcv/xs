@@ -1,7 +1,7 @@
 import { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Página Inicial',
+  title: 'Xase',
   description: 'Bem-vindo à página inicial do nosso site',
   keywords: ['página inicial', 'bem-vindo', 'home'],
 };

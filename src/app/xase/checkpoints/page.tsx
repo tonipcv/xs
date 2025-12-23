@@ -7,7 +7,7 @@ import { getTenantId } from '@/lib/xase/server-auth';
 import { prisma } from '@/lib/prisma';
 
 export const metadata: Metadata = {
-  title: 'XASE AI - Checkpoints',
+  title: 'Xase',
   description: 'Integrity anchors with KMS signature',
 };
 

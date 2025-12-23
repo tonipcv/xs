@@ -7,7 +7,7 @@ import { getTenantId } from '@/lib/xase/server-auth';
 import { prisma } from '@/lib/prisma';
 
 export const metadata: Metadata = {
-  title: 'XASE AI - Dashboard',
+  title: 'Xase',
   description: 'Ledger imutável para decisões de IA',
 };
 
