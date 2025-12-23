@@ -13,7 +13,7 @@
   }
   
   body {
-    @apply bg-[#0a0a0a] text-white;
+    @apply bg-[#1c1d20] text-white;
   }
   
   /* Remove default margins */

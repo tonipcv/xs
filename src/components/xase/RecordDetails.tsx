@@ -88,10 +88,10 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
       });
       
       window.location.href = `/api/records/${record.transactionId}/evidence?${params}`;
-      showToast('info', 'Iniciando download...');
+      showToast('info', 'Starting download...');
     } catch (error) {
       console.error('Download failed:', error);
-      showToast('error', 'Falha no download. Tente novamente.');
+      showToast('error', 'Download failed. Try again.');
     } finally {
       setTimeout(() => setDownloading(false), 2000);
     }
@@ -104,18 +104,18 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
         mode: 'redirect',
       });
       window.location.href = `/api/records/${record.transactionId}/evidence?${params}`;
-      showToast('info', 'Iniciando download do bundle...');
+      showToast('info', 'Starting bundle download...');
     } catch (e) {
-      showToast('error', 'Não foi possível iniciar o download.');
+      showToast('error', 'Could not start the download.');
     }
   };
 
   const copyToClipboard = async (text: string, label: string) => {
     try {
       await navigator.clipboard.writeText(text);
-      showToast('success', `${label} copiado.`);
+      showToast('success', `${label} copied.`);
     } catch (e) {
-      showToast('error', `Falha ao copiar ${label.toLowerCase()}.`);
+      showToast('error', `Failed to copy ${label.toLowerCase()}.`);
     }
   };
 
@@ -129,14 +129,14 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
       if (!res.ok) throw new Error('request failed');
       const data = await res.json();
       if (!data?.presigned_url) throw new Error('no url');
-      await copyToClipboard(data.presigned_url, 'URL assinada');
+      await copyToClipboard(data.presigned_url, 'Signed URL');
     } catch (e) {
-      showToast('error', 'Falha ao obter URL assinada.');
+      showToast('error', 'Failed to get signed URL.');
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#0a0a0a]">
+    <div className="min-h-screen bg-[#1c1d20]">
       <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
         {toast && (
           <div
@@ -235,7 +235,7 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
               <div>
                 <label className="text-xs text-white/50 uppercase tracking-wider">Timestamp</label>
                 <p className="text-sm text-white mt-1">
-                  {new Date(record.timestamp).toLocaleString('pt-BR', {
+                  {new Date(record.timestamp).toLocaleString('en-US', {
                     day: '2-digit',
                     month: 'long',
                     year: 'numeric',
@@ -331,7 +331,7 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
               <div>
                 <label className="text-xs text-white/50 uppercase tracking-wider">Timestamp</label>
                 <p className="text-sm text-white mt-1">
-                  {new Date(checkpoint.timestamp).toLocaleString('pt-BR')}
+                  {new Date(checkpoint.timestamp).toLocaleString('en-US')}
                 </p>
               </div>
               <div>
@@ -398,7 +398,7 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
                         )}
                       </td>
                       <td className="px-6 py-4 text-sm text-white/80">
-                        {new Date(intervention.timestamp).toLocaleString('pt-BR', {
+                        {new Date(intervention.timestamp).toLocaleString('en-US', {
                           day: '2-digit',
                           month: 'short',
                           hour: '2-digit',
@@ -483,7 +483,7 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
                         {bundle.bundleHash.substring(0, 16)}...
                       </td>
                       <td className="px-6 py-4 text-sm text-white/80">
-                        {new Date(bundle.createdAt).toLocaleString('pt-BR', {
+                        {new Date(bundle.createdAt).toLocaleString('en-US', {
                           day: '2-digit',
                           month: 'short',
                           hour: '2-digit',
@@ -492,7 +492,7 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
                       </td>
                       <td className="px-6 py-4 text-sm text-white/80">
                         {bundle.lastAccess
-                          ? new Date(bundle.lastAccess).toLocaleString('pt-BR', {
+                          ? new Date(bundle.lastAccess).toLocaleString('en-US', {
                               day: '2-digit',
                               month: 'short',
                               hour: '2-digit',
@@ -535,15 +535,15 @@ export function RecordDetails({ record, bundles, checkpoint }: RecordDetailsProp
             </div>
           ) : (
             <div className="px-6 py-12 text-center space-y-3">
-              <p className="text-white/60 text-sm">Nenhum evidence bundle gerado ainda.</p>
-              <p className="text-white/30 text-xs">Clique abaixo para gerar o primeiro bundle.</p>
+              <p className="text-white/60 text-sm">No evidence bundle generated yet.</p>
+              <p className="text-white/30 text-xs">Click below to generate the first bundle.</p>
               <div>
                 <button
                   onClick={() => handleDownload(true)}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-white/90 transition-colors"
                 >
                   <Download className="w-4 h-4" />
-                  Gerar e baixar bundle
+                  Generate and download bundle
                 </button>
               </div>
             </div>

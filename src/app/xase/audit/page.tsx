@@ -56,7 +56,7 @@ export default async function AuditPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen bg-[#1c1d20]">
         <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
@@ -107,7 +107,7 @@ export default async function AuditPage() {
                       <td className="px-6 py-4 text-sm text-white/80">{log.resourceType}</td>
                       <td className="px-6 py-4 text-sm text-white/80 font-mono">{log.resourceId.substring(0, 16)}...</td>
                       <td className="px-6 py-4 text-sm text-white/80">
-                        {new Date(log.timestamp).toLocaleString('pt-BR', {
+                        {new Date(log.timestamp).toLocaleString('en-US', {
                           day: '2-digit',
                           month: 'short',
                           hour: '2-digit',

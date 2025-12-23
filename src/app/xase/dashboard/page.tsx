@@ -10,7 +10,7 @@ export default function DashboardPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen bg-[#1c1d20]">
         <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold text-white tracking-tight">Trust Dashboard</h1>

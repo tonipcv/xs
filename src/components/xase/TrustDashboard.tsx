@@ -117,7 +117,7 @@ export function TrustDashboard({ period = '24h' }: { period?: string }) {
       {/* Alertas Ativos */}
       {alerts.length > 0 && (
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold">🔔 Alertas Ativos</h3>
+          <h3 className="text-lg font-semibold">Active Alerts</h3>
           {alerts.map((alert) => (
             <Alert key={alert.id} variant={getSeverityColor(alert.severity) as any}>
               <AlertTriangle className="h-4 w-4" />
@@ -129,7 +129,7 @@ export function TrustDashboard({ period = '24h' }: { period?: string }) {
                 {alert.message}
                 {alert.metric_value && alert.threshold_value && (
                   <div className="mt-2 text-sm">
-                    Valor atual: <strong>{alert.metric_value.toFixed(2)}</strong> | Threshold:{' '}
+                    Current value: <strong>{alert.metric_value.toFixed(2)}</strong> | Threshold:{' '}
                     <strong>{alert.threshold_value.toFixed(2)}</strong>
                   </div>
                 )}

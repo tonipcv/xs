@@ -8,7 +8,7 @@ import { prisma } from '@/lib/prisma';
 
 export const metadata: Metadata = {
   title: 'Xase',
-  description: 'Ledger imutável para decisões de IA',
+  description: 'Immutable ledger for AI decisions',
 };
 
 export default async function XaseDashboard() {
@@ -72,7 +72,7 @@ export default async function XaseDashboard() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen bg-[#1c1d20]">
         <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           {/* Header */}
           <div className="space-y-2">
@@ -80,7 +80,7 @@ export default async function XaseDashboard() {
               Dashboard
             </h1>
             <p className="text-sm text-gray-400">
-              Visão geral do seu ledger de evidências
+              Overview of your evidence ledger
             </p>
           </div>
 
@@ -160,7 +160,7 @@ export default async function XaseDashboard() {
                 <span className="text-xs text-white/40">Last checkpoint</span>
                 <span className="text-sm text-white">
                   {lastCheckpoint
-                    ? new Date(lastCheckpoint).toLocaleString('pt-BR', {
+                    ? new Date(lastCheckpoint).toLocaleString('en-US', {
                         day: '2-digit',
                         month: 'short',
                         hour: '2-digit',

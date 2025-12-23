@@ -57,7 +57,7 @@ export default async function CheckpointsPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen bg-[#1c1d20]">
         <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
@@ -83,7 +83,7 @@ export default async function CheckpointsPage() {
               <p className="text-[10px] text-white/40 tracking-wider">LAST CHECKPOINT</p>
               <p className="text-sm text-white">
                 {lastCheckpoint
-                  ? new Date(lastCheckpoint).toLocaleString('pt-BR', {
+                  ? new Date(lastCheckpoint).toLocaleString('en-US', {
                       day: '2-digit',
                       month: 'short',
                       hour: '2-digit',
@@ -96,17 +96,15 @@ export default async function CheckpointsPage() {
 
           {/* Checkpoint Configuration */}
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
-            <h2 className="text-base font-semibold text-white mb-4">
-              Configuração
-            </h2>
+            <h2 className="text-base font-semibold text-white mb-4">Configuration</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-white">Checkpoint Automático</p>
-                  <p className="text-xs text-white/50">Executar a cada 1 hora</p>
+                  <p className="text-sm font-medium text-white">Automatic Checkpoint</p>
+                  <p className="text-xs text-white/50">Run every 1 hour</p>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-white/50">Ativo</span>
+                  <span className="text-xs text-white/50">Active</span>
                   <div className="w-10 h-6 bg-white/[0.06] rounded-full relative" />
                 </div>
               </div>
@@ -114,14 +112,14 @@ export default async function CheckpointsPage() {
               <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg">
                 <div className="space-y-1">
                   <p className="text-sm font-medium text-white">KMS Provider</p>
-                  <p className="text-xs text-white/50">Mock (desenvolvimento)</p>
+                  <p className="text-xs text-white/50">Mock (development)</p>
                 </div>
                 <span className="text-xs px-2 py-1 bg-white/[0.06] text-white/80 rounded">Dev Mode</span>
               </div>
 
               <div className="flex items-center justify-between p-4 bg-white/[0.02] border border-white/[0.06] rounded-lg">
                 <div className="space-y-1">
-                  <p className="text-sm font-medium text-white">Algoritmo</p>
+                  <p className="text-sm font-medium text-white">Algorithm</p>
                   <p className="text-xs text-white/50">RSA-SHA256</p>
                 </div>
                 <span className="text-xs text-white/40">KMS</span>
@@ -150,7 +148,7 @@ export default async function CheckpointsPage() {
                       <td className="px-6 py-4 text-sm text-white/80">{cp.recordCount}</td>
                       <td className="px-6 py-4 text-sm text-white/80">{cp.signatureAlgo || 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-white/80">
-                        {new Date(cp.timestamp).toLocaleString('pt-BR', {
+                        {new Date(cp.timestamp).toLocaleString('en-US', {
                           day: '2-digit',
                           month: 'short',
                           hour: '2-digit',

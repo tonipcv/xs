@@ -75,7 +75,7 @@ export default function ApiKeyCreator() {
                 )
               })}
             </div>
-            <p className="text-[11px] text-white/40 mt-1">Selecione as permissões necessárias para esta chave.</p>
+            <p className="text-[11px] text-white/40 mt-1">Select the necessary permissions for this key.</p>
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
@@ -105,7 +105,7 @@ export default function ApiKeyCreator() {
       {createdKey && (
         <div className="mt-4 p-4 border border-emerald-400/20 bg-emerald-400/5 rounded-lg">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-sm text-emerald-200 font-semibold">API Key criada</p>
+            <p className="text-sm text-emerald-200 font-semibold">API Key created</p>
             <div className="flex items-center gap-2">
               <button
                 onClick={() => setReveal((v) => !v)}

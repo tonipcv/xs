@@ -45,7 +45,7 @@ export default async function RecordsPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#0a0a0a]">
+      <div className="min-h-screen bg-[#1c1d20]">
         <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           <div className="flex items-center justify-between">
             <div className="space-y-2">
@@ -80,7 +80,7 @@ export default async function RecordsPage() {
                       <td className="px-6 py-4 text-sm text-white/80">{record.decisionType || 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-white/80">{record.confidence ? (record.confidence * 100).toFixed(1) + '%' : 'N/A'}</td>
                       <td className="px-6 py-4 text-sm text-white/80">
-                        {new Date(record.timestamp).toLocaleString('pt-BR', {
+                        {new Date(record.timestamp).toLocaleString('en-US', {
                           day: '2-digit',
                           month: 'short',
                           hour: '2-digit',
@@ -112,7 +112,7 @@ export default async function RecordsPage() {
                   <h3 className="text-lg font-semibold text-white">No records yet</h3>
                   <p className="text-sm text-white/50 max-w-md">Start sending decisions via the API</p>
                 </div>
-                <a href="/xase/docs" className="px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] text-white text-sm font-medium rounded-md transition-colors mt-4">
+                <a href="https://xase.ai/docs" className="px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] text-white text-sm font-medium rounded-md transition-colors mt-4">
                   View docs
                 </a>
               </div>

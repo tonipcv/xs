@@ -62,8 +62,8 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar variant="inset" className="border-r border-white/[0.08] bg-[#0a0a0a] w-60">
-      <SidebarHeader className="border-none bg-[#0a0a0a] h-14 flex items-center px-4">
+    <Sidebar variant="inset" className="border-r border-white/[0.08] bg-[#1c1d20] w-60">
+      <SidebarHeader className="border-none bg-[#1c1d20] h-14 flex items-center px-4">
         <BrandLogo />
       </SidebarHeader>
 
@@ -91,8 +91,8 @@ export function AppSidebar() {
           </SidebarGroup>
         ))}
       </SidebarContent>
-
-      <SidebarFooter className="border-t border-white/[0.06] bg-[#0a0a0a] p-2">
+ 
+      <SidebarFooter className="border-t border-white/[0.06] bg-[#1c1d20] p-2">
         <div className="flex items-center justify-between px-2">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-full bg-white/[0.08] text-white/80 flex items-center justify-center text-[10px] font-semibold">
@@ -127,9 +127,9 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-[#0a0a0a]">
+      <div className="flex min-h-screen w-full bg-[#1c1d20]">
         <AppSidebar />
-        <main className="flex-1 min-w-0 bg-[#0a0a0a]">
+        <main className="flex-1 min-w-0 bg-[#1c1d20]">
           {children}
         </main>
       </div>
