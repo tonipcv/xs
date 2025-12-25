@@ -17,6 +17,8 @@ function LoginContent() {
   const [needsOtp, setNeedsOtp] = useState(false);
   const [isTotp, setIsTotp] = useState(false);
   const [otp, setOtp] = useState('');
+  const [savedEmail, setSavedEmail] = useState<string>('');
+  const [savedPassword, setSavedPassword] = useState<string>('');
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get('callbackUrl') ?? null;
@@ -47,30 +49,45 @@ function LoginContent() {
     const otpCurrent = needsOtp ? otp : (formData.get('otp') as string | null);
 
     try {
-      console.log('Tentando fazer login...', { email });
+      // Etapa 1: se ainda não pedimos código, validamos credenciais sem 401
+      if (!needsOtp) {
+        const res = await fetch('/api/auth/request-otp', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          setError(data.error || 'Falha ao iniciar login');
+          return;
+        }
+        if (data.next === 'totp') {
+          setNeedsOtp(true);
+          setIsTotp(true);
+          setSavedEmail(email);
+          setSavedPassword(password);
+          setError(null);
+          return;
+        }
+        if (data.next === 'otp') {
+          setNeedsOtp(true);
+          setIsTotp(false);
+          setSavedEmail(email);
+          setSavedPassword(password);
+          setError(null);
+          return;
+        }
+      }
+
+      // Etapa 2: concluir login com NextAuth (envia OTP/TOTP quando necessário)
       const result = await signIn('credentials', {
-        email,
-        password,
+        email: needsOtp ? savedEmail : email,
+        password: needsOtp ? savedPassword : password,
         otp: otpCurrent || undefined,
         redirect: false,
       });
 
-      console.log('Resultado do login:', result);
-
       if (result?.error) {
-        // Fluxo em dois passos
-        if (result.error === 'OTP_REQUIRED') {
-          setNeedsOtp(true);
-          setIsTotp(false);
-          setError(null);
-          return;
-        }
-        if (result.error === 'TOTP_REQUIRED') {
-          setNeedsOtp(true);
-          setIsTotp(true);
-          setError(null);
-          return;
-        }
         if (result.error === 'OTP_INVALID') {
           setError('Código inválido. Tente novamente.');
           return;
@@ -90,11 +107,7 @@ function LoginContent() {
         return;
       }
 
-
       if (result?.ok) {
-        console.log('Login bem sucedido, redirecionando para WhatsApp...');
-        
-        // Redireciona direto para a página das instâncias do WhatsApp
         router.push('/xase');
         router.refresh();
       }
@@ -128,35 +141,39 @@ function LoginContent() {
           
           {/* Formulário */}
           <form onSubmit={handleSubmit} className="space-y-6" autoComplete="off">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-[#f5f5f7]/80 mb-1.5">
-                {t.login.email}
-              </label>
-              <input
-                type="email"
-                id="email"
-                name="email"
-                required
-                autoComplete="off"
-                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
-                placeholder={t.login.emailPlaceholder}
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium text-[#f5f5f7]/80 mb-1.5">
-                {t.login.password}
-              </label>
-              <input
-                type="password"
-                id="password"
-                name="password"
-                required
-                autoComplete="new-password"
-                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
-                placeholder={t.login.passwordPlaceholder}
-              />
-            </div>
+            {!needsOtp && (
+              <>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-[#f5f5f7]/80 mb-1.5">
+                    {t.login.email}
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    name="email"
+                    required
+                    autoComplete="off"
+                    className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
+                    placeholder={t.login.emailPlaceholder}
+                  />
+                </div>
+                
+                <div>
+                  <label htmlFor="password" className="block text-sm font-medium text-[#f5f5f7]/80 mb-1.5">
+                    {t.login.password}
+                  </label>
+                  <input
+                    type="password"
+                    id="password"
+                    name="password"
+                    required
+                    autoComplete="new-password"
+                    className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
+                    placeholder={t.login.passwordPlaceholder}
+                  />
+                </div>
+              </>
+            )}
 
             {needsOtp && (
               <div>

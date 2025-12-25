@@ -120,7 +120,11 @@ export const authOptions: NextAuthOptions = {
   },
   debug: process.env.NODE_ENV === 'development',
   session: {
-    strategy: "jwt"
+    strategy: "jwt",
+    maxAge: 2 * 60 * 60, // 2 hours
+  },
+  jwt: {
+    maxAge: 2 * 60 * 60, // 2 hours
   },
   callbacks: {
     async jwt({ token, user }) {
