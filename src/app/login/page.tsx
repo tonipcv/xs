@@ -14,6 +14,9 @@ function LoginContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [locale, setLocale] = useState('pt-BR');
+  const [needsOtp, setNeedsOtp] = useState(false);
+  const [isTotp, setIsTotp] = useState(false);
+  const [otp, setOtp] = useState('');
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get('callbackUrl') ?? null;
@@ -41,18 +44,48 @@ function LoginContent() {
     const formData = new FormData(event.currentTarget);
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
+    const otpCurrent = needsOtp ? otp : (formData.get('otp') as string | null);
 
     try {
       console.log('Tentando fazer login...', { email });
       const result = await signIn('credentials', {
         email,
         password,
+        otp: otpCurrent || undefined,
         redirect: false,
       });
 
       console.log('Resultado do login:', result);
 
       if (result?.error) {
+        // Fluxo em dois passos
+        if (result.error === 'OTP_REQUIRED') {
+          setNeedsOtp(true);
+          setIsTotp(false);
+          setError(null);
+          return;
+        }
+        if (result.error === 'TOTP_REQUIRED') {
+          setNeedsOtp(true);
+          setIsTotp(true);
+          setError(null);
+          return;
+        }
+        if (result.error === 'OTP_INVALID') {
+          setError('Código inválido. Tente novamente.');
+          return;
+        }
+        if (result.error === 'OTP_EXPIRED') {
+          setError('Código expirado. Envie novamente fazendo login.');
+          setNeedsOtp(false);
+          setIsTotp(false);
+          setOtp('');
+          return;
+        }
+        if (result.error === 'TOTP_INVALID') {
+          setError('Código do autenticador inválido.');
+          return;
+        }
         setError(result.error);
         return;
       }
@@ -125,12 +158,35 @@ function LoginContent() {
               />
             </div>
 
+            {needsOtp && (
+              <div>
+                <label htmlFor="otp" className="block text-sm font-medium text-[#f5f5f7]/80 mb-1.5">
+                  {isTotp ? 'Authenticator code' : 'Código enviado por e-mail'}
+                </label>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  id="otp"
+                  name="otp"
+                  value={otp}
+                  onChange={(e) => setOtp(e.target.value)}
+                  className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
+                  placeholder={isTotp ? '000000' : '000000'}
+                />
+                {!isTotp && (
+                  <p className="text-xs text-[#f5f5f7]/50 mt-1">Enviamos um código de 6 dígitos para seu e-mail.</p>
+                )}
+              </div>
+            )}
+
             <button 
               type="submit" 
               className="w-full py-2.5 px-4 text-sm font-medium text-[#f5f5f7] bg-[#2a2b2d] hover:bg-[#3a3b3d] rounded transition-colors duration-200 flex items-center justify-center gap-2 mt-6"
               disabled={isSubmitting}
             >
-              {isSubmitting ? t.login.signingIn : t.login.signIn}
+              {isSubmitting ? t.login.signingIn : (needsOtp ? 'Confirmar código' : t.login.signIn)}
               {!isSubmitting && <ArrowRight className="h-4 w-4" />}
             </button>
           </form>

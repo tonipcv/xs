@@ -31,6 +31,12 @@ datasource db {
   phone                String?
   passwordResetToken   String?            @map("password_reset_token")
   passwordResetExpires DateTime?          @map("password_reset_expires")
+  emailOtpCode         String?
+  emailOtpExpires      DateTime?
+  twoFactorEnabled     Boolean            @default(false)
+  totpSecret           String?
+  twoFactorVerifiedAt  DateTime?
+  twoFactorBackupCodes String?
   
   // 🎯 XASE CORE: Link opcional para Tenant
   tenantId             String?            // Acesso ao console Xase

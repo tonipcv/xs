@@ -24,8 +24,8 @@ export async function sendEmail({
     
     await transporter.sendMail({
       from: {
-        name: process.env.EMAIL_FROM_NAME || 'Katsu',
-        address: process.env.EMAIL_FROM_ADDRESS || 'oi@k17.com.br'
+        name: process.env.EMAIL_FROM_NAME || 'Xase',
+        address: process.env.EMAIL_FROM_ADDRESS || 'no-reply@xase.ai'
       },
       to,
       subject,

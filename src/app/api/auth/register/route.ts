@@ -72,15 +72,15 @@ export async function POST(req: Request) {
       // Enviar email de confirmação
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                      process.env.NEXTAUTH_URL || 
-                     'https://wallet.k17.com.br';
+                     'https://xase.ai';
       const confirmationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
 
       try {
         await sendEmail({
           to: email,
-          subject: 'Confirme seu email',
+          subject: 'Confirme seu email - Xase',
           html: `
-            <h1>Bem-vindo ao Katsu!</h1>
+            <h1>Bem-vindo ao Xase!</h1>
             <p>Olá ${name},</p>
             <p>Obrigado por se cadastrar. Por favor, confirme seu email clicando no botão abaixo:</p>
             <a href="${confirmationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px;">

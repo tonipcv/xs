@@ -58,14 +58,14 @@ export async function POST(request: Request) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                    process.env.NEXTAUTH_URL || 
-                   'https://wallet.k17.com.br'
+                   'https://xase.ai'
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
 
     await sendEmail({
       to: email,
-      subject: 'Recuperação de Senha',
+      subject: 'Xase - Recuperação de Senha',
       html: `
-        <h1>Recuperação de Senha</h1>
+        <h1>Xase - Recuperação de Senha</h1>
         <p>Você solicitou a recuperação de senha. Clique no link abaixo para definir uma nova senha:</p>
         <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px;">
           Redefinir Senha

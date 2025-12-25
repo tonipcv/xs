@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react';
 import { AppLayout } from '@/components/AppSidebar';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Badge } from '@/components/ui/badge';
-import { useSession } from "next-auth/react";
+import { useSession, signOut } from "next-auth/react";
+import Link from 'next/link';
 
 interface UserProfile {
   id: string;
@@ -22,10 +21,10 @@ interface UserProfile {
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState<boolean | null>(null);
   const { data: session } = useSession();
 
   useEffect(() => {
-    // Simular dados do perfil
     if (session?.user) {
       setProfile({
         id: '1',
@@ -34,166 +33,169 @@ export default function ProfilePage() {
         phone: '+55 11 99999-9999',
         plan: 'Pro',
         tokensUsed: 1250,
-        tokensLimit: 5000
+        tokensLimit: 5000,
       });
     }
   }, [session]);
 
+  useEffect(() => {
+    const load2fa = async () => {
+      try {
+        const res = await fetch('/api/profile/me', { cache: 'no-store' })
+        if (!res.ok) return;
+        const data = await res.json()
+        setTwoFactorEnabled(Boolean(data.twoFactorEnabled))
+      } catch {}
+    }
+    load2fa()
+  }, [])
+
   if (!profile) {
     return (
       <AppLayout>
-        <div className="flex items-center justify-center h-64">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        <div className="min-h-screen bg-[#1c1d20] flex items-center justify-center">
+          <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
         </div>
       </AppLayout>
     );
   }
 
+  const usagePct = Math.round((profile.tokensUsed / profile.tokensLimit) * 100);
+
   return (
     <AppLayout>
-      <div className="space-y-6">
-        {/* Header */}
-        <div>
-          <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Perfil</h1>
-          <p className="text-gray-600">Gerencie suas informações pessoais</p>
-        </div>
+      <div className="min-h-screen bg-[#1c1d20]">
+        <div className="max-w-[1100px] mx-auto px-8 py-8 space-y-8">
+          <div className="flex items-start justify-between gap-4">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold text-white tracking-tight">Profile</h1>
+              <p className="text-sm text-white/60">Manage your account information, security and preferences.</p>
+            </div>
+            <Button
+              onClick={() => signOut({ callbackUrl: '/login', redirect: true })}
+              className="bg-white/[0.06] hover:bg-white/[0.12] text-white"
+            >
+              Sign out
+            </Button>
+          </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Informações Pessoais */}
-          <div className="lg:col-span-2">
-            <Card className="bg-white border-gray-200 shadow-sm">
-              <CardHeader>
-                <div className="flex items-center justify-between">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div className="lg:col-span-2 space-y-6">
+              <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
                   <div>
-                    <CardTitle className="text-lg font-semibold text-gray-900">
-                      Informações Pessoais
-                    </CardTitle>
-                    <CardDescription>
-                      Atualize seus dados pessoais
-                    </CardDescription>
+                    <h2 className="text-sm font-semibold text-white/80">Account</h2>
+                    <p className="text-xs text-white/50">Update your personal information</p>
                   </div>
                   <Button
                     variant="outline"
                     size="sm"
+                    className="border-white/15 text-white/80 hover:bg-white/[0.06]"
                     onClick={() => setIsEditing(!isEditing)}
                   >
-                    {isEditing ? 'Cancelar' : 'Editar'}
+                    {isEditing ? 'Cancel' : 'Edit'}
                   </Button>
                 </div>
-              </CardHeader>
-              <CardContent className="space-y-4">
+
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <Label htmlFor="name">Nome</Label>
+                    <Label htmlFor="name" className="text-white/70">Name</Label>
                     <Input
                       id="name"
                       value={profile.name}
                       disabled={!isEditing}
-                      className="mt-1"
+                      className="mt-1 bg-[#2a2b2d] border-none text-white placeholder-white/40"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="email">Email</Label>
+                    <Label htmlFor="email" className="text-white/70">Email</Label>
                     <Input
                       id="email"
                       type="email"
                       value={profile.email}
                       disabled={!isEditing}
-                      className="mt-1"
+                      className="mt-1 bg-[#2a2b2d] border-none text-white placeholder-white/40"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="phone">Telefone</Label>
+                    <Label htmlFor="phone" className="text-white/70">Phone</Label>
                     <Input
                       id="phone"
                       value={profile.phone || ''}
                       disabled={!isEditing}
-                      className="mt-1"
+                      className="mt-1 bg-[#2a2b2d] border-none text-white placeholder-white/40"
                     />
                   </div>
                   <div>
-                    <Label htmlFor="plan">Plano</Label>
-                    <div className="mt-1">
-                      <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
-                        {profile.plan}
-                      </Badge>
+                    <Label className="text-white/70">Plan</Label>
+                    <div className="mt-2 inline-flex items-center gap-2 px-2 py-1 rounded border border-white/[0.12] text-xs text-white/80">
+                      <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
+                      {profile.plan}
                     </div>
                   </div>
                 </div>
-                
+
                 {isEditing && (
-                  <div className="flex gap-2 pt-4">
-                    <Button size="sm">Salvar</Button>
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing(false)}>
-                      Cancelar
-                    </Button>
+                  <div className="flex gap-2 pt-5">
+                    <Button size="sm" className="bg-white/[0.12] hover:bg-white/[0.18] text-white">Save</Button>
+                    <Button size="sm" variant="outline" className="border-white/15 text-white/80 hover:bg-white/[0.06]" onClick={() => setIsEditing(false)}>Cancel</Button>
                   </div>
                 )}
-              </CardContent>
-            </Card>
-          </div>
+              </div>
 
-          {/* Estatísticas */}
-          <div className="space-y-6">
-            <Card className="bg-white border-gray-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  Uso de Tokens
-                </CardTitle>
-                <CardDescription>
-                  Consumo mensal de IA
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
+              <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-sm font-semibold text-white/80">Preferences</h2>
+                    <p className="text-xs text-white/50">Language, notifications and theme</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                  <div className="text-white/70">Language</div>
+                  <div className="text-white/50">Auto (browser)</div>
+                  <div className="text-white/70">Theme</div>
+                  <div className="text-white/50">Dark</div>
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-white/80">Security</h2>
+                    <p className="text-xs text-white/50">Add an extra layer of protection to your account</p>
+                  </div>
+                  {twoFactorEnabled !== null && (
+                    <span className={`text-[11px] px-2 py-1 rounded border ${twoFactorEnabled ? 'border-green-500/30 text-green-400 bg-green-500/10' : 'border-white/15 text-white/60 bg-white/[0.04]'}`}>
+                      {twoFactorEnabled ? '2FA Enabled' : '2FA Disabled'}
+                    </span>
+                  )}
+                </div>
+                <Link href="/profile/security/2fa" className="inline-flex items-center px-3 py-2 bg-white/[0.06] hover:bg-white/[0.12] text-white text-sm font-medium rounded-md transition-colors">
+                  {twoFactorEnabled ? 'Manage 2FA' : 'Enable 2FA'}
+                </Link>
+              </div>
+
+              <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
+                <h2 className="text-sm font-semibold text-white/80 mb-1">Plan</h2>
+                <p className="text-xs text-white/50 mb-4">Monthly AI usage</p>
                 <div className="space-y-3">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Usado</span>
-                    <span className="font-medium">{profile.tokensUsed.toLocaleString()}</span>
+                  <div className="flex justify-between text-xs text-white/60">
+                    <span>Used</span>
+                    <span className="text-white/80 font-medium">{profile.tokensUsed.toLocaleString()}</span>
                   </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Limite</span>
-                    <span className="font-medium">{profile.tokensLimit.toLocaleString()}</span>
+                  <div className="flex justify-between text-xs text-white/60">
+                    <span>Limit</span>
+                    <span className="text-white/80 font-medium">{profile.tokensLimit.toLocaleString()}</span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div 
-                      className="bg-blue-600 h-2 rounded-full" 
-                      style={{ width: `${(profile.tokensUsed / profile.tokensLimit) * 100}%` }}
-                    ></div>
+                  <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                    <div className="h-2 bg-green-500" style={{ width: `${usagePct}%` }} />
                   </div>
-                  <p className="text-xs text-gray-500">
-                    {Math.round((profile.tokensUsed / profile.tokensLimit) * 100)}% utilizado
-                  </p>
+                  <p className="text-[11px] text-white/50">{usagePct}% used</p>
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="bg-white border-gray-200 shadow-sm">
-              <CardHeader>
-                <CardTitle className="text-lg font-semibold text-gray-900">
-                  Estatísticas
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Instâncias Ativas</span>
-                  <Badge variant="outline" className="bg-green-50 text-green-600 border-green-200">
-                    3
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Agentes IA</span>
-                  <Badge variant="outline" className="bg-blue-50 text-blue-600 border-blue-200">
-                    5
-                  </Badge>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Mensagens Hoje</span>
-                  <Badge variant="outline" className="bg-purple-50 text-purple-600 border-purple-200">
-                    127
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
         </div>
       </div>

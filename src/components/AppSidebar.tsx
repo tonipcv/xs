@@ -94,26 +94,15 @@ export function AppSidebar() {
  
       <SidebarFooter className="border-t border-white/[0.06] bg-[#1c1d20] p-2">
         <div className="flex items-center justify-between px-2">
-          <div className="flex items-center gap-2">
+          <Link href="/profile" className="flex items-center gap-2 hover:opacity-90">
             <div className="w-6 h-6 rounded-full bg-white/[0.08] text-white/80 flex items-center justify-center text-[10px] font-semibold">
               {initial}
             </div>
             <div className="text-xs text-white/80">
               {displayName}
             </div>
-          </div>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                className="h-8 w-8 flex items-center justify-center rounded-md text-white/60 hover:bg-white/[0.06] hover:text-white transition-all"
-                onClick={handleLogout}
-                disabled={isLoggingOut}
-                aria-label="Sair"
-              >
-                <LogOut className="h-4 w-4 stroke-[1.5]" />
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
+          </Link>
+          <div />
         </div>
       </SidebarFooter>
     </Sidebar>
