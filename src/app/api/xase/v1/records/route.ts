@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { checkAndIncrementUsage } from '@/lib/usage';
 import { validateApiKey, checkRateLimit, hasPermission } from '@/lib/xase/auth';
 import {
   hashObject,
@@ -117,6 +118,24 @@ export async function POST(request: NextRequest) {
       );
     }
     
+    // 2.5. Fair-use gating por plano (associa consumo a um usuário do tenant)
+    try {
+      const tenantUser = await prisma.user.findFirst({
+        where: { tenantId: auth.tenantId! },
+        select: { id: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      if (tenantUser?.id) {
+        // custo básico por registro; pode ser ajustado conforme payload
+        await checkAndIncrementUsage(tenantUser.id, 100);
+      }
+    } catch (e: any) {
+      if (e.code === 'LIMIT_EXCEEDED') {
+        return NextResponse.json({ error: 'Limit exceeded', usage: e.usage, code: 'LIMIT_EXCEEDED' }, { status: 402 });
+      }
+      throw e;
+    }
+
     // 3. Validar payload
     const body = await request.json();
     const validation = DecisionSchema.safeParse(body);

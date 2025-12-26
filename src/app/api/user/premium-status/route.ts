@@ -12,10 +12,11 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { isPremium: true }
+      select: { planTier: true }
     });
 
-    return NextResponse.json({ isPremium: user?.isPremium || false });
+    const isPremium = user ? user.planTier !== 'sandbox' : false;
+    return NextResponse.json({ isPremium });
   } catch (error) {
     console.error('Error fetching premium status:', error);
     return NextResponse.json({ isPremium: false }, { status: 500 });

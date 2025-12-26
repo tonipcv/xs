@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
 import { signIn } from "next-auth/react"
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { translations } from '@/lib/i18n';
 import BrandLogo from '@/components/BrandLogo';
@@ -17,6 +17,7 @@ function LoginContent() {
   const [needsOtp, setNeedsOtp] = useState(false);
   const [isTotp, setIsTotp] = useState(false);
   const [otp, setOtp] = useState('');
+  const [confirmed, setConfirmed] = useState(false);
   const [savedEmail, setSavedEmail] = useState<string>('');
   const [savedPassword, setSavedPassword] = useState<string>('');
   const router = useRouter();
@@ -58,7 +59,7 @@ function LoginContent() {
         });
         const data = await res.json();
         if (!res.ok) {
-          setError(data.error || 'Falha ao iniciar login');
+          setError(data.error || 'Failed to start login');
           return;
         }
         if (data.next === 'totp') {
@@ -89,18 +90,18 @@ function LoginContent() {
 
       if (result?.error) {
         if (result.error === 'OTP_INVALID') {
-          setError('Código inválido. Tente novamente.');
+          setError('Invalid code. Try again.');
           return;
         }
         if (result.error === 'OTP_EXPIRED') {
-          setError('Código expirado. Envie novamente fazendo login.');
+          setError('Code expired. Please log in again to resend.');
           setNeedsOtp(false);
           setIsTotp(false);
           setOtp('');
           return;
         }
         if (result.error === 'TOTP_INVALID') {
-          setError('Código do autenticador inválido.');
+          setError('Invalid authenticator code.');
           return;
         }
         setError(result.error);
@@ -108,12 +109,17 @@ function LoginContent() {
       }
 
       if (result?.ok) {
-        router.push('/xase');
-        router.refresh();
+        // Marca como confirmado visualmente e só depois redireciona
+        setConfirmed(true);
+        const dest = callbackUrl || '/xase';
+        setTimeout(() => {
+          router.push(dest);
+          router.refresh();
+        }, 900);
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError(err instanceof Error ? err.message : 'Erro ao fazer login');
+      setError(err instanceof Error ? err.message : 'Login error');
     } finally {
       setIsSubmitting(false);
     }
@@ -178,7 +184,7 @@ function LoginContent() {
             {needsOtp && (
               <div>
                 <label htmlFor="otp" className="block text-sm font-medium text-[#f5f5f7]/80 mb-1.5">
-                  {isTotp ? 'Authenticator code' : 'Código enviado por e-mail'}
+                  {isTotp ? 'Authenticator code' : 'Code sent by email'}
                 </label>
                 <input
                   type="text"
@@ -193,7 +199,7 @@ function LoginContent() {
                   placeholder={isTotp ? '000000' : '000000'}
                 />
                 {!isTotp && (
-                  <p className="text-xs text-[#f5f5f7]/50 mt-1">Enviamos um código de 6 dígitos para seu e-mail.</p>
+                  <p className="text-xs text-[#f5f5f7]/50 mt-1">We sent a 6-digit code to your email.</p>
                 )}
               </div>
             )}
@@ -201,10 +207,19 @@ function LoginContent() {
             <button 
               type="submit" 
               className="w-full py-2.5 px-4 text-sm font-medium text-[#f5f5f7] bg-[#2a2b2d] hover:bg-[#3a3b3d] rounded transition-colors duration-200 flex items-center justify-center gap-2 mt-6"
-              disabled={isSubmitting}
+              disabled={isSubmitting || confirmed}
             >
-              {isSubmitting ? t.login.signingIn : (needsOtp ? 'Confirmar código' : t.login.signIn)}
-              {!isSubmitting && <ArrowRight className="h-4 w-4" />}
+              {confirmed
+                ? 'Code confirmed'
+                : isSubmitting
+                  ? (needsOtp ? 'Confirming…' : t.login.signingIn)
+                  : (needsOtp ? 'Confirm code' : t.login.signIn)
+              }
+              {confirmed ? (
+                <Check className="h-4 w-4" />
+              ) : (
+                !isSubmitting && <ArrowRight className="h-4 w-4" />
+              )}
             </button>
           </form>
 

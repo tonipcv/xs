@@ -39,7 +39,7 @@ export const authOptions: NextAuthOptions = {
             emailOtpExpires: true,
             twoFactorEnabled: true,
             totpSecret: true,
-            isPremium: true,
+            planTier: true,
           }
         })
 
@@ -69,7 +69,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name || "",
             email: user.email,
             image: user.image,
-            isPremium: user.isPremium || false
+            isPremium: (user.planTier ?? 'sandbox') !== 'sandbox'
           }
         }
 
@@ -86,7 +86,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name || "",
             email: user.email,
             image: user.image,
-            isPremium: user.isPremium || false
+            isPremium: (user.planTier ?? 'sandbox') !== 'sandbox'
           }
         }
 

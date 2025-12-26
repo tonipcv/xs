@@ -11,6 +11,8 @@ import { NextResponse } from 'next/server';
 import { validateApiKey, hasPermission } from '@/lib/xase/auth';
 import { generateProofBundle } from '@/lib/xase/export';
 import { isValidTransactionId } from '@/lib/xase/crypto';
+import { prisma } from '@/lib/prisma';
+import { checkAndIncrementUsage } from '@/lib/usage';
 
 interface RouteParams {
   params: {
@@ -64,17 +66,38 @@ export async function POST(
       );
     }
 
-    // 3. Parse options
+    // 3. Fair-use gating por plano (associa consumo a um usuário do tenant)
+    try {
+      const auth2 = await validateApiKey(request);
+      if (auth2.valid && auth2.tenantId) {
+        const tenantUser = await prisma.user.findFirst({
+          where: { tenantId: auth2.tenantId },
+          select: { id: true },
+          orderBy: { createdAt: 'asc' },
+        });
+        if (tenantUser?.id) {
+          // custo mais alto para export
+          await checkAndIncrementUsage(tenantUser.id, 500);
+        }
+      }
+    } catch (e: any) {
+      if (e.code === 'LIMIT_EXCEEDED') {
+        return NextResponse.json({ error: 'Limit exceeded', usage: e.usage, code: 'LIMIT_EXCEEDED' }, { status: 402 });
+      }
+      throw e;
+    }
+
+    // 4. Parse options
     const body = await request.json().catch(() => ({} as any));
     const includePayloads = body.include_payloads === true;
 
-    // 4. Gerar proof bundle
+    // 5. Gerar proof bundle
     const bundle = await generateProofBundle(transactionId, {
       includePayloads,
       userId: undefined, // TODO: extrair de auth se for user-based
     });
 
-    // 5. Retornar bundle
+    // 6. Retornar bundle
     return NextResponse.json({
       success: true,
       transaction_id: transactionId,

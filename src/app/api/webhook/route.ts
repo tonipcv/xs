@@ -6,6 +6,7 @@ import { PRICE_IDS } from '@/lib/prices';
 import Stripe from 'stripe';
 
 const relevantEvents = new Set([
+  'checkout.session.completed',
   'customer.subscription.created',
   'customer.subscription.updated',
   'customer.subscription.deleted'
@@ -42,12 +43,26 @@ export async function POST(req: Request) {
   if (relevantEvents.has(event.type)) {
     try {
       switch (event.type) {
+        case 'checkout.session.completed':
+          const session = event.data.object as Stripe.Checkout.Session;
+          const userId = session.client_reference_id || (session.metadata?.userId as string);
+          const customerId = session.customer as string;
+
+          if (!userId || !customerId) {
+            console.error('Missing userId or customerId in checkout.session.completed');
+            break;
+          }
+
+          // Salvar stripeCustomerId no usuário
+          await prisma.user.update({
+            where: { id: userId },
+            data: { stripeCustomerId: customerId },
+          });
+          break;
+
         case 'customer.subscription.created':
         case 'customer.subscription.updated':
           const subscription = event.data.object as Stripe.Subscription;
-          
-          // Buscar o preço para determinar o tipo de plano
-          const priceId = subscription.items.data[0].price.id;
           
           // Buscar o usuário pelo Stripe Customer ID
           const user = await prisma.user.findFirst({
@@ -60,16 +75,57 @@ export async function POST(req: Request) {
             throw new Error('User not found');
           }
 
-          // Determinar o tipo de plano baseado no priceId
-          const isIniciante = Object.values(PRICE_IDS.INICIANTE).some(id => id === priceId);
-          const isPro = Object.values(PRICE_IDS.PRO).some(id => id === priceId);
+          // Expandir price para ler metadata
+          const priceId = subscription.items.data[0].price.id;
+          const price = await stripe.prices.retrieve(priceId, { expand: ['product'] });
+          const tier = (price.metadata?.tier || 'sandbox') as string;
+          const useCases = parseInt(price.metadata?.use_cases_included || '1', 10);
+          const retention = parseFloat(price.metadata?.retention_years || '0.08');
 
-          // Atualizar status premium baseado no plano
+          // Mapear tier para entitlements
+          let freeTokensLimit = 1000; // sandbox default
+
+          switch (tier) {
+            case 'team':
+              freeTokensLimit = 200000;
+              break;
+            case 'business':
+              freeTokensLimit = 500000;
+              break;
+            case 'enterprise':
+            case 'enterprise_plus':
+              freeTokensLimit = 999999999; // unlimited fair-use
+              break;
+          }
+
+          // Atualizar entitlements do usuário
           await prisma.user.update({
             where: { id: user.id },
             data: {
-              isPremium: true,
-              isSuperPremium: isPro,
+              planTier: tier,
+              useCasesIncluded: useCases,
+              retentionYears: retention,
+              freeTokensLimit,
+            },
+          });
+
+          // Persistir/atualizar Subscription
+          await prisma.subscription.upsert({
+            where: { stripeId: subscription.id },
+            create: {
+              stripeId: subscription.id,
+              userId: user.id,
+              priceId: priceId,
+              status: subscription.status,
+              currentPeriodStart: new Date(((subscription as any).current_period_start ?? (subscription as any).currentPeriodStart) * 1000),
+              currentPeriodEnd: new Date(((subscription as any).current_period_end ?? (subscription as any).currentPeriodEnd) * 1000),
+              cancelAtPeriodEnd: ((subscription as any).cancel_at_period_end ?? (subscription as any).cancelAtPeriodEnd) as boolean,
+            },
+            update: {
+              status: subscription.status,
+              currentPeriodStart: new Date(((subscription as any).current_period_start ?? (subscription as any).currentPeriodStart) * 1000),
+              currentPeriodEnd: new Date(((subscription as any).current_period_end ?? (subscription as any).currentPeriodEnd) * 1000),
+              cancelAtPeriodEnd: ((subscription as any).cancel_at_period_end ?? (subscription as any).cancelAtPeriodEnd) as boolean,
             },
           });
           break;
@@ -88,12 +144,14 @@ export async function POST(req: Request) {
             throw new Error('User not found');
           }
 
-          // Remover status premium
+          // Voltar para sandbox tier
           await prisma.user.update({
             where: { id: userToUpdate.id },
             data: {
-              isPremium: false,
-              isSuperPremium: false,
+              planTier: 'sandbox',
+              useCasesIncluded: 1,
+              retentionYears: 0.08,
+              freeTokensLimit: 1000,
             },
           });
           break;

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { AppLayout } from '@/components/AppSidebar';
+import XaseUsageBanner from '@/components/XaseUsageBanner';
 import { getTenantId } from '@/lib/xase/server-auth';
 import { prisma } from '@/lib/prisma';
 
@@ -74,14 +75,17 @@ export default async function XaseDashboard() {
     <AppLayout>
       <div className="min-h-screen bg-[#1c1d20]">
         <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
-          {/* Header */}
-          <div className="space-y-2">
-            <h1 className="text-2xl font-semibold text-white tracking-tight">
-              Dashboard
-            </h1>
-            <p className="text-sm text-gray-400">
-              Overview of your evidence ledger
-            </p>
+          {/* Header + minimal usage (top-right) */}
+          <div className="flex flex-col gap-3">
+            <div className="space-y-2">
+              <h1 className="text-2xl font-semibold text-white tracking-tight">Dashboard</h1>
+              <p className="text-sm text-gray-400">Overview of your evidence ledger</p>
+            </div>
+            <div className="w-full flex justify-end">
+              <div className="w-full max-w-sm">
+                <XaseUsageBanner />
+              </div>
+            </div>
           </div>
 
           {/* Stats Grid */}

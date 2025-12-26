@@ -13,15 +13,25 @@ interface UserProfile {
   name: string;
   email: string;
   phone?: string;
-  plan: string;
-  tokensUsed: number;
-  tokensLimit: number;
+}
+
+interface UsageData {
+  tokensUsedThisMonth: number;
+  freeTokensLimit: number;
+  totalTokensUsed: number;
+  percentage: number;
+  planTier: string;
+  useCasesIncluded: number;
+  retentionYears: number;
+  daysUntilReset: number;
 }
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<UserProfile | null>(null);
+  const [usage, setUsage] = useState<UsageData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState<boolean | null>(null);
+  const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const { data: session } = useSession();
 
   useEffect(() => {
@@ -31,12 +41,23 @@ export default function ProfilePage() {
         name: session.user.name || 'Usuário',
         email: session.user.email || '',
         phone: '+55 11 99999-9999',
-        plan: 'Pro',
-        tokensUsed: 1250,
-        tokensLimit: 5000,
       });
     }
   }, [session]);
+
+  useEffect(() => {
+    const loadUsage = async () => {
+      try {
+        const res = await fetch('/api/user/usage', { cache: 'no-store' });
+        if (!res.ok) return;
+        const data = await res.json();
+        setUsage(data);
+      } catch (e) {
+        console.error('Failed to load usage', e);
+      }
+    };
+    loadUsage();
+  }, []);
 
   useEffect(() => {
     const load2fa = async () => {
@@ -60,7 +81,32 @@ export default function ProfilePage() {
     );
   }
 
-  const usagePct = Math.round((profile.tokensUsed / profile.tokensLimit) * 100);
+  const handleManageBilling = async () => {
+    setIsLoadingPortal(true);
+    try {
+      const res = await fetch('/api/billing/portal', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnUrl: window.location.href }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      }
+    } catch (e) {
+      console.error('Failed to open billing portal', e);
+    } finally {
+      setIsLoadingPortal(false);
+    }
+  };
+
+  const tierLabels: Record<string, string> = {
+    sandbox: 'Sandbox (Free)',
+    team: 'Team',
+    business: 'Business',
+    enterprise: 'Enterprise',
+    enterprise_plus: 'Enterprise Plus',
+  };
 
   return (
     <AppLayout>
@@ -130,7 +176,7 @@ export default function ProfilePage() {
                     <Label className="text-white/70">Plan</Label>
                     <div className="mt-2 inline-flex items-center gap-2 px-2 py-1 rounded border border-white/[0.12] text-xs text-white/80">
                       <span className="inline-block h-1.5 w-1.5 rounded-full bg-green-500" />
-                      {profile.plan}
+                      {usage ? tierLabels[usage.planTier] || usage.planTier : 'Loading...'}
                     </div>
                   </div>
                 </div>
@@ -178,22 +224,66 @@ export default function ProfilePage() {
               </div>
 
               <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
-                <h2 className="text-sm font-semibold text-white/80 mb-1">Plan</h2>
-                <p className="text-xs text-white/50 mb-4">Monthly AI usage</p>
-                <div className="space-y-3">
-                  <div className="flex justify-between text-xs text-white/60">
-                    <span>Used</span>
-                    <span className="text-white/80 font-medium">{profile.tokensUsed.toLocaleString()}</span>
+                <div className="flex items-center justify-between mb-3">
+                  <div>
+                    <h2 className="text-sm font-semibold text-white/80">Plan & Usage</h2>
+                    <p className="text-xs text-white/50">Current tier and monthly consumption</p>
                   </div>
-                  <div className="flex justify-between text-xs text-white/60">
-                    <span>Limit</span>
-                    <span className="text-white/80 font-medium">{profile.tokensLimit.toLocaleString()}</span>
-                  </div>
-                  <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
-                    <div className="h-2 bg-green-500" style={{ width: `${usagePct}%` }} />
-                  </div>
-                  <p className="text-[11px] text-white/50">{usagePct}% used</p>
                 </div>
+                {usage ? (
+                  <div className="space-y-4">
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/60">Tier</span>
+                      <span className="text-white/90 font-medium">{tierLabels[usage.planTier] || usage.planTier}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/60">Use Cases</span>
+                      <span className="text-white/90 font-medium">{usage.useCasesIncluded === 999999999 ? 'Unlimited' : usage.useCasesIncluded}</span>
+                    </div>
+                    <div className="flex justify-between text-xs">
+                      <span className="text-white/60">Retention</span>
+                      <span className="text-white/90 font-medium">{usage.retentionYears < 1 ? '30 days' : `${usage.retentionYears} years`}</span>
+                    </div>
+                    <div className="border-t border-white/[0.06] pt-3 space-y-2">
+                      <div className="flex justify-between text-xs text-white/60">
+                        <span>Tokens Used</span>
+                        <span className="text-white/80 font-medium">{usage.tokensUsedThisMonth.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-white/60">
+                        <span>Limit</span>
+                        <span className="text-white/80 font-medium">{usage.freeTokensLimit >= 999999999 ? 'Unlimited' : usage.freeTokensLimit.toLocaleString()}</span>
+                      </div>
+                      <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
+                        <div 
+                          className={`h-2 ${usage.percentage >= 90 ? 'bg-red-500' : usage.percentage >= 70 ? 'bg-yellow-500' : 'bg-green-500'}`}
+                          style={{ width: `${Math.min(usage.percentage, 100)}%` }} 
+                        />
+                      </div>
+                      <div className="flex justify-between text-[11px]">
+                        <span className="text-white/50">{usage.percentage}% used</span>
+                        <span className="text-white/50">Resets in {usage.daysUntilReset} days</span>
+                      </div>
+                    </div>
+                    {usage.planTier !== 'sandbox' && (
+                      <Button 
+                        onClick={handleManageBilling}
+                        disabled={isLoadingPortal}
+                        className="w-full bg-white/[0.06] hover:bg-white/[0.12] text-white text-sm"
+                      >
+                        {isLoadingPortal ? 'Loading...' : 'Manage Billing'}
+                      </Button>
+                    )}
+                    {usage.planTier === 'sandbox' && (
+                      <Link href="/planos" className="block">
+                        <Button className="w-full bg-white/[0.06] hover:bg-white/[0.12] text-white text-sm">
+                          Upgrade Plan
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-xs text-white/50">Loading...</div>
+                )}
               </div>
             </div>
           </div>
