@@ -394,16 +394,28 @@ model AuditLog {
 model EvidenceBundle {
   id              String    @id @default(cuid())
   tenantId        String    @map("tenant_id")
-  recordId        String    @map("record_id") // FK para DecisionRecord
+  recordId        String?   @map("record_id") // FK para DecisionRecord (opcional para bundles multi-record)
   
   // Identificação
   bundleId        String    @unique @map("bundle_id") // ID público do bundle
-  transactionId   String    @map("transaction_id") // Cópia do transactionId do record
+  transactionId   String?   @map("transaction_id") // Cópia do transactionId do record (opcional)
+  
+  // Status do bundle (para geração assíncrona)
+  status          String    @default("PENDING") // PENDING, PROCESSING, READY, FAILED
+  
+  // Compliance metadata
+  purpose         String?   // AUDIT, COMPLIANCE, LEGAL, INVESTIGATION, BACKUP, OTHER
+  description     String?   @db.Text // Descrição do propósito
+  recordCount     Int       @default(0) @map("record_count") // Número de records no bundle
+  
+  // Filtros aplicados
+  dateFrom        DateTime? @map("date_from") // Início do período
+  dateTo          DateTime? @map("date_to") // Fim do período
   
   // Armazenamento
   storageUrl      String?   @map("storage_url") // S3/R2 URL do ZIP
   storageKey      String?   @map("storage_key") // Chave no bucket
-  bundleHash      String    @map("bundle_hash") // SHA-256 do ZIP completo
+  bundleHash      String?   @map("bundle_hash") // SHA-256 do ZIP completo
   bundleSize      Int?      @map("bundle_size") // Tamanho em bytes
   
   // Metadata
@@ -413,20 +425,27 @@ model EvidenceBundle {
   
   // Retenção e compliance
   retentionUntil  DateTime? @map("retention_until") // Data de expiração (WORM/legal hold)
+  expiresAt       DateTime? @map("expires_at") // Data de expiração do download
   legalHold       Boolean   @default(false) @map("legal_hold")
+  
+  // Auditoria
+  createdBy       String    @map("created_by") // Email/ID do usuário que criou
   
   // Timestamps
   createdAt       DateTime  @default(now()) @map("created_at")
+  completedAt     DateTime? @map("completed_at") // Quando ficou READY
   accessedAt      DateTime? @map("accessed_at") // Última vez que foi baixado
   
   // Relações
   tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  record          DecisionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  record          DecisionRecord? @relation(fields: [recordId], references: [id], onDelete: Cascade)
   
   @@index([tenantId])
   @@index([recordId])
   @@index([transactionId])
   @@index([bundleId])
+  @@index([status])
+  @@index([createdBy])
   @@map("xase_evidence_bundles")
 }
 

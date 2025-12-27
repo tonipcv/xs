@@ -42,7 +42,7 @@ export default async function ApiKeysPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#1c1d20]">
+      <div className="min-h-screen bg-[#121316]">
         <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           <div className="flex items-center justify-between">
             <div className="space-y-2">

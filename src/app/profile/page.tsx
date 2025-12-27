@@ -74,7 +74,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <AppLayout>
-        <div className="min-h-screen bg-[#1c1d20] flex items-center justify-center">
+        <div className="min-h-screen bg-[#121316] flex items-center justify-center">
           <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
         </div>
       </AppLayout>
@@ -110,7 +110,7 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#1c1d20]">
+      <div className="min-h-screen bg-[#121316]">
         <div className="max-w-[1100px] mx-auto px-8 py-8 space-y-8">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">

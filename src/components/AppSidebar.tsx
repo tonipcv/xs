@@ -32,6 +32,7 @@ const menuItems = [
       { title: 'Trust Dashboard', url: '/xase/dashboard' },
       { title: 'Records', url: '/xase/records' },
       { title: 'Checkpoints', url: '/xase/checkpoints' },
+      { title: 'Evidence Bundles', url: '/xase/bundles' },
       { title: 'Audit Log', url: '/xase/audit' },
       { title: 'API Keys', url: '/xase/api-keys' },
       { title: 'Docs', url: '/xase/docs' },
@@ -62,8 +63,8 @@ export function AppSidebar() {
   };
 
   return (
-    <Sidebar variant="inset" className="border-r border-white/[0.08] bg-[#1c1d20] w-60">
-      <SidebarHeader className="border-none bg-[#1c1d20] h-14 flex items-center px-4">
+    <Sidebar variant="inset" className="border-r border-white/[0.08] bg-[#121316] w-60">
+      <SidebarHeader className="border-none bg-[#121316] h-14 flex items-center px-4">
         <BrandLogo />
       </SidebarHeader>
 
@@ -73,13 +74,16 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu className="space-y-0.5">
                 {group.items.map((item) => {
-                  const active = pathname ? (pathname === item.url || pathname.startsWith(item.url + '/')) : false;
+                  const isRoot = item.url === '/xase';
+                  const active = pathname
+                    ? (isRoot ? pathname === '/xase' : (pathname === item.url || pathname.startsWith(item.url + '/')))
+                    : false;
                   return (
                     <SidebarMenuItem key={item.title}>
                       <SidebarMenuButton
                         asChild
                         isActive={active}
-                        className="h-9 w-full justify-start px-3 rounded-md text-sm transition-colors data-[active=true]:bg-white/[0.06] data-[active=true]:text-white hover:bg-white/[0.04] text-white/70"
+                        className="h-8 w-full justify-start px-2 rounded-md text-[13px] transition-colors border border-transparent data-[active=true]:border-white/[0.12] data-[active=true]:bg-white/[0.03] data-[active=true]:text-white hover:bg-white/[0.02] text-white/60"
                       >
                         <Link href={item.url}>{item.title}</Link>
                       </SidebarMenuButton>
@@ -92,10 +96,10 @@ export function AppSidebar() {
         ))}
       </SidebarContent>
  
-      <SidebarFooter className="border-t border-white/[0.06] bg-[#1c1d20] p-2">
+      <SidebarFooter className="border-t border-white/[0.06] bg-[#121316] p-2">
         <div className="flex items-center justify-between px-2">
           <Link href="/profile" className="flex items-center gap-2 hover:opacity-90">
-            <div className="w-6 h-6 rounded-full bg-white/[0.08] text-white/80 flex items-center justify-center text-[10px] font-semibold">
+            <div className="w-6 h-6 rounded-md bg-[#2a2d33] bg-gradient-to-br from-white/10 to-white/[0.02] text-white/80 flex items-center justify-center text-[10px] font-semibold border border-white/10">
               {initial}
             </div>
             <div className="text-xs text-white/80">
@@ -116,9 +120,9 @@ interface AppLayoutProps {
 export function AppLayout({ children }: AppLayoutProps) {
   return (
     <SidebarProvider>
-      <div className="flex min-h-screen w-full bg-[#1c1d20]">
+      <div className="flex min-h-screen w-full bg-[#121316]">
         <AppSidebar />
-        <main className="flex-1 min-w-0 bg-[#1c1d20]">
+        <main className="flex-1 min-w-0 bg-[#121316]">
           {children}
         </main>
       </div>

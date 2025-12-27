@@ -3,9 +3,11 @@ import { prisma } from '@/lib/prisma'
 import { compare } from 'bcryptjs'
 import { sendEmail } from '@/lib/email'
 import { generateEmailOtpCode } from '@/lib/otp'
+import { logger, ensureRequestId } from '@/lib/observability/logger'
 
 export async function POST(req: Request) {
   try {
+    const requestId = ensureRequestId((req as any)?.headers?.get?.('x-request-id') || null)
     const { email, password } = await req.json()
     if (!email || !password) {
       return NextResponse.json({ error: 'Email e senha são obrigatórios' }, { status: 400 })
@@ -61,9 +63,10 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ next: 'otp' }, { status: 200 })
   } catch (e) {
-    console.error('request-otp error', e)
+    const requestId = ensureRequestId(null)
+    logger.error('auth.request_otp:error', { requestId }, e)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   } finally {
-    await prisma.$disconnect()
+    // Do not disconnect Prisma in request scope; Next.js hot-reload/dev will manage connections
   }
 }

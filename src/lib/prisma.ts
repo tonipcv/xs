@@ -10,18 +10,26 @@ declare global {
 
 const prisma = globalThis.prisma ?? prismaClientSingleton()
 
-// Immutable guard: EvidenceBundle is write-once (create-only)
-// Deny any attempts to update/delete/upsert
+// Immutable guard: EvidenceBundle identity fields are immutable
+// Allow worker to update status/completion fields, but block changes to identity
 prisma.$use(async (params, next) => {
-  if (
-    params.model === 'EvidenceBundle' &&
-    (params.action === 'update' ||
-      params.action === 'updateMany' ||
-      params.action === 'delete' ||
-      params.action === 'deleteMany' ||
-      params.action === 'upsert')
-  ) {
-    throw new Error('IMMUTABLE_RESOURCE: EvidenceBundle is immutable (create-only).')
+  if (params.model === 'EvidenceBundle') {
+    // Block all deletes
+    if (params.action === 'delete' || params.action === 'deleteMany') {
+      throw new Error('IMMUTABLE_RESOURCE: EvidenceBundle cannot be deleted.')
+    }
+    
+    // For updates, check which fields are being changed
+    if (params.action === 'update' || params.action === 'updateMany' || params.action === 'upsert') {
+      const data = params.args?.data || {}
+      const immutableFields = ['bundleId', 'tenantId', 'createdBy', 'purpose', 'description', 'dateFrom', 'dateTo', 'recordCount', 'expiresAt']
+      const attemptedChanges = Object.keys(data)
+      const forbiddenChanges = attemptedChanges.filter(f => immutableFields.includes(f))
+      
+      if (forbiddenChanges.length > 0) {
+        throw new Error(`IMMUTABLE_RESOURCE: Cannot modify immutable fields: ${forbiddenChanges.join(', ')}`)
+      }
+    }
   }
   return next(params)
 })

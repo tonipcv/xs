@@ -16,27 +16,27 @@ function Feature({ children }: { children: ReactNode }) {
 
 export default function PlansPage() {
   return (
-    <div className="min-h-screen bg-[#0f1115] text-white">
-      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-[#0f1115]/80 backdrop-blur">
-        <div className="max-w-6xl mx-auto px-6 h-14 flex items-center gap-3">
+    <div className="min-h-screen bg-[#121316] text-white">
+      <header className="sticky top-0 z-40 w-full bg-[#0b0c0f] shadow-md shadow-black/30">
+        <div className="max-w-[1400px] mx-auto px-8 h-14 flex items-center justify-center">
           <a href="/" className="flex items-center gap-2">
             <BrandLogo />
           </a>
         </div>
       </header>
-      <div className="max-w-6xl mx-auto px-6 py-16 space-y-12">
+      <div className="max-w-[1400px] mx-auto px-8 py-16 space-y-12">
         {/* Hero */}
         <div className="flex flex-col gap-4">
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          <h1 className="text-2xl md:text-3xl font-semibold tracking-tight text-white">
             Pricing designed for regulated AI systems
           </h1>
-          <p className="text-white/70 max-w-2xl">
+          <p className="text-white/50 max-w-2xl text-sm">
             Transparent annual pricing based on use cases — not decision volume. Used by compliance,
             risk and legal teams to prove human oversight over AI decisions.
           </p>
           <div className="flex gap-3">
-            <a href="/contact" className="px-4 py-2 bg-white/[0.08] hover:bg-white/[0.14] rounded-md text-sm">Talk to Sales</a>
-            <a href="/contact" className="px-4 py-2 border border-white/15 hover:bg-white/[0.06] rounded-md text-sm">Request Demo</a>
+            <a href="/contact" className="px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] rounded-md text-sm text-white/90">Talk to Sales</a>
+            <a href="/contact" className="px-4 py-2 border border-white/12 hover:bg-white/[0.06] rounded-md text-sm text-white/80">Request Demo</a>
           </div>
         </div>
 
@@ -46,8 +46,8 @@ export default function PlansPage() {
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6 flex flex-col gap-4">
             <div>
               <p className="text-xs text-white/50">Sandbox</p>
-              <h3 className="text-xl font-semibold">Free</h3>
-              <p className="text-white/60 text-sm mt-1">1 use case (test), Sandbox only</p>
+              <h3 className="text-xl font-semibold text-white">Free</h3>
+              <p className="text-white/50 text-sm mt-1">1 use case (test), Sandbox only</p>
             </div>
             <ul className="space-y-2">
               <Feature>Unlimited decisions (fair use)</Feature>
@@ -61,12 +61,12 @@ export default function PlansPage() {
           </div>
 
           {/* Team */}
-          <div className="bg-white/[0.03] border border-white/[0.12] rounded-lg p-6 flex flex-col gap-4">
+          <div className="bg-white/[0.02] border border-white/[0.08] rounded-lg p-6 flex flex-col gap-4">
             <div>
               <p className="text-xs text-white/50">Team</p>
-              <h3 className="text-xl font-semibold">On request</h3>
+              <h3 className="text-xl font-semibold text-white">On request</h3>
               <p className="text-white/50 text-xs">Annual contract • Pricing based on use cases</p>
-              <p className="text-white/60 text-sm mt-1">For early-stage startups</p>
+              <p className="text-white/60 text-xs mt-1">For early-stage startups</p>
             </div>
             <ul className="space-y-2">
               <Feature>2 use cases</Feature>
@@ -82,13 +82,13 @@ export default function PlansPage() {
           </div>
 
           {/* Business (highlight) */}
-          <div className="bg-white/[0.06] border border-white/[0.18] rounded-lg p-6 flex flex-col gap-4 relative">
-            <span className="absolute -top-2 right-3 text-[10px] px-2 py-0.5 rounded bg-white/[0.12] text-white/80 border border-white/[0.18]">Most popular</span>
+          <div className="bg-white/[0.04] border border-white/[0.12] rounded-lg p-6 flex flex-col gap-4 relative">
+            <span className="absolute -top-2 right-3 text-[10px] px-2 py-0.5 rounded bg-white/[0.10] text-white/80 border border-white/[0.16]">Most popular</span>
             <div>
               <p className="text-xs text-white/50">Business</p>
-              <h3 className="text-xl font-semibold">On request</h3>
+              <h3 className="text-xl font-semibold text-white">On request</h3>
               <p className="text-white/50 text-xs">Annual contract • Pricing based on use cases</p>
-              <p className="text-white/60 text-sm mt-1">For growing companies</p>
+              <p className="text-white/60 text-xs mt-1">For growing companies</p>
             </div>
             <ul className="space-y-2">
               <Feature>5 use cases</Feature>
@@ -107,9 +107,9 @@ export default function PlansPage() {
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6 flex flex-col gap-4">
             <div>
               <p className="text-xs text-white/50">Enterprise</p>
-              <h3 className="text-xl font-semibold">On request</h3>
+              <h3 className="text-xl font-semibold text-white">On request</h3>
               <p className="text-white/50 text-xs">Annual contract • Pricing based on use cases</p>
-              <p className="text-white/60 text-sm mt-1">For regulated enterprises</p>
+              <p className="text-white/60 text-xs mt-1">For regulated enterprises</p>
             </div>
             <ul className="space-y-2">
               <Feature>10+ use cases</Feature>
@@ -128,7 +128,7 @@ export default function PlansPage() {
 
         {/* All plans include */}
         <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-          <h3 className="text-sm font-medium text-white/80 mb-3">All plans include</h3>
+          <h3 className="text-sm font-medium text-white/70 mb-3">All plans include</h3>
           <ul className="grid grid-cols-1 md:grid-cols-2 gap-2">
             <Feature>Unlimited decisions (fair use)</Feature>
             <Feature>Unlimited human interventions</Feature>
@@ -141,17 +141,17 @@ export default function PlansPage() {
 
         {/* Expansion by Use Case */}
         <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-          <h3 className="text-sm font-medium text-white/80 mb-2">Need more use cases?</h3>
-          <p className="text-sm text-white/70">Add use cases as you scale — $500 to $8,000 / year per additional use case. No migration between plans required.</p>
+          <h3 className="text-sm font-medium text-white/70 mb-2">Need more use cases?</h3>
+          <p className="text-sm text-white/60">Add use cases as you scale — $500 to $8,000 / year per additional use case. No migration between plans required.</p>
         </div>
 
         {/* POV callout */}
         <div className="bg-white/[0.04] border border-white/[0.08] rounded-lg p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div>
-            <h3 className="text-sm font-medium text-white/90">Not ready for an annual commitment?</h3>
-            <p className="text-sm text-white/70">Start with a 30-day Proof of Value. $5,000 — fully credited if you proceed.</p>
+            <h3 className="text-sm font-medium text-white/80">Not ready for an annual commitment?</h3>
+            <p className="text-sm text-white/60">Start with a 30-day Proof of Value. $5,000 — fully credited if you proceed.</p>
           </div>
-          <a href="/contact" className="px-4 py-2 bg-white/[0.08] hover:bg-white/[0.14] rounded-md text-sm">Start a Proof of Value</a>
+          <a href="/contact" className="px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] rounded-md text-sm text-white/90">Start a Proof of Value</a>
         </div>
       </div>
     </div>

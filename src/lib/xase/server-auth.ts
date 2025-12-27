@@ -114,3 +114,21 @@ export async function getTenantId(): Promise<string | null> {
     return null;
   }
 }
+
+/**
+ * Retorna contexto do tenant e papel do usuário para RBAC
+ * userId: email do usuário logado
+ * tenantId: ID do tenant associado
+ * role: papel (OWNER|ADMIN|VIEWER) vindo da session; default OWNER
+ */
+export async function getTenantContext(): Promise<{
+  userId: string | null;
+  tenantId: string | null;
+  role: 'OWNER' | 'ADMIN' | 'VIEWER';
+}> {
+  const session = await getServerSession(authOptions);
+  const userEmail = session?.user?.email || null;
+  const tenantId = await getTenantId();
+  const role = ((session?.user as any)?.xaseRole as 'OWNER' | 'ADMIN' | 'VIEWER') || 'OWNER';
+  return { userId: userEmail, tenantId, role };
+}

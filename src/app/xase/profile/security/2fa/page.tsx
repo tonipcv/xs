@@ -50,8 +50,8 @@ export default function TwoFactorSetupPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0b0b0c] text-white p-6">
-      <div className="max-w-lg mx-auto bg-[#141416] rounded-xl border border-zinc-800 p-6 space-y-6">
+    <div className="min-h-screen bg-[#121316] text-white p-6">
+      <div className="max-w-lg mx-auto bg-[#15161a] rounded-xl border border-zinc-800 p-6 space-y-6">
         <h1 className="text-xl font-semibold">Segurança da conta</h1>
         <h2 className="text-lg">Autenticação em duas etapas (TOTP)</h2>
 
@@ -77,7 +77,7 @@ export default function TwoFactorSetupPage() {
                 value={token}
                 onChange={(e) => setToken(e.target.value)}
                 placeholder="000000"
-                className="w-full px-3 py-2 bg-[#1c1d20] border border-zinc-800 rounded outline-none"
+                className="w-full px-3 py-2 bg-[#121316] border border-zinc-800 rounded outline-none"
               />
             </div>
             <button

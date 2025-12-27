@@ -207,7 +207,53 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Resposta
+    // Fallback: se não houver decisões no período, tentar último snapshot agregado
+    if (totalDecisions === 0) {
+      const snapshot = await prisma.metricsSnapshot.findFirst({
+        where: { tenantId: tenantId! },
+        orderBy: { periodEnd: 'desc' },
+      })
+
+      if (snapshot) {
+        const metricsByModelSnapshot = snapshot.metricsByModel ? JSON.parse(snapshot.metricsByModel) : {}
+        const topOverrideReasonsSnapshot = snapshot.topOverrideReasons ? JSON.parse(snapshot.topOverrideReasons) : []
+
+        const responseFromSnapshot = {
+          period,
+          period_start: snapshot.periodStart.toISOString(),
+          period_end: snapshot.periodEnd.toISOString(),
+          filters: {
+            model_id: modelId || null,
+            policy_id: policyId || null,
+            decision_type: decisionType || null,
+          },
+          summary: {
+            total_decisions: snapshot.totalDecisions,
+            ai_decisions: snapshot.aiDecisions,
+            human_interventions: snapshot.humanInterventions,
+            override_count: snapshot.overrideCount,
+            approval_count: snapshot.approvalCount,
+            rejection_count: snapshot.rejectionCount,
+          },
+          rates: {
+            override_rate: snapshot.overrideRate ?? 0,
+            intervention_rate: snapshot.interventionRate ?? 0,
+            approval_rate: snapshot.approvalRate ?? 0,
+          },
+          performance: {
+            avg_confidence: snapshot.avgConfidence ?? null,
+            avg_processing_time_ms: snapshot.avgProcessingTimeMs ? Math.round(snapshot.avgProcessingTimeMs) : null,
+          },
+          decisions_by_source: [],
+          interventions_by_action: [],
+          top_override_reasons: topOverrideReasonsSnapshot,
+          metrics_by_model: metricsByModelSnapshot,
+        }
+        return NextResponse.json(responseFromSnapshot)
+      }
+    }
+
+    // Resposta padrão (com base nas decisões do período)
     const response = {
       period,
       period_start: startDate.toISOString(),

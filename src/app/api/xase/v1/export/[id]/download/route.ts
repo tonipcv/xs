@@ -433,6 +433,7 @@ main().catch(e=>{ console.error(e); process.exit(1) })
             format: 'zip',
             includesPdf: false,
             includesPayloads: includePayloads,
+            createdBy: auth.apiKeyId ? `api-key:${auth.apiKeyId}` : 'api-system',
           },
         })
 

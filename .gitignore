@@ -70,6 +70,7 @@ packages/**/build/
 evidence/
 evidence_tmp/
 evidence.zip
+extracted-bundle/
 
 # Misc tools
 .vercel/
@@ -77,3 +78,4 @@ evidence.zip
 .eslintcache
 stylelintcache
 .next/types/
+

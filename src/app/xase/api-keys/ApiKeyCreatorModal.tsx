@@ -14,7 +14,7 @@ export default function ApiKeyCreatorModal() {
           Create API Key
         </button>
       </DialogTrigger>
-      <DialogContent className="bg-[#1c1d20] border-white/[0.08]">
+      <DialogContent className="bg-[#121316] border-white/[0.08]">
         <DialogHeader>
           <DialogTitle className="text-white">Create API Key</DialogTitle>
           <DialogDescription>Generate a new API key for this tenant. The full key will be shown only once.</DialogDescription>

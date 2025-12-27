@@ -20,7 +20,7 @@ export default async function DocsPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#1c1d20]">
+      <div className="min-h-screen bg-[#121316]">
         <div className="max-w-[900px] mx-auto px-8 py-8 space-y-8">
           {/* Header */}
           <div className="space-y-2">
