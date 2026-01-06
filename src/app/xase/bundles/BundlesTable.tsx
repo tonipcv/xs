@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { TableFilters } from '@/components/TableFilters';
 import { TablePagination } from '@/components/TablePagination';
 import { arrayToCSV, downloadCSV, downloadJSON } from '@/lib/table-utils';
-import { ArrowUpDown, Download, FileArchive, Plus } from 'lucide-react';
 import { CreateBundleModal } from './CreateBundleModal';
 
 interface EvidenceBundle {
@@ -232,11 +231,9 @@ export function BundlesTable({
 
   const hasActiveFilters = !!(search || statusFilter);
 
-  const getStatusColor = (status: string) => {
-    if (status === 'READY') return 'bg-emerald-500/5 text-emerald-400/80 border-emerald-500/20';
-    if (status === 'FAILED') return 'bg-rose-500/5 text-rose-400/80 border-rose-500/20';
-    if (status === 'PROCESSING') return 'bg-blue-500/5 text-blue-400/80 border-blue-500/20';
-    return 'bg-amber-500/5 text-amber-400/80 border-amber-500/20';
+  const getStatusColor = (_status: string) => {
+    // Neutral style regardless of status for legal-friendly minimal UI
+    return 'bg-white/[0.02] text-white/70 border-white/[0.08]';
   };
 
   return (
@@ -268,14 +265,13 @@ export function BundlesTable({
         
         <button
           onClick={() => setShowCreateModal(true)}
-          className="ml-4 px-3 py-1.5 bg-white text-black text-xs font-medium rounded transition-colors flex items-center gap-2 hover:bg-white/90"
+          className="ml-4 px-3 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
         >
-          <Plus className="w-3.5 h-3.5" />
           Create Bundle
         </button>
       </div>
 
-      <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg overflow-hidden">
+      <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl overflow-hidden relative">
         {loading && (
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
             <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
@@ -285,44 +281,41 @@ export function BundlesTable({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+              <tr className="border-b border-white/[0.08]">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   Bundle ID
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('status')}
-                    className="flex items-center gap-1 hover:text-white/50"
+                    className="hover:text-white/80 underline underline-offset-2"
                   >
                     Status
-                    <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('recordCount')}
-                    className="flex items-center gap-1 hover:text-white/50"
+                    className="hover:text-white/80 underline underline-offset-2"
                   >
                     Records
-                    <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   Purpose
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   Created By
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('createdAt')}
-                    className="flex items-center gap-1 hover:text-white/50"
+                    className="hover:text-white/80 underline underline-offset-2"
                   >
                     Created
-                    <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   Actions
                 </th>
               </tr>
@@ -361,11 +354,7 @@ export function BundlesTable({
                           Manifest
                         </span>
                       )}
-                      {bundle.legalFormat === 'uk_insurance' && (
-                        <span className="text-xs px-2 py-1 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20" title="Court-Ready Format">
-                          ⚖️ Court-Ready
-                        </span>
-                      )}
+                      {/* Removed emoji and semantic color tag for neutral UI */}
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-white/80">
@@ -389,19 +378,18 @@ export function BundlesTable({
                     {bundle.status === 'READY' ? (
                       <button
                         onClick={() => handleDownload(bundle.bundleId)}
-                        className="inline-flex items-center px-3 py-1.5 rounded-md text-xs font-medium bg-white/[0.06] hover:bg-white/[0.12] text-white transition-colors gap-1.5"
+                        className="inline-flex items-center px-3 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
                       >
-                        <Download className="w-3.5 h-3.5" />
                         Download
                       </button>
                     ) : (
                       <div className="flex items-center gap-2">
-                        <span className="text-xs text-white/40">
+                        <span className="text-xs text-white/60">
                           {bundle.status === 'PROCESSING' ? 'Processing...' : 'Pending'}
                         </span>
                         <button
                           onClick={() => handleReprocess(bundle.bundleId)}
-                          className="inline-flex items-center px-2 py-1 rounded-md text-xs font-medium bg-white/[0.06] hover:bg-white/[0.12] text-white transition-colors"
+                          className="inline-flex items-center px-2 py-1 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
                           title="Reprocess bundle"
                         >
                           Reprocess

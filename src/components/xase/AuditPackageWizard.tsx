@@ -66,9 +66,8 @@ export function AuditPackageWizard({ transactionId, onComplete }: AuditPackageWi
       {/* Trigger Button */}
       <button
         onClick={() => setIsOpen(true)}
-        className="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-black rounded text-xs font-medium hover:bg-white/90 transition-colors"
+        className="inline-flex items-center px-3 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
       >
-        <Package className="w-3.5 h-3.5" />
         Create Audit Package
       </button>
 

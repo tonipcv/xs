@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { TableFilters } from '@/components/TableFilters';
 import { TablePagination } from '@/components/TablePagination';
 import { arrayToCSV, downloadCSV, downloadJSON } from '@/lib/table-utils';
-import { ArrowUpDown } from 'lucide-react';
 
 interface AuditLog {
   id: string;
@@ -227,7 +226,7 @@ export function AuditTable({
         hasActiveFilters={hasActiveFilters}
       />
 
-      <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg overflow-hidden">
+      <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl overflow-hidden">
         {loading && (
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
             <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
@@ -237,41 +236,38 @@ export function AuditTable({
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+              <tr className="border-b border-white/[0.08]">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('action')}
-                    className="flex items-center gap-1 hover:text-white/50"
+                    className="hover:text-white/80 underline underline-offset-2"
                   >
                     Action
-                    <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('resourceType')}
-                    className="flex items-center gap-1 hover:text-white/50"
+                    className="hover:text-white/80 underline underline-offset-2"
                   >
                     Resource Type
-                    <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   Resource ID
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">User</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">IP</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">User Agent</th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">User</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">IP</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">User Agent</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('timestamp')}
-                    className="flex items-center gap-1 hover:text-white/50"
+                    className="hover:text-white/80 underline underline-offset-2"
                   >
                     Timestamp
-                    <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider uppercase">
                   Status
                 </th>
               </tr>
@@ -285,22 +281,22 @@ export function AuditTable({
                   <td className="px-6 py-4 text-sm text-white/80">
                     {log.action}
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/60">
+                  <td className="px-6 py-4 text-sm text-white/70">
                     {log.resourceType}
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/50 font-mono">
+                  <td className="px-6 py-4 text-sm text-white/65 font-mono">
                     {log.resourceId.substring(0, 16)}...
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/50 font-mono">
+                  <td className="px-6 py-4 text-sm text-white/65 font-mono">
                     {log.userId || '—'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/50 font-mono">
+                  <td className="px-6 py-4 text-sm text-white/65 font-mono">
                     {log.ipAddress || '—'}
                   </td>
-                  <td className="px-6 py-4 text-xs text-white/50 truncate max-w-[220px]" title={log.userAgent || ''}>
+                  <td className="px-6 py-4 text-xs text-white/60 truncate max-w-[220px]" title={log.userAgent || ''}>
                     {log.userAgent || '—'}
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/60">
+                  <td className="px-6 py-4 text-sm text-white/70">
                     {new Date(log.timestamp).toLocaleString('en-US', {
                       day: '2-digit',
                       month: 'short',
@@ -309,13 +305,7 @@ export function AuditTable({
                     })}
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`text-[11px] px-2 py-0.5 rounded border font-medium ${
-                        log.status === 'SUCCESS'
-                          ? 'bg-emerald-500/5 text-emerald-400/80 border-emerald-500/20'
-                          : 'bg-rose-500/5 text-rose-400/80 border-rose-500/20'
-                      }`}
-                    >
+                    <span className={`text-[11px] px-2 py-0.5 rounded border font-medium bg-white/[0.02] text-white/70 border-white/[0.08]`}>
                       {log.status}
                     </span>
                   </td>

@@ -10,6 +10,10 @@ import { GlossaryTooltip } from '@/components/xase/Tooltip';
 import { ExplainerButton, EXPLAINERS } from '@/components/xase/ExplainerButton';
 import { CopyButton } from '@/components/xase/CopyButton';
 import { createHash } from 'crypto';
+import { CompliancePackages } from './CompliancePackages';
+import { Playfair_Display } from 'next/font/google';
+
+const heading = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] });
 
 export const metadata: Metadata = {
   title: 'Xase Evidence Ledger',
@@ -256,16 +260,16 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#121316]">
-        <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-6">
+      <div className="min-h-screen bg-[#0e0f12]">
+        <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           {/* Header com timestamp preciso */}
           <div className="flex flex-col gap-2">
             <div className="flex items-center justify-between">
-              <div className="space-y-1">
-                <h1 className="text-2xl font-semibold text-white tracking-tight">
+              <div className="space-y-1.5">
+                <h1 className={`${heading.className} text-3xl font-semibold text-white tracking-tight`}>
                   Evidence Ledger
                 </h1>
-                <p className="text-xs text-white/40 font-mono">
+                <p className="text-sm text-white/40 font-mono">
                   Data as of {nowISO}
                 </p>
               </div>
@@ -277,7 +281,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
 
           {/* Alert Banner (se houver alertas críticos) */}
           {activeAlerts.filter((a) => a.severity === 'CRITICAL').length > 0 && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
+            <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
               <div className="flex items-start gap-3">
                 <div className="w-2 h-2 rounded-full bg-red-500 mt-1.5"></div>
                 <div className="flex-1">
@@ -295,8 +299,8 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
           )}
 
           {/* Summary Card (linguagem natural) */}
-          <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
-            <p className="text-sm text-white/80">
+          <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-5">
+            <p className="text-sm text-white/80 leading-relaxed">
               {chainIntact
                 ? `Your evidence ledger is operational. ${totalRecords.toLocaleString()} decision${
                     totalRecords !== 1 ? 's' : ''
@@ -309,7 +313,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                 } pending review.`}
             </p>
             {lastRecord?.transactionId && (
-              <div className="mt-2 text-xs text-white/60">
+              <div className="mt-3 text-sm text-white/60">
                 Quick proof: Last verified decision{' '}
                 <a href={`/xase/records/${lastRecord.transactionId}`} className="underline hover:text-white/80">
                   {lastRecord.transactionId.slice(0, 8)}...
@@ -323,15 +327,15 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
           </div>
 
           {/* Integrity Hero Card */}
-          <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
+          <div className="bg-white/[0.02] border border-white/[0.06] rounded-xl p-6">
             <div className="space-y-4">
               <div className="flex items-start justify-between">
                 <div>
-                  <h2 className="text-lg font-semibold text-white">
+                  <h2 className={`${heading.className} text-xl font-semibold text-white tracking-tight`}>
                     <GlossaryTooltip term="Chain Integrity">Chain Integrity</GlossaryTooltip>
                     <ExplainerButton {...EXPLAINERS.chainIntegrity} />
                   </h2>
-                  <p className="text-xs text-white/50 mt-1">
+                  <p className="text-sm text-white/60 mt-1 leading-relaxed">
                     Cryptographic verification of decision ledger
                   </p>
                 </div>
@@ -345,23 +349,23 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-1">
-                  <p className="text-xs text-white/50">Total Records</p>
+                  <p className="text-sm text-white/70">Total Records</p>
                   <p className="text-2xl font-semibold text-white font-mono">
                     {totalRecords.toLocaleString()}
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-xs text-white/50">Last Verified</p>
-                  <p className="text-sm text-white/80 font-mono">
+                  <p className="text-sm text-white/70">Last Verified</p>
+                  <p className="text-sm text-white/80 font-mono leading-relaxed">
                     {lastVerifiedAt ? lastVerifiedAt : 'N/A'}
                   </p>
                 </div>
 
                 <div className="space-y-1">
-                  <p className="text-xs text-white/50">Latest Hash</p>
+                  <p className="text-sm text-white/70">Latest Hash</p>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-white/80 font-mono truncate">
+                    <p className="text-sm text-white/80 font-mono truncate leading-relaxed">
                       {lastRecord?.recordHash
                         ? `${lastRecord.recordHash.slice(0, 16)}...`
                         : 'N/A'}
@@ -375,12 +379,12 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
 
               {latestMerkleRoot && (
                 <div className="pt-3 border-t border-white/[0.06]">
-                  <p className="text-xs text-white/50 mb-1">
+                  <p className="text-sm text-white/60 mb-1 leading-relaxed">
                     <GlossaryTooltip term="Merkle Root">Merkle Root</GlossaryTooltip> (Latest Bundle)
                     <ExplainerButton {...EXPLAINERS.merkleRoot} />
                   </p>
                   <div className="flex items-center gap-2">
-                    <p className="text-sm text-white/80 font-mono truncate">
+                    <p className="text-sm text-white/80 font-mono truncate leading-relaxed">
                       {latestMerkleRoot.slice(0, 32)}...
                     </p>
                     <CopyButton text={latestMerkleRoot} title="Copy Merkle root" />
@@ -403,8 +407,8 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <h2 className="text-sm font-medium text-white/80">Human Oversight Log <ExplainerButton {...EXPLAINERS.humanOversight} /></h2>
-                <p className="text-xs text-white/40 font-mono mt-0.5">
+                <h2 className={`${heading.className} text-base font-semibold text-white/90`}>Human Oversight Log <ExplainerButton {...EXPLAINERS.humanOversight} /></h2>
+                <p className="text-sm text-white/50 font-mono mt-0.5">
                   Period: {startRangeISO} to {nowISO}
                 </p>
               </div>
@@ -424,9 +428,9 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                 ))}
               </div>
               {unreviewedHighImpact > 0 && (
-                <div className="flex items-center gap-2 px-3 py-1.5 bg-yellow-500/10 border border-yellow-500/30 rounded">
-                  <div className="w-1.5 h-1.5 rounded-full bg-yellow-500"></div>
-                  <span className="text-xs text-yellow-400">
+                <div className="flex items-center gap-2 px-3 py-1 bg-[#e1d5b7]/10 border border-[#e1d5b7]/30 rounded-full">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#e1d5b7]"></div>
+                  <span className="text-[11px] tracking-wide text-[#e1d5b7]">
                     {unreviewedHighImpact} unreviewed high-impact decision
                     {unreviewedHighImpact > 1 ? 's' : ''}
                   </span>
@@ -435,7 +439,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
             </div>
 
             <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-              <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+              <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-5">
                 <p className="text-xs font-medium text-white/80">Total Decisions</p>
                 <p className="text-2xl font-semibold text-white mt-1 font-mono">{totalDec}</p>
                 <p className="text-xs text-white/50">
@@ -443,7 +447,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                 </p>
               </div>
 
-              <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+              <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-5">
                 <p className="text-xs font-medium text-white/80">Override Rate <ExplainerButton {...EXPLAINERS.overrideRate} /></p>
                 <p className="text-2xl font-semibold text-white mt-1 font-mono">
                   {overrideRate.toFixed(2)}%
@@ -453,7 +457,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                 </p>
               </div>
 
-              <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+              <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-5">
                 <p className="text-xs font-medium text-white/80">Avg Confidence <ExplainerButton title="Model confidence" explanation="Confidence reflects the model's self-assessed probability for its decision. High confidence does not guarantee correctness and should be considered alongside human oversight and outcome reviews." /></p>
                 <p className="text-2xl font-semibold text-white mt-1 font-mono">
                   {avgConfidence != null ? (avgConfidence * 100).toFixed(2) + '%' : 'N/A'}
@@ -461,7 +465,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                 <p className="text-xs text-white/50">Model confidence</p>
               </div>
 
-              <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+              <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-5">
                 <p className="text-xs font-medium text-white/80">Approval Rate</p>
                 <p className="text-2xl font-semibold text-white mt-1 font-mono">
                   {approvalRate.toFixed(2)}%
@@ -473,7 +477,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
             </div>
 
             {/* Breakdown por tipo de intervenção */}
-            <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
               <p className="text-sm font-medium text-white/80 mb-3">Intervention Breakdown</p>
               <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {['REVIEW_REQUESTED', 'APPROVED', 'REJECTED', 'OVERRIDE', 'ESCALATED'].map(
@@ -495,16 +499,16 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
           {/* Audit Trail Preview */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-white/80">Audit Trail <ExplainerButton {...EXPLAINERS.auditTrail} /></h2>
+              <h2 className={`${heading.className} text-base font-semibold text-white/90`}>Audit Trail <ExplainerButton {...EXPLAINERS.auditTrail} /></h2>
               <a
                 href="/xase/audit"
-                className="text-xs text-white/60 hover:text-white/80 transition-colors"
+                className="text-sm text-white/60 hover:text-white/80 transition-colors"
               >
                 View full trail →
               </a>
             </div>
 
-            <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg overflow-hidden">
+            <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl overflow-hidden">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead className="bg-white/[0.02] border-b border-white/[0.04]">
@@ -582,54 +586,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
           </div>
 
           {/* Compliance Packages */}
-          <div className="space-y-3">
-            <h2 className="text-sm font-medium text-white/80">Compliance Packages</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-              <a
-                href="/xase/bundles?template=eu_ai_act"
-                className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-lg hover:bg-white/[0.04] hover:border-white/[0.08] transition-all"
-              >
-                <p className="text-sm font-medium text-white">EU AI Act High-Risk Report</p>
-                <div className="text-xs text-white/60 space-y-1">
-                  <p>Full decision trail + human oversight evidence.</p>
-                  <p className="text-white/50">Includes: Chain integrity proof, Merkle root certificate, decision hashes, timestamp attestation, intervention logs.</p>
-                </div>
-              </a>
-
-              <a
-                href="/xase/bundles?template=reconstruction"
-                className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-lg hover:bg-white/[0.04] hover:border-white/[0.08] transition-all"
-              >
-                <p className="text-sm font-medium text-white">Decision Reconstruction Package</p>
-                <div className="text-xs text-white/60 space-y-1">
-                  <p>Complete reproducibility evidence bundle.</p>
-                  <p className="text-white/50">Includes: Input/output hashes, model/policy versions, environment snapshots, feature vectors, verification scripts.</p>
-                </div>
-              </a>
-
-              <a
-                href="/xase/bundles?template=oversight"
-                className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-lg hover:bg-white/[0.04] hover:border-white/[0.08] transition-all"
-              >
-                <p className="text-sm font-medium text-white">Human Oversight Evidence</p>
-                <div className="text-xs text-white/60 space-y-1">
-                  <p>Intervention logs + justifications.</p>
-                  <p className="text-white/50">Includes: Intervention breakdown (approve/reject/override/escalate), reasons, actor metadata, timestamps.</p>
-                </div>
-              </a>
-
-              <a
-                href="/xase/audit"
-                className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-lg hover:bg-white/[0.04] hover:border-white/[0.08] transition-all"
-              >
-                <p className="text-sm font-medium text-white">Full Audit Trail Export</p>
-                <div className="text-xs text-white/60 space-y-1">
-                  <p>Complete immutable action log.</p>
-                  <p className="text-white/50">Includes: Administrative actions, resource targets, immutable timestamps, event identifiers, status outcomes.</p>
-                </div>
-              </a>
-            </div>
-          </div>
+          <CompliancePackages tenantId={tenantId!} />
 
           {/* Insurance Metrics + Top Override Reasons (compact) */}
           {(totalClaims > 0 || topOverride.length > 0) && (
@@ -638,7 +595,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
               {totalClaims > 0 && (
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-medium text-white/80">Insurance Claims ({lookbackDays}d)</h3>
+                    <h3 className={`${heading.className} text-base font-semibold text-white/90`}>Insurance Claims ({lookbackDays}d)</h3>
                     <div className="hidden md:flex items-center gap-1">
                       {([7, 30, 90] as const).map((r) => (
                         <a
@@ -656,13 +613,13 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                     </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
                       <p className="text-xs font-medium text-white/80">Total Claims</p>
                       <p className="text-xl font-semibold text-white mt-1 font-mono">
                         {totalClaims}
                       </p>
                     </div>
-                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
                       <p className="text-xs font-medium text-white/80">Approval Rate</p>
                       <p className="text-xl font-semibold text-white mt-1 font-mono">
                         {insuranceApprovalRate.toFixed(2)}%
@@ -671,7 +628,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                         {insuranceApprovals} approved
                       </p>
                     </div>
-                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
                       <p className="text-xs font-medium text-white/80">Adverse Action Rate</p>
                       <p className="text-xl font-semibold text-white mt-1 font-mono">
                         {adverseActionRate.toFixed(2)}%
@@ -680,7 +637,7 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                         {adverseActionCount} adverse actions
                       </p>
                     </div>
-                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
                       <p className="text-xs font-medium text-white/80">Avg Claim Amount</p>
                       <p className="text-xl font-semibold text-white mt-1 font-mono">
                         {avgClaimAmount
@@ -691,12 +648,12 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
                           : 'N/A'}
                       </p>
                     </div>
-                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+                    <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
                       <p className="text-xs font-medium text-white/80">High Impact</p>
                       <p className="text-xl font-semibold text-white mt-1 font-mono">
                         {highImpactCount}
                       </p>
-                      <p className="text-[11px] text-yellow-400">Requires review</p>
+                      <p className="text-[11px] text-white/60">Requires review</p>
                     </div>
                   </div>
                 </div>
@@ -705,8 +662,8 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
               {/* Top Override Reasons */}
               {topOverride.length > 0 && (
                 <div className="space-y-3">
-                  <h3 className="text-sm font-medium text-white/80">Top Override Reasons (24h)</h3>
-                  <div className="bg-white/[0.02] border border-white/[0.04] rounded-lg p-4">
+                  <h3 className={`${heading.className} text-base font-semibold text-white/90`}>Top Override Reasons (24h)</h3>
+                  <div className="bg-white/[0.02] border border-white/[0.04] rounded-xl p-4">
                     <div className="space-y-2">
                       {topOverride.map(([reason, count]) => (
                         <div className="flex items-center justify-between" key={reason}>
@@ -724,38 +681,38 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
           {/* System Status Expandido */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-medium text-white/80">System Status</h2>
+              <h2 className={`${heading.className} text-base font-semibold text-white/90`}>System Status</h2>
               <div className="flex items-center gap-2">
                 <div className="w-1.5 h-1.5 rounded-full bg-white/60"></div>
-                <span className="text-xs text-white/50">Operational</span>
+                <span className="text-xs text-white/60">Operational</span>
               </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-              <div className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-lg">
-                <span className="text-xs text-white/50">Evidence Capture</span>
+              <div className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+                <span className="text-xs text-white/80">Evidence Capture</span>
                 <span className="text-sm text-white font-medium">{systemStatus.evidenceCapture}</span>
                 {totalRecords > 0 && lastRecord && (
-                  <span className="text-[10px] text-white/40 font-mono">
+                  <span className="text-[10px] text-white/60 font-mono">
                     Last: {lastEventAgo} · {new Date(lastRecord.timestamp).toISOString()}
                   </span>
                 )}
               </div>
 
-              <div className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-lg">
-                <span className="text-xs text-white/50">Ledger Sync</span>
+              <div className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+                <span className="text-xs text-white/80">Ledger Sync</span>
                 <span className="text-sm text-white font-medium">{systemStatus.ledgerSync}</span>
-                <span className="text-[10px] text-white/40">{totalRecords} records</span>
+                <span className="text-[10px] text-white/60">{totalRecords} records</span>
               </div>
 
-              <div className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-lg">
-                <span className="text-xs text-white/50">Export Service</span>
+              <div className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+                <span className="text-xs text-white/80">Export Service</span>
                 <span className="text-sm text-white font-medium">{systemStatus.exportService}</span>
-                <span className="text-[10px] text-white/40">{totalExports} bundles ready</span>
+                <span className="text-[10px] text-white/60">{totalExports} bundles ready</span>
               </div>
 
-              <div className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-lg">
-                <span className="text-xs text-white/50">API</span>
+              <div className="flex flex-col gap-2 p-4 bg-white/[0.02] border border-white/[0.04] rounded-xl">
+                <span className="text-xs text-white/80">API</span>
                 <span className="text-sm text-white font-medium">{systemStatus.apiStatus}</span>
                 <a href="/xase/api-keys" className="text-[10px] text-white/60 hover:text-white/80">
                   Manage keys →
@@ -767,12 +724,12 @@ export default async function XaseDashboard({ searchParams }: { searchParams?: P
           {/* Active Alerts (se houver) */}
           {activeAlerts.length > 0 && (
             <div className="space-y-3">
-              <h2 className="text-sm font-medium text-white/80">Active Alerts</h2>
+              <h2 className={`${heading.className} text-base font-semibold text-white/90`}>Active Alerts</h2>
               <div className="space-y-2">
                 {activeAlerts.map((alert) => (
                   <div
                     key={alert.id}
-                    className={`flex items-start gap-3 p-4 rounded-lg border ${
+                    className={`flex items-start gap-3 p-4 rounded-xl border ${
                       alert.severity === 'CRITICAL'
                         ? 'bg-red-500/10 border-red-500/30'
                         : alert.severity === 'ERROR'

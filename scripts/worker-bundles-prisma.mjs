@@ -22,6 +22,7 @@
 
 import { PrismaClient } from '@prisma/client'
 import JSZip from 'jszip'
+import { PDFDocument, StandardFonts, rgb } from 'pdf-lib'
 import crypto from 'crypto'
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3'
 
@@ -175,7 +176,7 @@ async function processGenerateBundle(prisma, job, opts = {}) {
   } catch (e) {
     throw new Error(`Invalid payload JSON: ${e?.message || e}`)
   }
-  const { bundleId, tenantId, dateFilter } = payload || {}
+  const { bundleId, tenantId, dateFilter, packageTitle } = payload || {}
   if (!bundleId || !tenantId) throw new Error('Missing bundleId or tenantId in payload')
 
   // Idempotency check
@@ -206,6 +207,18 @@ async function processGenerateBundle(prisma, job, opts = {}) {
       : {}),
   }
   const records = await prisma.decisionRecord.findMany({ where, orderBy: { timestamp: 'asc' } })
+
+  // Human oversight stats (group by action) for all records in this bundle
+  let oversight = {}
+  try {
+    const recordIds = records.map(r => r.id)
+    if (recordIds.length > 0) {
+      const groups = await prisma.humanIntervention.groupBy({ by: ['action'], where: { recordId: { in: recordIds } }, _count: true })
+      groups.forEach(g => { oversight[g.action] = g._count })
+    }
+  } catch (e) {
+    log('warn', 'worker.oversight_stats_failed', { error: (e?.message||String(e)).slice(0,200) })
+  }
 
   // Build ZIP
   const zip = new JSZip()
@@ -352,6 +365,72 @@ All access to this bundle is logged in the XASE audit trail.
 Contact your compliance officer for audit logs.
 `
   zip.file('README.md', readmeContent)
+
+  // Generate PDF Legal Report (embedded + uploaded)
+  try {
+    const doc = await PDFDocument.create()
+    const font = await doc.embedFont(StandardFonts.Helvetica)
+    const fontBold = await doc.embedFont(StandardFonts.HelveticaBold)
+    const page = doc.addPage([595.28, 841.89])
+    const margin = 48
+    let y = 790
+    const h = (t) => { page.drawText(t, { x: margin, y, size: 18, font: fontBold, color: rgb(0.1,0.1,0.1) }); y -= 28; }
+    const kv = (k,v) => { page.drawText(k, { x: margin, y, size: 10, font: fontBold, color: rgb(0.25,0.25,0.25) }); page.drawText(String(v ?? 'N/A'), { x: margin+180, y, size: 10, font, color: rgb(0.05,0.05,0.05) }); y -= 16 }
+
+    const reportTitle = packageTitle || bundle.description || 'Compliance Evidence Report'
+    h(reportTitle)
+    kv('Bundle ID', bundle.bundleId)
+    kv('Tenant', bundle.tenantId)
+    kv('Purpose', bundle.purpose || 'N/A')
+    kv('Description', bundle.description || 'N/A')
+    kv('Created At (UTC)', bundle.createdAt.toISOString())
+    kv('Record Count', records.length)
+    y -= 10
+    h('Verification')
+    page.drawText('Use verify.js to validate hashes and signatures. See README.md inside the bundle.', { x: margin, y, size: 10, font, color: rgb(0.05,0.05,0.05), maxWidth: 595.28 - margin*2, lineHeight: 12 })
+    y -= 28
+    h('Cryptographic Hashes')
+    kv('records.json (SHA-256)', recordsHash)
+    if (metadata && metadata.generatedAt) kv('metadata.generatedAt', metadata.generatedAt)
+    y -= 10
+    h('Signature (KMS)')
+    if (kmsSig) {
+      kv('Algorithm', kmsSig.algorithm)
+      kv('Key ID', kmsSig.keyId)
+      kv('Signed At', kmsSig.signedAt)
+    } else {
+      kv('Status', 'Hash-only verification (no KMS signature)')
+    }
+    y -= 10
+    h('Human Oversight Summary')
+    const overs = {
+      APPROVED: oversight.APPROVED || 0,
+      REJECTED: oversight.REJECTED || 0,
+      OVERRIDE: oversight.OVERRIDE || 0,
+      ESCALATED: oversight.ESCALATED || 0,
+      REVIEW_REQUESTED: oversight.REVIEW_REQUESTED || 0,
+    }
+    Object.entries(overs).forEach(([k,v]) => kv(k, v))
+
+    const pdfBytes = await doc.save()
+    // Embed into ZIP
+    zip.file('reports/report.pdf', pdfBytes)
+
+    // Upload PDF separately if storage configured
+    const storageCfg = getStorageConfig()
+    const s3Client = getS3Client(storageCfg)
+    let pdfUrl = null
+    if (s3Client) {
+      const pdfKey = `pdf/${bundle.tenantId}/${bundle.bundleId}/report.pdf`
+      await s3Client.send(new PutObjectCommand({ Bucket: storageCfg.bucket, Key: pdfKey, Body: Buffer.from(pdfBytes), ContentType: 'application/pdf' }))
+      pdfUrl = `${storageCfg.endpoint}/${storageCfg.bucket}/${pdfKey}`
+    }
+
+    // Mark includesPdf and url (if available)
+    await prisma.evidenceBundle.update({ where: { id: bundle.id }, data: { includesPdf: true, pdfReportUrl: pdfUrl } })
+  } catch (e) {
+    log('warn', 'worker.pdf_generate_failed', { error: (e?.message||String(e)).slice(0,200) })
+  }
 
   const zipBuffer = await zip.generateAsync({ type: 'nodebuffer', compression: 'DEFLATE', compressionOptions: { level: 9 } })
 

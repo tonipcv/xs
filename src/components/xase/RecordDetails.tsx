@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Download, FileText, Shield, Clock, Hash, CheckCircle2, AlertCircle, Copy, Link as LinkIcon, RotateCcw, UserCheck, Plus } from 'lucide-react';
+// Icons removed for a sober, document-friendly UI
 import { InterventionDialog } from './InterventionDialog';
 import { InsuranceDetailsCard } from './InsuranceDetailsCard';
 import { SnapshotsCard } from './SnapshotsCard';
@@ -10,6 +10,9 @@ import { DecisionTimeline } from './DecisionTimeline';
 import { ProofIntegrityPanel } from './ProofIntegrityPanel';
 import { AuditPackageWizard } from './AuditPackageWizard';
 import { RegulatorViewToggle } from './RegulatorViewToggle';
+import { Playfair_Display } from 'next/font/google';
+
+const heading = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] });
 
 interface RecordDetailsProps {
   record: any;
@@ -181,11 +184,11 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
   };
 
   return (
-    <div className="min-h-screen bg-[#121316]">
-      <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
+    <div className="min-h-screen bg-[#0e0f12] text-white">
+      <div className="max-w-[1400px] w-full mx-auto px-6 py-8 space-y-8">
         {toast && (
           <div
-            className={`fixed top-6 right-6 z-50 px-4 py-2 rounded-md text-sm shadow-md border bg-white/10 text-white border-white/20`}
+            className={`fixed top-6 right-6 z-50 px-4 py-2 rounded-md text-sm shadow-md border ${regulatorView ? 'bg-black/5 text-gray-900 border-gray-200' : 'bg-white/10 text-white border-white/20'}`}
           >
             {toast.message}
           </div>
@@ -196,16 +199,16 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
             <div className="flex items-center gap-3">
               <a
                 href="/xase/records"
-                className="text-white/50 hover:text-white transition-colors text-sm"
+                className={`text-white/50 hover:text-white transition-colors text-sm`}
               >
-                ← {regulatorView ? 'Decision Records' : 'Decision Risk Inbox'}
+                {regulatorView ? 'Decision Records' : 'Decision Risk Inbox'}
               </a>
-              <span className="text-white/30">/</span>
-              <h1 className="text-xl font-semibold text-white tracking-tight">
+              <span className={'text-white/30'}>/</span>
+              <h1 className={`${heading.className} text-3xl font-semibold tracking-tight text-white`}>
                 {regulatorView ? 'Decision Record' : 'Decision Investigation'}
               </h1>
             </div>
-            <p className="text-sm text-white/50 font-mono">
+            <p className={`text-sm font-mono text-white/50`}>
               {record.transactionId}
             </p>
           </div>
@@ -251,8 +254,7 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
         {checkpoint && (
           <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6 space-y-4">
             <div className="flex items-center gap-3">
-              <Shield className="w-5 h-5 text-white/50" />
-              <h2 className="text-base font-semibold text-white">Nearest Checkpoint</h2>
+              <h2 className={`${heading.className} text-base font-semibold text-white`}>Nearest Checkpoint</h2>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -292,34 +294,31 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
           <div className="flex justify-end">
             <button
               onClick={() => setInterventionDialogOpen(true)}
-              className="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-black rounded text-xs font-medium hover:bg-white/90 transition-colors"
+              className="inline-flex items-center px-3 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
             >
-              <Plus className="w-3.5 h-3.5" />
               Add Human Intervention
             </button>
           </div>
         )}
 
         {/* Evidence Bundles History */}
-        <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg overflow-hidden">
-          <div className="px-6 py-4 border-b border-white/[0.06] flex items-center justify-between">
+        <div className={`bg-white/[0.02] border border-white/[0.06] rounded-xl overflow-hidden`}>
+          <div className={`px-6 py-4 border-b border-white/[0.06] flex items-center justify-between`}>
             <div className="flex items-center gap-3">
-              <Clock className="w-4 h-4 text-white/40" />
-              <h2 className="text-sm font-medium text-white/90">Evidence Bundles</h2>
-              <span className="text-xs text-white/30">{bundles.length}</span>
+              <h2 className={`${heading.className} text-base font-semibold text-white/90`}>Evidence Bundles</h2>
+              <span className={`text-xs text-white/30`}>{bundles.length}</span>
             </div>
             {bundles.length > 0 && (
               <div className="flex items-center gap-2">
                 <button
                   onClick={() => handleDownload(true)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
+                  className="inline-flex items-center px-2.5 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
                 >
-                  <Download className="w-3.5 h-3.5" />
                   Generate bundle
                 </button>
                 <button
                   onClick={handleGeneratePdf}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
+                  className="inline-flex items-center px-2.5 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
                 >
                   Generate PDF
                 </button>
@@ -331,37 +330,37 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/[0.06]">
-                    <th className="text-left px-6 py-3 text-xs font-medium text-white/30 uppercase tracking-wider">Bundle ID</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-white/30 uppercase tracking-wider">Type</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-white/30 uppercase tracking-wider">Size</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-white/30 uppercase tracking-wider">Hash</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-white/30 uppercase tracking-wider">Created</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-white/30 uppercase tracking-wider">Last Access</th>
-                    <th className="text-left px-6 py-3 text-xs font-medium text-white/30 uppercase tracking-wider">Actions</th>
+                  <tr className={'border-b border-white/[0.06]'}>
+                    <th className={`text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-white/30`}>Bundle ID</th>
+                    <th className={`text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-white/30`}>Type</th>
+                    <th className={`text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-white/30`}>Size</th>
+                    <th className={`text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-white/30`}>Hash</th>
+                    <th className={`text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-white/30`}>Created</th>
+                    <th className={`text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-white/30`}>Last Access</th>
+                    <th className={`text-left px-6 py-3 text-xs font-medium uppercase tracking-wider text-white/30`}>Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {bundles.map((bundle) => (
                     <tr
                       key={bundle.id}
-                      className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors"
+                      className={`border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors`}
                     >
-                      <td className="px-6 py-4 text-xs text-white/80 font-mono">
+                      <td className={`px-6 py-4 text-xs font-mono text-white/80`}>
                         {bundle.bundleId.substring(0, 20)}...
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-[11px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/50 border-white/[0.06]">
+                        <span className={`text-[11px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/50 border-white/[0.06]`}>
                           {bundle.includesPayloads ? 'Full' : 'Hashes'}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-sm text-white/60">
+                      <td className={`px-6 py-4 text-sm text-white/60`}>
                         {bundle.bundleSize ? (bundle.bundleSize / 1024).toFixed(1) + ' KB' : 'N/A'}
                       </td>
-                      <td className="px-6 py-4 text-xs text-white/50 font-mono">
+                      <td className={`px-6 py-4 text-xs font-mono text-white/50`}>
                         {bundle.bundleHash ? `${bundle.bundleHash.substring(0, 16)}...` : 'N/A'}
                       </td>
-                      <td className="px-6 py-4 text-sm text-white/60">
+                      <td className={`px-6 py-4 text-sm text-white/60`}>
                         {bundle.createdAt
                           ? new Date(bundle.createdAt).toLocaleString('en-US', {
                               day: '2-digit',
@@ -371,7 +370,7 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
                             })
                           : 'N/A'}
                       </td>
-                      <td className="px-6 py-4 text-sm text-white/60">
+                      <td className={`px-6 py-4 text-sm text-white/60`}>
                         {bundle.lastAccess
                           ? new Date(bundle.lastAccess).toLocaleString('en-US', {
                               day: '2-digit',
@@ -382,32 +381,29 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
                           : 'Never'}
                       </td>
                       <td className="px-6 py-3">
-                        <div className="flex items-center gap-2">
-                          <button
-                            title="Re-download"
-                            className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/60 border-white/[0.06] hover:bg-white/[0.06]"
-                            onClick={() => handleRowRedownload(!!bundle.includesPayloads)}
-                          >
-                            <RotateCcw className="w-3.5 h-3.5" />
-                            Re-download
-                          </button>
-                          <button
-                            title="Copy hash"
-                            className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/60 border-white/[0.06] hover:bg-white/[0.06]"
-                            onClick={() => copyToClipboard(bundle.bundleHash, 'Hash')}
-                          >
-                            <Copy className="w-3.5 h-3.5" />
-                            Copy hash
-                          </button>
-                          <button
-                            title="Copy presigned URL"
-                            className="inline-flex items-center gap-1 text-[11px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/60 border-white/[0.06] hover:bg-white/[0.06]"
-                            onClick={() => handleCopyPresignedUrl(!!bundle.includesPayloads)}
-                          >
-                            <LinkIcon className="w-3.5 h-3.5" />
-                            Copy URL
-                          </button>
-                        </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              title="Re-download"
+                              className="inline-flex items-center text-[11px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/60 border-white/[0.06] hover:bg-white/[0.06]"
+                              onClick={() => handleRowRedownload(!!bundle.includesPayloads)}
+                            >
+                              Re-download
+                            </button>
+                            <button
+                              title="Copy hash"
+                              className="inline-flex items-center text-[11px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/60 border-white/[0.06] hover:bg-white/[0.06]"
+                              onClick={() => copyToClipboard(bundle.bundleHash, 'Hash')}
+                            >
+                              Copy hash
+                            </button>
+                            <button
+                              title="Copy presigned URL"
+                              className="inline-flex items-center text-[11px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/60 border-white/[0.06] hover:bg-white/[0.06]"
+                              onClick={() => handleCopyPresignedUrl(!!bundle.includesPayloads)}
+                            >
+                              Copy URL
+                            </button>
+                          </div>
                       </td>
                     </tr>
                   ))}
@@ -416,19 +412,18 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
             </div>
           ) : (
             <div className="px-6 py-12 text-center space-y-3">
-              <p className="text-white/60 text-sm">No evidence bundle generated yet.</p>
-              <p className="text-white/30 text-xs">Click below to generate the first bundle.</p>
+              <p className={`text-white/60 text-sm`}>No evidence bundle generated yet.</p>
+              <p className={`text-white/30 text-xs`}>Click below to generate the first bundle.</p>
               <div>
                 <button
                   onClick={() => handleDownload(true)}
-                  className="inline-flex items-center gap-1.5 px-2.5 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
+                  className="inline-flex items-center px-2.5 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
                 >
-                  <Download className="w-3.5 h-3.5" />
                   Generate bundle
                 </button>
                 <button
                   onClick={handleGeneratePdf}
-                  className="ml-2 inline-flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white rounded text-xs font-medium hover:bg-white/15 transition-colors"
+                  className="ml-2 inline-flex items-center px-3 py-1.5 bg-white/10 text-white rounded text-xs font-medium hover:bg-white/15 transition-colors"
                 >
                   Generate PDF
                 </button>
@@ -445,6 +440,42 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
           onSuccess={handleInterventionSuccess}
         />
       </div>
+
+      {/* Regulator View Modal (document-like) */}
+      {regulatorView && (
+        <div className="fixed inset-0 z-[60] bg-black/60">
+          <div className="absolute inset-0 overflow-auto">
+            <div className="w-full max-w-5xl mx-auto my-8 bg-white text-gray-900 border border-gray-200 rounded-xl p-6 space-y-6">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h1 className={`${heading.className} text-3xl font-semibold tracking-tight text-gray-900`}>Decision Record</h1>
+                  <p className="text-sm text-gray-600 font-mono mt-1">{record.transactionId}</p>
+                </div>
+                <button
+                  onClick={() => setRegulatorView(false)}
+                  className="text-sm text-gray-500 hover:text-gray-900"
+                >
+                  Close
+                </button>
+              </div>
+
+              {/* Read-only, document-like cards */}
+              <DecisionSummaryCard record={record} insuranceDecision={record.insuranceDecision} docMode />
+              <ProofIntegrityPanel record={record} enableTamperDemo={false} docMode />
+              {record.insuranceDecision && (
+                <InsuranceDetailsCard insuranceDecision={record.insuranceDecision} docMode />
+              )}
+              {snapshots.length > 0 && (
+                <SnapshotsCard snapshots={snapshots} docMode />
+              )}
+
+              <div className="text-[11px] text-gray-500 border-t border-gray-200 pt-4">
+                Printed artifact generated from immutable record. Formatting optimized for reading and printing.
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
       {bundleModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
           <div className="w-full max-w-md bg-[#0f1114] border border-white/[0.08] rounded-lg p-5 space-y-4">

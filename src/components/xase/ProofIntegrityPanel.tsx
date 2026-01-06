@@ -1,15 +1,18 @@
 'use client';
 
 import { useState } from 'react';
-import { Shield, CheckCircle2, AlertTriangle, RefreshCw, Copy, Eye, EyeOff, Zap } from 'lucide-react';
+import { Playfair_Display } from 'next/font/google';
+
+const heading = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] });
 
 interface ProofIntegrityPanelProps {
   record: any;
   onVerify?: () => Promise<{ valid: boolean; message: string }>;
   enableTamperDemo?: boolean;
+  docMode?: boolean;
 }
 
-export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true }: ProofIntegrityPanelProps) {
+export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true, docMode = false }: ProofIntegrityPanelProps) {
   const [verifying, setVerifying] = useState(false);
   const [verificationResult, setVerificationResult] = useState<{
     valid: boolean;
@@ -77,25 +80,25 @@ export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true 
     }
   };
 
+  const isDoc = !!docMode;
+
   const getStatusBadge = () => {
     if (verificationResult) {
       if (verificationResult.valid) {
         return (
-          <div className="flex items-center gap-2 px-3 py-2 bg-emerald-500/5 border border-emerald-500/20 rounded">
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+          <div className={`flex items-center gap-2 px-3 py-2 rounded border ${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.08]'}`}>
             <div>
-              <p className="text-xs font-medium text-emerald-400">Valid</p>
-              <p className="text-[10px] text-emerald-400/60">Integrity verified</p>
+              <p className={`text-xs font-medium ${isDoc ? 'text-gray-800' : 'text-white/70'}`}>Valid</p>
+              <p className={`text-[10px] ${isDoc ? 'text-gray-600' : 'text-white/40'}`}>Integrity verified</p>
             </div>
           </div>
         );
       } else {
         return (
-          <div className="flex items-center gap-2 px-3 py-2 bg-rose-500/5 border border-rose-500/20 rounded">
-            <AlertTriangle className="w-4 h-4 text-rose-400" />
+          <div className={`flex items-center gap-2 px-3 py-2 rounded border ${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.08]'}`}>
             <div>
-              <p className="text-xs font-medium text-rose-400">Invalid</p>
-              <p className="text-[10px] text-rose-400/60">Evidence altered</p>
+              <p className={`text-xs font-medium ${isDoc ? 'text-gray-800' : 'text-white/70'}`}>Invalid</p>
+              <p className={`text-[10px] ${isDoc ? 'text-gray-600' : 'text-white/40'}`}>Evidence altered</p>
             </div>
           </div>
         );
@@ -103,45 +106,42 @@ export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true 
     }
 
     return (
-      <div className="flex items-center gap-2 px-3 py-2 bg-white/[0.02] border border-white/[0.08] rounded">
-        <Shield className="w-4 h-4 text-white/40" />
+      <div className={`flex items-center gap-2 px-3 py-2 rounded border ${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.08]'}`}>
         <div>
-          <p className="text-xs font-medium text-white/60">Not verified</p>
-          <p className="text-[10px] text-white/30">Pending verification</p>
+          <p className={`text-xs font-medium ${isDoc ? 'text-gray-800' : 'text-white/60'}`}>Not verified</p>
+          <p className={`text-[10px] ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>Pending verification</p>
         </div>
       </div>
     );
   };
 
   return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg overflow-hidden">
+    <div className={`${isDoc ? 'bg-white border border-gray-200 text-gray-900' : 'bg-white/[0.02] border border-white/[0.06] text-white'} rounded-xl overflow-hidden`}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-white/[0.06]">
+      <div className={`px-6 py-4 border-b ${isDoc ? 'border-gray-200' : 'border-white/[0.06]'}`}>
         <div className="flex items-center gap-3">
-          <Shield className="w-4 h-4 text-white/40" />
-          <h2 className="text-sm font-medium text-white/90">Proof & Integrity</h2>
+          <h2 className={`${heading.className} text-base font-semibold ${isDoc ? 'text-gray-900' : 'text-white/90'}`}>Proof & Integrity</h2>
         </div>
-        <p className="text-xs text-white/25 mt-1">
+        <p className={`text-xs mt-1 ${isDoc ? 'text-gray-600' : 'text-white/25'}`}>
           Cryptographic verification
         </p>
       </div>
 
       <div className="p-6 space-y-6">
         {/* Tamper Demo Toggle (Demo Only) */}
-        {enableTamperDemo && (
-          <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded">
+        {enableTamperDemo && !isDoc && (
+          <div className="p-4 bg-white/[0.02] border border-white/[0.06] rounded">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Zap className="w-4 h-4 text-amber-400" />
                 <div>
-                  <p className="text-xs font-medium text-amber-400">Demo Mode</p>
-                  <p className="text-[10px] text-amber-400/60">Simulate tampering</p>
+                  <p className="text-xs font-medium text-white/70">Demo Mode</p>
+                  <p className="text-[10px] text-white/40">Simulate tampering</p>
                 </div>
               </div>
               <button
                 onClick={handleTamperToggle}
                 className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-                  tamperSimulated ? 'bg-rose-500' : 'bg-white/20'
+                  tamperSimulated ? 'bg-white/40' : 'bg-white/20'
                 }`}
               >
                 <span
@@ -152,7 +152,7 @@ export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true 
               </button>
             </div>
             {tamperSimulated && (
-              <p className="text-xs text-amber-400/70 mt-3">
+              <p className="text-xs text-white/50 mt-3">
                 Simulating altered evidence
               </p>
             )}
@@ -166,27 +166,20 @@ export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true 
           <button
             onClick={handleVerify}
             disabled={verifying}
-            className="inline-flex items-center gap-2 px-3 py-1.5 bg-white text-black rounded text-xs font-medium hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className={`inline-flex items-center gap-2 px-3 py-1.5 rounded text-xs font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed ${isDoc ? 'bg-transparent text-gray-900 border border-gray-300 hover:bg-gray-100' : 'bg-transparent text-white/85 border border-white/12 hover:bg-white/[0.04]'}`}
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${verifying ? 'animate-spin' : ''}`} />
             {verifying ? 'Verifying...' : 'Verify Integrity'}
           </button>
         </div>
 
         {/* Verification Result */}
         {verificationResult && (
-          <div className={`p-4 rounded border ${
-            verificationResult.valid 
-              ? 'bg-emerald-500/5 border-emerald-500/20' 
-              : 'bg-rose-500/5 border-rose-500/20'
-          }`}>
-            <p className={`text-xs font-medium ${
-              verificationResult.valid ? 'text-emerald-400' : 'text-rose-400'
-            }`}>
+          <div className={`p-4 rounded border ${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.06]'}`}>
+            <p className={`text-xs font-medium ${isDoc ? 'text-gray-800' : 'text-white/70'}`}>
               {verificationResult.message}
             </p>
             {verificationResult.timestamp && (
-              <p className="text-[10px] text-white/30 mt-2">
+              <p className={`text-[10px] mt-2 ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>
                 Verified at {verificationResult.timestamp.toLocaleString('en-GB', {
                   hour: '2-digit',
                   minute: '2-digit',
@@ -201,9 +194,8 @@ export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true 
         <div>
           <button
             onClick={() => setShowHashes(!showHashes)}
-            className="flex items-center gap-2 text-xs text-white/50 hover:text-white/80 transition-colors"
+            className={`text-xs underline underline-offset-2 transition-colors ${isDoc ? 'text-gray-600 hover:text-gray-900' : 'text-white/60 hover:text-white/80'}`}
           >
-            {showHashes ? <EyeOff className="w-3.5 h-3.5" /> : <Eye className="w-3.5 h-3.5" />}
             {showHashes ? 'Hide' : 'Show'} hashes
           </button>
         </div>
@@ -212,78 +204,82 @@ export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true 
         {showHashes && (
           <div className="space-y-4">
             {/* Record Hash */}
-            <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded">
+            <div className={`${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.06]'} p-3 border rounded`}>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium">
+                <label className={`text-[10px] uppercase tracking-wider font-medium ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>
                   Record Hash
                 </label>
-                <button
-                  onClick={() => copyHash(record.recordHash, 'Record Hash')}
-                  className="text-[10px] text-white/40 hover:text-white/70 flex items-center gap-1"
-                >
-                  <Copy className="w-3 h-3" />
-                  {copiedHash === 'Record Hash' ? 'Copied' : 'Copy'}
-                </button>
+                {!isDoc && (
+                  <button
+                    onClick={() => copyHash(record.recordHash, 'Record Hash')}
+                    className={`text-[10px] underline underline-offset-2 text-white/60 hover:text-white/80`}
+                  >
+                    {copiedHash === 'Record Hash' ? 'Copied' : 'Copy'}
+                  </button>
+                )}
               </div>
-              <p className="text-[11px] text-white/50 font-mono break-all">
+              <p className={`text-[11px] font-mono break-all ${isDoc ? 'text-gray-700' : 'text-white/50'}`}>
                 {record.recordHash}
               </p>
             </div>
 
             {/* Input Hash */}
-            <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded">
+            <div className={`${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.06]'} p-3 border rounded`}>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium">
+                <label className={`text-[10px] uppercase tracking-wider font-medium ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>
                   Input Hash
                 </label>
-                <button
-                  onClick={() => copyHash(record.inputHash, 'Input Hash')}
-                  className="text-[10px] text-white/40 hover:text-white/70 flex items-center gap-1"
-                >
-                  <Copy className="w-3 h-3" />
-                  {copiedHash === 'Input Hash' ? 'Copied' : 'Copy'}
-                </button>
+                {!isDoc && (
+                  <button
+                    onClick={() => copyHash(record.inputHash, 'Input Hash')}
+                    className={`text-[10px] underline underline-offset-2 text-white/60 hover:text-white/80`}
+                  >
+                    {copiedHash === 'Input Hash' ? 'Copied' : 'Copy'}
+                  </button>
+                )}
               </div>
-              <p className="text-[11px] text-white/50 font-mono break-all">
+              <p className={`text-[11px] font-mono break-all ${isDoc ? 'text-gray-700' : 'text-white/50'}`}>
                 {record.inputHash}
               </p>
             </div>
 
             {/* Output Hash */}
-            <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded">
+            <div className={`${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.06]'} p-3 border rounded`}>
               <div className="flex items-center justify-between mb-2">
-                <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium">
+                <label className={`text-[10px] uppercase tracking-wider font-medium ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>
                   Output Hash
                 </label>
-                <button
-                  onClick={() => copyHash(record.outputHash, 'Output Hash')}
-                  className="text-[10px] text-white/40 hover:text-white/70 flex items-center gap-1"
-                >
-                  <Copy className="w-3 h-3" />
-                  {copiedHash === 'Output Hash' ? 'Copied' : 'Copy'}
-                </button>
+                {!isDoc && (
+                  <button
+                    onClick={() => copyHash(record.outputHash, 'Output Hash')}
+                    className={`text-[10px] underline underline-offset-2 text-white/60 hover:text-white/80`}
+                  >
+                    {copiedHash === 'Output Hash' ? 'Copied' : 'Copy'}
+                  </button>
+                )}
               </div>
-              <p className="text-[11px] text-white/50 font-mono break-all">
+              <p className={`text-[11px] font-mono break-all ${isDoc ? 'text-gray-700' : 'text-white/50'}`}>
                 {record.outputHash}
               </p>
             </div>
 
             {/* Context Hash */}
             {record.contextHash && (
-              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded">
+              <div className={`${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.06]'} p-3 border rounded`}>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium">
+                  <label className={`text-[10px] uppercase tracking-wider font-medium ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>
                     Context Hash
                   </label>
-                  <button
-                    onClick={() => copyHash(record.contextHash, 'Context Hash')}
-                    className="text-[10px] text-white/40 hover:text-white/70 flex items-center gap-1"
-                  >
-                    <Copy className="w-3 h-3" />
-                    {copiedHash === 'Context Hash' ? 'Copied' : 'Copy'}
-                  </button>
+                  {!isDoc && (
+                    <button
+                      onClick={() => copyHash(record.contextHash, 'Context Hash')}
+                      className={`text-[10px] underline underline-offset-2 text-white/60 hover:text-white/80`}
+                    >
+                      {copiedHash === 'Context Hash' ? 'Copied' : 'Copy'}
+                    </button>
+                  )}
                 </div>
-                <p className="text-[11px] text-white/50 font-mono break-all">
+                <p className={`text-[11px] font-mono break-all ${isDoc ? 'text-gray-700' : 'text-white/50'}`}>
                   {record.contextHash}
                 </p>
               </div>
@@ -291,20 +287,21 @@ export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true 
 
             {/* Previous Hash (Chain) */}
             {record.previousHash && (
-              <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded">
+              <div className={`${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.06]'} p-3 border rounded`}>
                 <div className="flex items-center justify-between mb-2">
-                  <label className="text-[10px] text-white/30 uppercase tracking-wider font-medium">
+                  <label className={`text-[10px] uppercase tracking-wider font-medium ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>
                     Previous Hash (Chain)
                   </label>
-                  <button
-                    onClick={() => copyHash(record.previousHash, 'Previous Hash')}
-                    className="text-[10px] text-white/40 hover:text-white/70 flex items-center gap-1"
-                  >
-                    <Copy className="w-3 h-3" />
-                    {copiedHash === 'Previous Hash' ? 'Copied' : 'Copy'}
-                  </button>
+                  {!isDoc && (
+                    <button
+                      onClick={() => copyHash(record.previousHash, 'Previous Hash')}
+                      className={`text-[10px] underline underline-offset-2 text-white/60 hover:text-white/80`}
+                    >
+                      {copiedHash === 'Previous Hash' ? 'Copied' : 'Copy'}
+                    </button>
+                  )}
                 </div>
-                <p className="text-[11px] text-white/50 font-mono break-all">
+                <p className={`text-[11px] font-mono break-all ${isDoc ? 'text-gray-700' : 'text-white/50'}`}>
                   {record.previousHash}
                 </p>
               </div>
@@ -313,9 +310,9 @@ export function ProofIntegrityPanel({ record, onVerify, enableTamperDemo = true 
         )}
 
         {/* Legal Note */}
-        <div className="p-3 bg-white/[0.02] border border-white/[0.06] rounded">
-          <p className="text-xs text-white/40">
-            <span className="font-medium text-white/50">Legal defensibility:</span> Cryptographic hashes prove the decision record has not been altered since creation.
+        <div className={`p-3 border rounded ${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.06]'}`}>
+          <p className={`text-xs ${isDoc ? 'text-gray-700' : 'text-white/40'}`}>
+            <span className={`font-medium ${isDoc ? 'text-gray-900' : 'text-white/50'}`}>Legal defensibility:</span> Cryptographic hashes prove the decision record has not been altered since creation.
           </p>
         </div>
       </div>

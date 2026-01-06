@@ -8,10 +8,7 @@ import { requireTenant, requireRole, auditDenied, ForbiddenError, UnauthorizedEr
 import { assertRateLimit, RateLimitError } from '@/lib/xase/rate-limit';
 import { logger, ensureRequestId } from '@/lib/observability/logger';
 import { captureException, captureMessage } from '@/lib/observability/sentry';
-import { generateProofBundle } from '@/lib/xase/export';
-import { BundleManifest, finalizeManifest, generateEnhancedVerifyScript } from '@/lib/xase/manifest';
-import { hashObject, hashString } from '@/lib/xase/crypto';
-import { getKMSProvider } from '@/lib/xase/kms';
+import { enqueueJob } from '@/lib/jobs';
 
 export async function POST(request: NextRequest) {
   try {
@@ -45,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { purpose, description, dateFrom, dateTo } = body;
+    const { purpose, description, dateFrom, dateTo, packageTitle } = body;
 
     if (!purpose) {
       return NextResponse.json({ error: 'Purpose is required' }, { status: 400 });
@@ -87,99 +84,28 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate bundle manifest synchronously (simplest solution)
-    logger.info('bundle.create:generating_manifest', { requestId, tenantId, bundleId });
-
-    // Fetch records for bundle
-    const records = await prisma.decisionRecord.findMany({
-      where: {
-        tenantId,
-        ...(Object.keys(dateFilter).length > 0 ? { timestamp: dateFilter } : {}),
-      },
-      orderBy: { timestamp: 'asc' },
-      take: 1000, // Limit for performance
-    });
-
-    // Build manifest
-    const manifest: BundleManifest = {
-      version: '1.0.0',
-      bundleId,
-      generatedAt: new Date().toISOString(),
-      tenantId,
-      files: [],
-      recordCount: records.length,
-      purpose,
-      legalFormat: 'STANDARD',
-      includesSnapshots: false,
-      includesPdf: false,
-      includesCustodyReport: false,
-    };
-
-    // Add decision files to manifest
-    for (const record of records) {
-      const decisionContent = JSON.stringify({
-        transactionId: record.transactionId,
-        timestamp: record.timestamp.toISOString(),
-        inputHash: record.inputHash,
-        outputHash: record.outputHash,
-        recordHash: record.recordHash,
-        previousHash: record.previousHash,
-      }, null, 2);
-
-      manifest.files.push({
-        path: `decisions/${record.transactionId}.json`,
-        hash: `sha256:${hashString(decisionContent)}`,
-        size: Buffer.byteLength(decisionContent, 'utf8'),
-        type: 'decision',
-      });
-    }
-
-    // Add verify script
-    const verifyScript = generateEnhancedVerifyScript();
-    manifest.files.push({
-      path: 'verify.js',
-      hash: `sha256:${hashString(verifyScript)}`,
-      size: Buffer.byteLength(verifyScript, 'utf8'),
-      type: 'verify',
-    });
-
-    // Finalize manifest with hash
-    const finalManifest = finalizeManifest(manifest);
-    const manifestJson = JSON.stringify(finalManifest, null, 2);
-    const bundleManifestHash = finalManifest.manifestHash!;
-
-    logger.info('bundle.create:manifest_generated', { requestId, tenantId, bundleId, manifestHash: bundleManifestHash });
-
-    // KMS sign the manifest hash (for legal robustness)
-    let kmsSignatureInfo: { signature: string; algorithm: string; keyId: string; timestamp: Date } | null = null;
-    try {
-      const kms = getKMSProvider();
-      const sig = await kms.sign(bundleManifestHash);
-      kmsSignatureInfo = sig;
-      logger.info('bundle.create:kms_signed', { requestId, tenantId, bundleId, keyId: sig.keyId, algorithm: sig.algorithm });
-    } catch (e) {
-      logger.warn('bundle.create:kms_sign_skip', { requestId, tenantId, bundleId, error: (e as Error).message });
-    }
-
-    // Create bundle record with READY status
+    // Create bundle record with PENDING status
     const bundle = await prisma.evidenceBundle.create({
       data: {
         bundleId,
         tenantId,
-        status: 'READY',
-        recordCount: records.length,
+        status: 'PENDING',
+        recordCount,
         purpose,
         description,
         createdBy: session.user.email,
         dateFrom: dateFrom ? new Date(dateFrom) : null,
         dateTo: dateTo ? new Date(dateTo) : null,
         expiresAt: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000), // 90 days
-        completedAt: new Date(),
-        bundleManifestHash,
+        completedAt: null,
+        bundleManifestHash: null,
         legalFormat: 'STANDARD',
         includesPdf: false,
       },
     });
+
+    // Enqueue background job
+    await enqueueJob('GENERATE_BUNDLE', { bundleId, tenantId, dateFilter, packageTitle }, { dedupeKey: bundleId, maxAttempts: 5 });
 
     // Log audit event (include IP and User-Agent)
     const ipAddress = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || null;
@@ -196,13 +122,10 @@ export async function POST(request: NextRequest) {
         status: 'SUCCESS',
         metadata: JSON.stringify({
           purpose,
-          recordCount: records.length,
+          recordCount,
           dateFrom,
           dateTo,
-          manifestHash: bundleManifestHash,
-          kmsSignature: kmsSignatureInfo?.signature || null,
-          kmsAlgorithm: kmsSignatureInfo?.algorithm || null,
-          kmsKeyId: kmsSignatureInfo?.keyId || null,
+          queued: true,
         }),
       },
     });
@@ -212,10 +135,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       success: true,
       bundleId,
-      status: 'READY',
-      recordCount: records.length,
-      manifestHash: bundleManifestHash,
-      message: 'Bundle created successfully',
+      status: 'PENDING',
+      recordCount,
+      message: 'Bundle enqueued successfully',
     });
   } catch (error) {
     const requestId = ensureRequestId(null);

@@ -1,6 +1,8 @@
 'use client';
 
-import { Clock, User, Bot, CheckCircle2, XCircle, AlertCircle, ArrowRight } from 'lucide-react';
+import { Playfair_Display } from 'next/font/google';
+
+const heading = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] });
 
 interface TimelineEvent {
   id: string;
@@ -19,9 +21,10 @@ interface TimelineEvent {
 interface DecisionTimelineProps {
   record: any;
   interventions: any[];
+  docMode?: boolean;
 }
 
-export function DecisionTimeline({ record, interventions }: DecisionTimelineProps) {
+export function DecisionTimeline({ record, interventions, docMode = false }: DecisionTimelineProps) {
   const buildTimeline = (): TimelineEvent[] => {
     const events: TimelineEvent[] = [];
 
@@ -61,20 +64,12 @@ export function DecisionTimeline({ record, interventions }: DecisionTimelineProp
 
   const timeline = buildTimeline();
 
-  const getEventIcon = (event: TimelineEvent) => {
-    if (event.type === 'AI_DECISION') {
-      return <Bot className="w-4 h-4 text-white/40" />;
-    }
-    
-    if (event.type === 'HUMAN_INTERVENTION') {
-      return <User className="w-4 h-4 text-white/40" />;
-    }
+  const isDoc = !!docMode;
 
-    return <Clock className="w-4 h-4 text-white/30" />;
-  };
+  const getEventIcon = (_event: TimelineEvent) => null;
 
   const getEventColor = (event: TimelineEvent) => {
-    return 'border-white/[0.06] bg-white/[0.02]';
+    return isDoc ? 'border-gray-200 bg-gray-50' : 'border-white/[0.06] bg-white/[0.02]';
   };
 
   const formatTime = (date: Date) => {
@@ -105,17 +100,16 @@ export function DecisionTimeline({ record, interventions }: DecisionTimelineProp
   };
 
   return (
-    <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg overflow-hidden">
+    <div className={`${isDoc ? 'bg-white border border-gray-200 text-gray-900' : 'bg-white/[0.02] border border-white/[0.06] text-white'} rounded-xl overflow-hidden`}>
       {/* Header */}
-      <div className="px-6 py-4 border-b border-white/[0.06]">
+      <div className={`px-6 py-4 border-b ${isDoc ? 'border-gray-200' : 'border-white/[0.06]'}`}>
         <div className="flex items-center gap-3">
-          <Clock className="w-4 h-4 text-white/40" />
-          <h2 className="text-sm font-medium text-white/90">Decision Timeline</h2>
-          <span className="text-xs text-white/30">
+          <h2 className={`${heading.className} text-base font-semibold ${isDoc ? 'text-gray-900' : 'text-white/90'}`}>Decision Timeline</h2>
+          <span className={`text-xs ${isDoc ? 'text-gray-500' : 'text-white/30'}`}>
             {timeline.length} event{timeline.length !== 1 ? 's' : ''}
           </span>
         </div>
-        <p className="text-xs text-white/25 mt-1">
+        <p className={`text-xs mt-1 ${isDoc ? 'text-gray-600' : 'text-white/25'}`}>
           Immutable audit trail
         </p>
       </div>
@@ -124,7 +118,7 @@ export function DecisionTimeline({ record, interventions }: DecisionTimelineProp
       <div className="p-6">
         {timeline.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-white/50 text-sm">No timeline events recorded</p>
+            <p className={`${isDoc ? 'text-gray-700' : 'text-white/50'} text-sm`}>No timeline events recorded</p>
           </div>
         ) : (
           <div className="space-y-4">
@@ -132,37 +126,35 @@ export function DecisionTimeline({ record, interventions }: DecisionTimelineProp
               <div key={event.id} className="relative">
                 {/* Connector line */}
                 {index < timeline.length - 1 && (
-                  <div className="absolute left-[18px] top-10 bottom-0 w-[1px] bg-white/[0.06]" />
+                  <div className={`absolute left-0 top-6 bottom-0 w-[1px] ${isDoc ? 'bg-gray-200' : 'bg-white/[0.06]'}`} />
                 )}
 
                 {/* Event card */}
-                <div className={`border rounded-lg p-4 ${getEventColor(event)}`}>
+                <div className={`border rounded-xl p-4 ${getEventColor(event)}`}>
                   <div className="flex items-start gap-3">
                     {/* Icon */}
-                    <div className="flex-shrink-0 w-9 h-9 rounded-full bg-white/[0.03] border border-white/[0.08] flex items-center justify-center">
-                      {getEventIcon(event)}
-                    </div>
+                    {/* icon removed for neutral UI */}
 
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       {/* Header */}
                       <div className="flex items-start justify-between gap-4 mb-2">
                         <div>
-                          <h3 className="text-sm font-medium text-white/90 mb-1">
+                          <h3 className={`text-sm font-medium mb-1 ${isDoc ? 'text-gray-900' : 'text-white/90'}`}>
                             {event.type === 'AI_DECISION' ? 'Automated Decision' : getActionLabel(event.action)}
                           </h3>
                           {event.type === 'HUMAN_INTERVENTION' && event.actor && (
                             <div className="space-y-0.5">
-                              <p className="text-xs text-white/60">
+                              <p className={`text-xs ${isDoc ? 'text-gray-700' : 'text-white/60'}`}>
                                 {event.actor.name || 'Unknown Actor'}
                               </p>
                               {event.actor.role && (
-                                <p className="text-[10px] text-white/40">
+                                <p className={`text-[10px] ${isDoc ? 'text-gray-600' : 'text-white/40'}`}>
                                   {event.actor.role}
                                 </p>
                               )}
                               {event.actor.email && (
-                                <p className="text-[10px] text-white/30 font-mono">
+                                <p className={`text-[10px] font-mono ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>
                                   {event.actor.email}
                                 </p>
                               )}
@@ -172,10 +164,10 @@ export function DecisionTimeline({ record, interventions }: DecisionTimelineProp
 
                         {/* Timestamp */}
                         <div className="text-right flex-shrink-0">
-                          <p className="text-xs text-white/50 font-medium">
+                          <p className={`text-xs font-medium ${isDoc ? 'text-gray-700' : 'text-white/50'}`}>
                             {formatTime(event.timestamp)}
                           </p>
-                          <p className="text-[10px] text-white/30">
+                          <p className={`text-[10px] ${isDoc ? 'text-gray-600' : 'text-white/30'}`}>
                             {formatDate(event.timestamp)}
                           </p>
                         </div>
@@ -183,8 +175,8 @@ export function DecisionTimeline({ record, interventions }: DecisionTimelineProp
 
                       {/* Details */}
                       {event.details && (
-                        <div className="mt-2 p-3 bg-white/[0.02] rounded border border-white/[0.06]">
-                          <p className="text-xs text-white/50">
+                        <div className={`mt-2 p-3 rounded border ${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.02] border-white/[0.06]'}`}>
+                          <p className={`text-xs ${isDoc ? 'text-gray-700' : 'text-white/50'}`}>
                             {event.details}
                           </p>
                         </div>
@@ -194,12 +186,12 @@ export function DecisionTimeline({ record, interventions }: DecisionTimelineProp
                       {event.type === 'AI_DECISION' && event.metadata && (
                         <div className="mt-3 flex items-center gap-2 flex-wrap">
                           {event.metadata.outcome && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-white/40 border border-white/[0.08]">
+                            <span className={`text-[10px] px-2 py-0.5 rounded border ${isDoc ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-white/[0.04] text-white/40 border-white/[0.08]'}`}>
                               {event.metadata.outcome}
                             </span>
                           )}
                           {event.metadata.confidence !== null && (
-                            <span className="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-white/40 border border-white/[0.08]">
+                            <span className={`text-[10px] px-2 py-0.5 rounded border ${isDoc ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-white/[0.04] text-white/40 border-white/[0.08]'}`}>
                               {(event.metadata.confidence * 100).toFixed(1)}%
                             </span>
                           )}
@@ -215,8 +207,8 @@ export function DecisionTimeline({ record, interventions }: DecisionTimelineProp
       </div>
 
       {/* Footer note */}
-      <div className="px-6 py-3 border-t border-white/[0.06] bg-white/[0.01]">
-        <p className="text-[10px] text-white/25">
+      <div className={`px-6 py-3 border-t ${isDoc ? 'border-gray-200 bg-white' : 'border-white/[0.06] bg-white/[0.01]'}`}>
+        <p className={`text-[10px] ${isDoc ? 'text-gray-600' : 'text-white/25'}`}>
           Cryptographically sealed audit trail
         </p>
       </div>

@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { TableFilters } from '@/components/TableFilters';
 import { TablePagination } from '@/components/TablePagination';
 import { arrayToCSV, downloadCSV, downloadJSON } from '@/lib/table-utils';
-import { ArrowUpDown } from 'lucide-react';
+// removed icons for minimalist UI
  
 
 interface Record {
@@ -69,13 +69,8 @@ export function RecordsTable({
   };
 
   const getRiskBadge = (level: 'high' | 'medium' | 'low') => {
-    const styles = {
-      high: 'bg-rose-500/5 text-rose-400/80 border-rose-500/20',
-      medium: 'bg-amber-500/5 text-amber-400/80 border-amber-500/20',
-      low: 'bg-emerald-500/5 text-emerald-400/80 border-emerald-500/20',
-    };
     return (
-      <span className={`text-[10px] px-2 py-0.5 rounded border ${styles[level]} uppercase font-medium tracking-wide`}>
+      <span className={`text-[10px] px-2 py-0.5 rounded border bg-white/[0.02] text-white/75 border-white/[0.08] uppercase font-medium tracking-wide`}>
         {level}
       </span>
     );
@@ -460,7 +455,7 @@ export function RecordsTable({
         hasActiveFilters={hasActiveFilters}
       />
 
-      <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl overflow-hidden">
+      <div className="bg-white/[0.02] border border-white/[0.08] rounded-xl overflow-hidden">
         {loading && (
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
             <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
@@ -471,28 +466,27 @@ export function RecordsTable({
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/[0.08]">
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider">
                   RISK
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider">
                   DECISION
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider">
                   AMOUNT
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider">
                   <button
                     onClick={() => handleSort('timestamp')}
-                    className="flex items-center gap-1 hover:text-white/70"
+                    className="hover:text-white/70 underline underline-offset-2"
                   >
                     DATE
-                    <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider">
                   PROOF STATUS
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/70 tracking-wider">
                   ACTIONS
                 </th>
               </tr>
@@ -514,7 +508,7 @@ export function RecordsTable({
                         {getRiskBadge(riskLevel)}
                         <div className="flex gap-1">
                           {record.isVerified && (
-                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/5 text-emerald-400/70 border border-emerald-500/20 uppercase font-medium tracking-wide">
+                            <span className="text-[9px] px-1.5 py-0.5 rounded bg-white/[0.02] text-white/55 border border-white/[0.08] uppercase font-medium tracking-wide">
                               PROOF
                             </span>
                           )}
@@ -527,43 +521,31 @@ export function RecordsTable({
                       <div className="space-y-1.5">
                         <div className="flex items-center gap-2">
                           {record.insuranceDecision?.decisionOutcome ? (
-                            <span className={`text-[11px] px-2 py-0.5 rounded border font-medium ${
-                              record.insuranceDecision.decisionOutcome === 'APPROVED'
-                                ? 'bg-emerald-500/5 text-emerald-400/80 border-emerald-500/20'
-                                : record.insuranceDecision.decisionOutcome === 'REJECTED'
-                                ? 'bg-rose-500/5 text-rose-400/80 border-rose-500/20'
-                                : 'bg-amber-500/5 text-amber-400/80 border-amber-500/20'
-                            }`}>
+                            <span className={`text-[11px] px-2 py-0.5 rounded border font-medium bg-white/[0.02] text-white/70 border-white/[0.08]`}>
                               {record.insuranceDecision.decisionOutcome === 'APPROVED' ? 'Approved' : 
                                record.insuranceDecision.decisionOutcome === 'REJECTED' ? 'Rejected' : 
                                'Review'}
                             </span>
                           ) : null}
                           {record.insuranceDecision?.claimType && (
-                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.02] text-white/40 border border-white/[0.06]">
+                            <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.02] text-white/70 border border-white/[0.08]">
                               {record.insuranceDecision.claimType}
                             </span>
                           )}
                         </div>
-                        <p className="text-[11px] text-white/40 font-mono">
+                        <p className="text-[11px] text-white/60 font-mono">
                           {record.insuranceDecision?.claimNumber || record.transactionId.substring(0, 16)}
                         </p>
                         <div className="flex items-center gap-2 text-[10px]">
-                          <span className="text-white/30">Conf</span>
-                          <span className={`font-medium ${
-                            (record.confidence || 0) >= 0.7 ? 'text-white/70' : 'text-amber-400/70'
-                          }`}>
+                          <span className="text-white/50">Conf</span>
+                          <span className={`font-medium text-white/70`}>
                             {record.confidence ? (record.confidence * 100).toFixed(0) + '%' : 'N/A'}
                           </span>
                           {record.insuranceDecision?.decisionImpactConsumerImpact && (
                             <>
-                              <span className="text-white/20">·</span>
-                              <span className="text-white/30">Impact</span>
-                              <span className={`font-medium ${
-                                record.insuranceDecision.decisionImpactConsumerImpact === 'HIGH' ? 'text-rose-400/70' :
-                                record.insuranceDecision.decisionImpactConsumerImpact === 'MEDIUM' ? 'text-amber-400/70' :
-                                'text-emerald-400/70'
-                              }`}>
+                              <span className="text-white/40">·</span>
+                              <span className="text-white/50">Impact</span>
+                              <span className={`font-medium text-white/70`}>
                                 {record.insuranceDecision.decisionImpactConsumerImpact}
                               </span>
                             </>
@@ -578,7 +560,7 @@ export function RecordsTable({
                     </td>
 
                     {/* DATE COLUMN */}
-                    <td className="px-6 py-4 text-xs text-white/50">
+                    <td className="px-6 py-4 text-xs text-white/70">
                       {new Date(record.timestamp).toLocaleString('en-US', {
                         month: 'short',
                         day: 'numeric',
@@ -592,9 +574,9 @@ export function RecordsTable({
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-1">
                         {record.isVerified ? (
-                          <span className="text-[10px] text-emerald-400/80 font-medium">Verified</span>
+                          <span className="text-[10px] text-white/80 font-medium">Verified</span>
                         ) : (
-                          <span className="text-[10px] text-amber-400/70 font-medium">Pending</span>
+                          <span className="text-[10px] text-white/60 font-medium">Pending</span>
                         )}
                         <span className="text-[9px] text-white/25 font-mono">
                           {record.recordHash?.substring(0, 12)}...
@@ -606,7 +588,7 @@ export function RecordsTable({
                     <td className="px-6 py-4">
                       <a
                         href={`/xase/records/${record.transactionId}`}
-                        className="inline-flex items-center px-3 py-1.5 rounded text-xs font-medium bg-white/[0.04] hover:bg-white/[0.08] text-white/80 hover:text-white transition-colors"
+                        className="inline-flex items-center px-3 py-1.5 border border-white/12 bg-transparent text-white/85 rounded text-xs font-medium hover:bg-white/[0.04] hover:border-white/20 transition-colors"
                       >
                         Investigate
                       </a>

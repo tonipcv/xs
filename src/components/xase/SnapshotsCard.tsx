@@ -1,5 +1,8 @@
 'use client';
 
+import { Playfair_Display } from 'next/font/google';
+const heading = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] });
+
 interface Snapshot {
   id: string;
   type: string;
@@ -11,9 +14,10 @@ interface Snapshot {
 
 interface SnapshotsCardProps {
   snapshots: Snapshot[];
+  docMode?: boolean;
 }
 
-export function SnapshotsCard({ snapshots }: SnapshotsCardProps) {
+export function SnapshotsCard({ snapshots, docMode = false }: SnapshotsCardProps) {
   const getSnapshotIcon = () => {
     // Minimal neutral indicator (dot)
     return <span className="inline-block w-1.5 h-1.5 rounded-full bg-white/40" />;
@@ -45,13 +49,14 @@ export function SnapshotsCard({ snapshots }: SnapshotsCardProps) {
     return null;
   }
 
+  const isDoc = !!docMode;
   return (
-    <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-4 space-y-4">
+    <div className={`${isDoc ? 'bg-white border border-gray-200 text-gray-900' : 'bg-white/[0.03] border border-white/[0.08] text-white'} rounded-xl p-4 space-y-4`}>
       <div className="flex items-center gap-2">
-        <h2 className="text-base font-semibold text-white">Reproducibility Snapshots</h2>
+        <h2 className={`${heading.className} text-base font-semibold ${isDoc ? 'text-gray-900' : 'text-white'}`}>Reproducibility Snapshots</h2>
       </div>
 
-      <p className="text-xs text-white/60">
+      <p className={`text-xs ${isDoc ? 'text-gray-700' : 'text-white/60'}`}>
         Immutable snapshots captured at decision time to enable full reproducibility and audit trail.
       </p>
 
@@ -59,21 +64,21 @@ export function SnapshotsCard({ snapshots }: SnapshotsCardProps) {
         {snapshots.map((snapshot) => (
           <div
             key={snapshot.id}
-            className="flex items-center justify-between p-3 bg-white/[0.02] border border-white/[0.06] rounded-lg hover:bg-white/[0.04] transition-colors"
+            className={`flex items-center justify-between p-3 rounded-lg transition-colors ${isDoc ? 'bg-gray-50 border border-gray-300 hover:bg-gray-100' : 'bg-white/[0.02] border border-white/[0.06] hover:bg-white/[0.04]'}`}
           >
             <div className="flex items-center gap-2.5 flex-1">
-              {getSnapshotIcon()}
+              {!isDoc && getSnapshotIcon()}
               <div className="flex-1">
-                <p className="text-xs font-medium text-white">{getSnapshotLabel(snapshot.type)}</p>
+                <p className={`text-xs font-medium ${isDoc ? 'text-gray-900' : 'text-white'}`}>{getSnapshotLabel(snapshot.type)}</p>
                 <div className="flex items-center gap-3 mt-0.5">
-                  <p className="text-[11px] text-white/50">
+                  <p className={`text-[11px] ${isDoc ? 'text-gray-600' : 'text-white/50'}`}>
                     Hash: {snapshot.payloadHash.substring(0, 16)}...
                   </p>
-                  <p className="text-[11px] text-white/50">
+                  <p className={`text-[11px] ${isDoc ? 'text-gray-600' : 'text-white/50'}`}>
                     Size: {formatSize(snapshot.payloadSize)}
                   </p>
                   {snapshot.compressed && (
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-white/10 text-white/80 border border-white/15">
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full border ${isDoc ? 'bg-gray-100 text-gray-700 border-gray-300' : 'bg-white/10 text-white/80 border-white/15'}`}>
                       Compressed
                     </span>
                   )}
@@ -81,7 +86,7 @@ export function SnapshotsCard({ snapshots }: SnapshotsCardProps) {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-[11px] text-white/40">
+              <p className={`text-[11px] ${isDoc ? 'text-gray-500' : 'text-white/40'}`}>
                 {new Date(snapshot.capturedAt).toLocaleString('en-US', {
                   month: 'short',
                   day: '2-digit',
@@ -93,12 +98,12 @@ export function SnapshotsCard({ snapshots }: SnapshotsCardProps) {
           </div>
         ))}
       </div>
-      <div className="bg-white/[0.04] border border-white/[0.08] rounded-lg p-3">
+      <div className={`${isDoc ? 'bg-gray-50 border-gray-300' : 'bg-white/[0.04] border-white/[0.08]'} rounded-lg p-3 border`}>
         <div className="flex items-start gap-2.5">
-          <div className="w-1.5 h-1.5 rounded-full bg-white/40 mt-1" />
+          {!isDoc && <div className={`w-1.5 h-1.5 rounded-full mt-1 bg-white/40`} />}
           <div className="flex-1">
-            <h3 className="text-xs font-medium text-white mb-0.5">Reproducibility Guarantee</h3>
-            <p className="text-[11px] text-white/60">
+            <h3 className={`text-xs font-medium mb-0.5 ${isDoc ? 'text-gray-900' : 'text-white'}`}>Reproducibility Guarantee</h3>
+            <p className={`text-[11px] ${isDoc ? 'text-gray-700' : 'text-white/60'}`}>
               These snapshots allow complete recreation of the decision. All data is immutably stored and cryptographically verified.
             </p>
           </div>

@@ -70,12 +70,7 @@ export async function POST(
       throw error;
     }
 
-    if (bundle.status !== 'READY') {
-      return NextResponse.json(
-        { error: `Bundle is not ready. Current status: ${bundle.status}` },
-        { status: 400 }
-      );
-    }
+    // If not READY, proceed with inline generation as fallback (dev-friendly)
 
     // Retention & Legal Hold enforcement on expiry
     if (bundle.expiresAt && bundle.expiresAt < new Date()) {
@@ -141,6 +136,15 @@ export async function POST(
         tenantId,
         ...(Object.keys(dateFilter).length > 0 ? { timestamp: dateFilter } : {}),
       },
+      select: {
+        id: true,
+        transactionId: true,
+        timestamp: true,
+        inputHash: true,
+        outputHash: true,
+        recordHash: true,
+        previousHash: true,
+      },
       orderBy: { timestamp: 'asc' },
     });
 
@@ -159,11 +163,11 @@ export async function POST(
       records: records.map((r: any) => ({
         id: r.id,
         transactionId: r.transactionId,
-        policyId: r.policyId,
-        decisionType: r.decisionType,
-        confidence: r.confidence,
-        isVerified: r.isVerified,
         timestamp: r.timestamp.toISOString(),
+        inputHash: r.inputHash,
+        outputHash: r.outputHash,
+        recordHash: r.recordHash,
+        previousHash: r.previousHash,
       })),
     };
 
@@ -334,6 +338,17 @@ ${new Date().toISOString()}
       compressionOptions: { level: 9 },
     });
 
+    // If bundle had no storage and was generated inline, mark as READY
+    try {
+      await prisma.evidenceBundle.update({
+        where: { id: bundle.id },
+        data: {
+          status: 'READY',
+          completedAt: new Date(),
+        },
+      });
+    } catch {}
+
     // Log audit event
     await prisma.auditLog.create({
       data: {
@@ -353,12 +368,12 @@ ${new Date().toISOString()}
     });
 
     logger.info('bundle.download:legacy_zip', { requestId, bundleId, recordCount: records.length });
-    // Return ZIP file
-    return new Response(zipBuffer, {
+    // Return ZIP file using Uint8Array (compatible BodyInit)
+    return new Response(new Uint8Array(zipBuffer), {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="evidence-bundle-${bundleId}.zip"`,
-        'Content-Length': zipBuffer.length.toString(),
+        'Content-Length': String(zipBuffer.length),
       },
     });
   } catch (error) {
