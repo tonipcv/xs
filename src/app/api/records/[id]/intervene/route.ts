@@ -56,7 +56,7 @@ export async function POST(
     }
 
     // 3. Extrair transaction ID
-    const { id } = params;
+    const { id } = await params;
     const transactionId = id;
 
     // 4. Validar payload
@@ -154,7 +154,7 @@ export async function GET(
     }
 
     // 3. Extrair transaction ID
-    const { id } = params;
+    const { id } = await params;
     const transactionId = id;
 
     // 4. Buscar intervenções

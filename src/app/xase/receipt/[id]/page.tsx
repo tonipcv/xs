@@ -14,7 +14,7 @@ interface Props {
 
 export default async function DecisionReceiptPage({ params }: Props) {
   const { id } = await params
-  const record = await prisma.decisionRecord.findUnique({
+  const record = await prisma.decisionRecord.findFirst({
     where: { transactionId: id },
     include: {
       tenant: {
@@ -240,7 +240,7 @@ function HashDisplay({
 // Metadata para SEO
 export async function generateMetadata({ params }: Props) {
   const { id } = await params
-  const record = await prisma.decisionRecord.findUnique({
+  const record = await prisma.decisionRecord.findFirst({
     where: { transactionId: id },
     select: {
       transactionId: true,

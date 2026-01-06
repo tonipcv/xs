@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma';
 import { AppLayout } from '@/components/AppSidebar';
 import Link from 'next/link';
 import { getTenantContext } from '@/lib/xase/server-auth';
+import { LegalArtifactsCard } from '@/components/xase/LegalArtifactsCard';
 
 export const metadata: Metadata = {
   title: 'Evidence Bundle Details',
@@ -66,6 +67,10 @@ export default async function BundleDetailsPage({ params }: { params: Promise<{ 
       retentionUntil: true,
       expiresAt: true,
       createdBy: true,
+      pdfReportUrl: true,
+      pdfReportHash: true,
+      bundleManifestHash: true,
+      legalFormat: true,
     },
   });
 
@@ -167,6 +172,15 @@ export default async function BundleDetailsPage({ params }: { params: Promise<{ 
               )}
             </div>
           </div>
+
+          {/* Legal Artifacts */}
+          <LegalArtifactsCard
+            bundleId={bundle.bundleId}
+            pdfReportUrl={bundle.pdfReportUrl}
+            pdfReportHash={bundle.pdfReportHash}
+            bundleManifestHash={bundle.bundleManifestHash}
+            legalFormat={bundle.legalFormat}
+          />
 
           {/* Download history */}
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-5">

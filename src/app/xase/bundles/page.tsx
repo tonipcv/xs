@@ -36,8 +36,8 @@ export default async function EvidenceBundlesPage() {
     );
   }
 
-  // Fetch bundles and statistics
-  const [bundles, total, readyCount, pendingCount] = await Promise.all([
+  // Fetch bundles and statistics using transaction to avoid connection pool issues
+  const [bundles, total, readyCount, pendingCount] = await prisma.$transaction([
     prisma.evidenceBundle.findMany({
       where: { tenantId },
       orderBy: { createdAt: 'desc' },
@@ -52,6 +52,9 @@ export default async function EvidenceBundlesPage() {
         createdAt: true,
         completedAt: true,
         expiresAt: true,
+        pdfReportUrl: true,
+        legalFormat: true,
+        bundleManifestHash: true,
       },
     }),
     prisma.evidenceBundle.count({ where: { tenantId } }),
@@ -77,34 +80,34 @@ export default async function EvidenceBundlesPage() {
           {/* Statistics */}
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-              <p className="text-[10px] text-white/40 tracking-wider">TOTAL BUNDLES</p>
-              <p className="text-3xl font-semibold text-white">{total}</p>
+              <p className="text-[10px] text-white/30 tracking-wider uppercase font-medium">Total Bundles</p>
+              <p className="text-2xl font-semibold text-white/90 mt-2">{total}</p>
             </div>
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-              <p className="text-[10px] text-white/40 tracking-wider">READY</p>
-              <p className="text-3xl font-semibold text-white">{readyCount}</p>
+              <p className="text-[10px] text-white/30 tracking-wider uppercase font-medium">Ready</p>
+              <p className="text-2xl font-semibold text-emerald-400/90 mt-2">{readyCount}</p>
             </div>
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-              <p className="text-[10px] text-white/40 tracking-wider">PENDING</p>
-              <p className="text-3xl font-semibold text-white">{pendingCount}</p>
+              <p className="text-[10px] text-white/30 tracking-wider uppercase font-medium">Pending</p>
+              <p className="text-2xl font-semibold text-amber-400/90 mt-2">{pendingCount}</p>
             </div>
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-              <p className="text-[10px] text-white/40 tracking-wider">COMPLIANCE</p>
-              <p className="text-sm text-white">SOC2 Ready</p>
+              <p className="text-[10px] text-white/30 tracking-wider uppercase font-medium">Compliance</p>
+              <p className="text-sm text-white/80 mt-2">SOC2 Ready</p>
             </div>
           </div>
 
           {/* Compliance Notice */}
           <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-4">
             <div className="flex items-start gap-3">
-              <div className="w-5 h-5 rounded-full bg-white/[0.06] flex items-center justify-center flex-shrink-0 mt-0.5">
-                <svg className="w-3 h-3 text-white/60" fill="currentColor" viewBox="0 0 20 20">
+              <div className="w-4 h-4 rounded-full bg-white/[0.04] flex items-center justify-center flex-shrink-0 mt-0.5">
+                <svg className="w-2.5 h-2.5 text-white/40" fill="currentColor" viewBox="0 0 20 20">
                   <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
                 </svg>
               </div>
               <div className="flex-1">
-                <h3 className="text-sm font-medium text-white mb-1">Compliance & Legal Holds</h3>
-                <p className="text-xs text-white/60">
+                <h3 className="text-xs font-medium text-white/80 mb-1">Compliance & Legal Holds</h3>
+                <p className="text-xs text-white/50">
                   Evidence bundles are cryptographically signed and tamper-evident. All downloads are audited. 
                   Bundles include offline verification scripts for legal proceedings.
                 </p>

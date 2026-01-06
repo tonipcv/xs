@@ -13,6 +13,9 @@ interface AuditLog {
   resourceId: string;
   status: string;
   timestamp: Date;
+  userId?: string | null;
+  ipAddress?: string | null;
+  userAgent?: string | null;
 }
 
 interface AuditTableProps {
@@ -154,6 +157,9 @@ export function AuditTable({
       { key: 'resourceId' as keyof AuditLog, label: 'Resource ID' },
       { key: 'status' as keyof AuditLog, label: 'Status' },
       { key: 'timestamp' as keyof AuditLog, label: 'Timestamp' },
+      { key: 'userId' as keyof AuditLog, label: 'User' },
+      { key: 'ipAddress' as keyof AuditLog, label: 'IP' },
+      { key: 'userAgent' as keyof AuditLog, label: 'User Agent' },
     ];
     
     const csv = arrayToCSV(
@@ -221,49 +227,52 @@ export function AuditTable({
         hasActiveFilters={hasActiveFilters}
       />
 
-      <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl overflow-hidden">
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg overflow-hidden">
         {loading && (
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
-            <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+            <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
           </div>
         )}
         
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.08]">
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+              <tr className="border-b border-white/[0.06]">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('action')}
-                    className="flex items-center gap-1 hover:text-white/70"
+                    className="flex items-center gap-1 hover:text-white/50"
                   >
-                    ACTION
+                    Action
                     <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('resourceType')}
-                    className="flex items-center gap-1 hover:text-white/70"
+                    className="flex items-center gap-1 hover:text-white/50"
                   >
-                    RESOURCE TYPE
+                    Resource Type
                     <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
-                  RESOURCE ID
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                  Resource ID
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">User</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">IP</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">User Agent</th>
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('timestamp')}
-                    className="flex items-center gap-1 hover:text-white/70"
+                    className="flex items-center gap-1 hover:text-white/50"
                   >
-                    TIMESTAMP
+                    Timestamp
                     <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
-                  STATUS
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                  Status
                 </th>
               </tr>
             </thead>
@@ -273,16 +282,25 @@ export function AuditTable({
                   key={log.id}
                   className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors"
                 >
-                  <td className="px-6 py-4 text-sm text-white font-mono">
+                  <td className="px-6 py-4 text-sm text-white/80">
                     {log.action}
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/80">
+                  <td className="px-6 py-4 text-sm text-white/60">
                     {log.resourceType}
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/80 font-mono">
+                  <td className="px-6 py-4 text-sm text-white/50 font-mono">
                     {log.resourceId.substring(0, 16)}...
                   </td>
-                  <td className="px-6 py-4 text-sm text-white/80">
+                  <td className="px-6 py-4 text-sm text-white/50 font-mono">
+                    {log.userId || '—'}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-white/50 font-mono">
+                    {log.ipAddress || '—'}
+                  </td>
+                  <td className="px-6 py-4 text-xs text-white/50 truncate max-w-[220px]" title={log.userAgent || ''}>
+                    {log.userAgent || '—'}
+                  </td>
+                  <td className="px-6 py-4 text-sm text-white/60">
                     {new Date(log.timestamp).toLocaleString('en-US', {
                       day: '2-digit',
                       month: 'short',
@@ -292,10 +310,10 @@ export function AuditTable({
                   </td>
                   <td className="px-6 py-4">
                     <span
-                      className={`text-xs px-2 py-1 rounded ${
+                      className={`text-[11px] px-2 py-0.5 rounded border font-medium ${
                         log.status === 'SUCCESS'
-                          ? 'bg-green-500/10 text-green-400'
-                          : 'bg-red-500/10 text-red-400'
+                          ? 'bg-emerald-500/5 text-emerald-400/80 border-emerald-500/20'
+                          : 'bg-rose-500/5 text-rose-400/80 border-rose-500/20'
                       }`}
                     >
                       {log.status}

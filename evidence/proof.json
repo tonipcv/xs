@@ -1,0 +1,23 @@
+{
+  "type": "xase.decision.proof",
+  "version": "1.0.0",
+  "hash_algo": "SHA-256",
+  "signature_algo": "RSA-SHA256",
+  "hash": "sha256:15ea0b1266dc1f4e6f50e69554a257bf3b268015f0f4f721237bfe41d20e418a",
+  "signature": "BN4T4MADIJ4z/Uh8R+0pmsEqFR2TuQHymZ32OZzpFSMYpgLY2fGdyHkPe6fKYBOK/0HtTE89D6zX1aWl/8abtSeyHGMOJqzFBBkm7mM4HE4zH4akVRx7VKjiOTETh7dUH1nFSEW3rLW1L6B+jxmE6gZh/5YNvbOMvzvU/hTFunLVKlgKn53usXmrwHSPHEv0I3id7oZbKpMruy11LCEAfZAzg3vrxVuszZXdZuIMXQ+ebW1y2+RO0abWRvJLhWxdmdfhiViXeCnhrirheFdxKp5x9XDQGuEgqNVaF+WHEdocC2CiqbFmRGbcFTe4LrkIq6ViuSFx8oO26PW6oGcixA==",
+  "key_id": "mock-key-persistent",
+  "key_fingerprint": "bc6bd0930edf0299...",
+  "issuer": "xase.ai",
+  "signed_at": "2025-12-17T00:07:30.647Z",
+  "record_hash": "83e300b73f357dd65e9cf67eedd1b0ea101fdd024b02fc66d5198da0a62f63f3",
+  "previous_hash": "809053e2b4d1b7413b02e5afe94c5eaa4e6d8e60e12e5d2cc68acd8f54ed6d8f",
+  "chain_position": 6,
+  "is_genesis": false,
+  "transaction_id": "txn_074e4ced98a889b919737878717687e8",
+  "policy_id": "credit_policy",
+  "policy_version": "v4",
+  "policy_hash": "sha256:660e9b22015bf0f67e497b97a033d89c70269339b12cc2399fb63da4e19ca117",
+  "model": {},
+  "public_key_pem": "-----BEGIN PUBLIC KEY-----\nMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAwBNEWjiNXxuiyyxAR6BS\nOuL3ogMTy8/1O+iT11QaSX3985c6mGWvyMGbZQrwhuIgO7pFBtcuD6x40mquYQsc\n1B1RixzhOHXA2k1riIap9cc5LsiCWQFPPFsKdJBwynuOqMxYBOsIKKB+YVt1VW5V\n5VgvSX3Z8Imm2+rURdvWlQaQgkMqNcgxJh/TsenogZopC1SD7QxnFyhlH5NfC3Qu\nel+nEJdpe5/RjakfgKZPXIV9qfF4LdS7bXS+PHY95Q9iCm+pohNh/3O9vmFXjyvF\nc0RpdGa6Y0GdfqoGhoS05Wrn93JUWMgqqfqaG5bKwH9068dUbmMf9CYYjXYMyLLE\nSwIDAQAB\n-----END PUBLIC KEY-----\n",
+  "notes": "Canonical JSON (JCS) hashed with SHA-256. Signature covers hash (DIGEST mode). Verify fingerprint against official channel."
+}

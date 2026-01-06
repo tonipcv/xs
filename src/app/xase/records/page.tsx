@@ -22,7 +22,7 @@ export default async function RecordsPage() {
   const tenantId = await getTenantId();
   
   if (!tenantId) {
-    return (
+  return (
       <AppLayout>
         <div className="min-h-screen bg-[#121316]">
           <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
@@ -36,7 +36,7 @@ export default async function RecordsPage() {
     );
   }
 
-  const [records, total] = await Promise.all([
+  const [recordsRaw, total] = await prisma.$transaction([
     prisma.decisionRecord.findMany({
       where: { tenantId },
       orderBy: { timestamp: 'desc' },
@@ -45,14 +45,77 @@ export default async function RecordsPage() {
         id: true,
         transactionId: true,
         policyId: true,
-        decisionType: true,
         confidence: true,
         isVerified: true,
         timestamp: true,
+        recordHash: true,
+        insuranceDecision: {
+          select: {
+            claimNumber: true,
+            claimType: true,
+            claimAmount: true,
+            policyNumber: true,
+            decisionOutcome: true,
+            decisionImpactConsumerImpact: true,
+          },
+        },
       },
     }),
     prisma.decisionRecord.count({ where: { tenantId } }),
   ]);
+
+  // Serialize Decimal fields for client component safety (plain objects)
+  const records = recordsRaw.map((r: any) => {
+    // confidence
+    let confidence: number | null = null;
+    if (r.confidence != null) {
+      try {
+        const v: any = r.confidence;
+        if (typeof v === 'object' && typeof v.toNumber === 'function') {
+          const n = v.toNumber();
+          confidence = Number.isFinite(n) ? n : null;
+        } else {
+          const n = Number(typeof v === 'object' && typeof v.toString === 'function' ? v.toString() : v);
+          confidence = Number.isFinite(n) ? n : null;
+        }
+      } catch {
+        confidence = null;
+      }
+    }
+
+    // insuranceDecision.claimAmount
+    const src = r.insuranceDecision;
+    let claimAmount: number | null = null;
+    if (src && src.claimAmount != null) {
+      try {
+        const v: any = src.claimAmount;
+        if (typeof v === 'object' && typeof v.toNumber === 'function') {
+          const n = v.toNumber();
+          claimAmount = Number.isFinite(n) ? n : null;
+        } else {
+          const n = Number(typeof v === 'object' && typeof v.toString === 'function' ? v.toString() : v);
+          claimAmount = Number.isFinite(n) ? n : null;
+        }
+      } catch {
+        claimAmount = null;
+      }
+    }
+
+    return {
+      ...r,
+      confidence,
+      timestamp: r.timestamp instanceof Date ? r.timestamp.toISOString() : r.timestamp,
+      insuranceDecision: src
+        ? {
+            ...src,
+            claimAmount,
+          }
+        : null,
+    };
+  });
+
+  // Ensure props are fully plain for client component
+  const safeRecords = JSON.parse(JSON.stringify(records));
 
   return (
     <AppLayout>
@@ -60,16 +123,16 @@ export default async function RecordsPage() {
         <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           <div className="space-y-2">
             <h1 className="text-2xl font-semibold text-white tracking-tight">
-              Records
+              Decision Risk Inbox
             </h1>
             <p className="text-sm text-white/50">
-              {total.toLocaleString()} decision{total !== 1 ? 's' : ''} in ledger
+              {total.toLocaleString()} decision{total !== 1 ? 's' : ''} · Monitoring for legal exposure
             </p>
           </div>
 
-          {records.length > 0 ? (
+          {safeRecords.length > 0 ? (
             <RecordsTable
-              initialRecords={records}
+              initialRecords={safeRecords}
               initialTotal={total}
               tenantId={tenantId}
             />

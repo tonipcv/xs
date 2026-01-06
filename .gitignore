@@ -67,8 +67,6 @@ packages/**/dist/
 packages/**/build/
 
 # Evidence and temp artifacts
-evidence/
-evidence_tmp/
 evidence.zip
 extracted-bundle/
 

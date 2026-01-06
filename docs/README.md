@@ -1,64 +1,153 @@
-# XASE — The Evidence Layer for AI Decisions
+# 📚 Xase Documentation
 
-> **Transform automated decisions into immutable legal records.**
+> **Documentação completa do Xase Dashboard - AI Evidence Layer & WhatsApp Automation**
 
-XASE é uma camada de evidência que transforma cada decisão de IA em um registro verificável, auditável e independente. Enquanto empresas correm para usar IA em decisões críticas (crédito, fraude, saúde, RH), não existe um padrão confiável para provar o que foi decidido, por qual modelo, sob qual política e com qual supervisão humana.
-
----
-
-## 🎯 O Problema
-
-Empresas estão colocando IA para decidir:
-- Quem recebe crédito
-- Quem é bloqueado por fraude
-- Quem é contratado ou demitido
-- Quem recebe um tratamento médico
-- Quem tem uma conta suspensa
-
-**Mas quando alguém pergunta: "Por que essa decisão foi tomada?"**
-
-A resposta hoje é fraca:
-- ❌ Logs frágeis
-- ❌ Prompts soltos
-- ❌ Versões de modelo perdidas
-- ❌ Políticas não versionadas
-- ❌ Nenhuma prova criptográfica
-- ❌ Nenhuma verificação independente
-
-Isso cria **risco jurídico, regulatório e reputacional**, especialmente com:
-- EU AI Act
-- LGPD / GDPR
-- Processos de consumidores
-- Auditorias e due diligence
-- Contratos enterprise
+Esta pasta contém toda a documentação técnica, guias de setup, material de vendas e compliance do sistema Xase.
 
 ---
 
-## ✅ A Solução: XASE
+## 🗂️ Estrutura da Documentação
 
-A XASE é uma **camada de evidência** que roda junto do sistema do cliente. Sempre que uma IA toma uma decisão, a empresa registra na XASE:
+A documentação está organizada em **6 categorias principais**:
 
-```typescript
-import { xase } from '@/lib/xase';
+### 📁 [Setup & Configuration](./setup/)
+Guias de instalação e configuração inicial
+- AI Agent WhatsApp setup
+- Xase Core setup
+- Deployment guides
+- Testing guides
+- Configurações específicas (KMS, MinIO, ngrok, AWS)
 
-// Registrar decisão
-const receipt = await xase.ingest({
-  input: { user_id: "u_123", amount: 5000 },
-  output: { decision: "APPROVED" },
-  context: { ip: "192.168.1.1" },
-  policy_id: "credit_policy_v1",
-  decision_type: "loan_approval",
-  confidence: 0.95
-});
+### 📁 [Architecture & Technical](./architecture/)
+Arquitetura técnica e design do sistema
+- Guia completo de arquitetura
+- Visão técnica detalhada
+- Security architecture
+- Evidence bundles
+- External API
+
+### 📁 [Implementation & Status](./implementation/)
+Status de implementação e features
+- Resumos de implementação
+- Features completas
+- Frontend implementation
+- HITL (Human-in-the-Loop)
+- SDKs (Python, JavaScript)
+
+### 📁 [Planning & Roadmap](./planning/)
+Planejamento estratégico e roadmap
+- Plano de execução Q1 2026
+- Product roadmap EU AI Act
+- MVP status
+- Próximos passos
+
+### 📁 [Sales & Business](./sales/)
+Material de vendas e análises de mercado
+- Sales playbook
+- Enterprise analysis
+- Vendability analysis
+- Legal grade
+- User guides
+
+### 📁 [Security & Compliance](./security/)
+Segurança, compliance e políticas
+- Security policy
+- Incident response plan
+- Evidence of controls
+- Auditor Q&A
+- DPA (Data Processing Agreement)
+- SLO (Service Level Objectives)
+
+### 📁 [Archived](./archived/)
+Documentos antigos e deprecados (mantidos para histórico)
+
+---
+
+## 🎯 O que é o Xase?
+
+**Xase** é uma plataforma que combina:
+
+### 🔐 XASE Core - Evidence Layer
+Camada de evidência para decisões de IA que transforma cada decisão automatizada em um registro legal verificável e imutável.
+
+**Principais features:**
+- Registro imutável de decisões
+- Hashes criptográficos e chain
+- Evidence bundles verificáveis offline
+- Storage MinIO/S3 com WORM
+- API REST completa
+- Compliance EU AI Act
+
+### 🤖 AI Agent WhatsApp
+Sistema de assistente virtual inteligente para WhatsApp usando OpenAI.
+
+**Principais features:**
+- Atendimento automatizado com GPT-3.5/4
+- Múltiplas instâncias WhatsApp
+- Base de conhecimento semântica
+- Sistema de tokens e rate limiting
+- Dashboard analytics
+
+---
+
+## 🚀 Quick Start
+
+### Para Desenvolvedores
+```bash
+# 1. Instalar dependências
+npm install
+
+# 2. Setup database
+npm run xase:setup
+npx prisma db push
+
+# 3. Criar tenant
+npm run xase:tenant "Sua Empresa" "email@empresa.com" "Nome"
+
+# 4. Iniciar desenvolvimento
+npm run dev
 ```
 
-A XASE então:
-1. ✅ Gera um **hash canônico** da decisão
-2. ✅ Cria uma **assinatura criptográfica** (KMS)
-3. ✅ Encadeia isso num **ledger imutável**
-4. ✅ Permite exportar um **bundle verificável offline**
+📖 **Leia:** [Setup Guide](./setup/XASE_SETUP_GUIDE.md)
 
-**Resultado:** 👉 a decisão vira prova, não opinião.
+### Para AI Agent WhatsApp
+```bash
+# 1. Configure Evolution API e OpenAI no .env
+OPENAI_API_KEY=sk-...
+EVOLUTION_API_URL=https://...
+EVOLUTION_API_KEY=...
+
+# 2. Acesse o dashboard
+http://localhost:3000/ai-agent
+```
+
+📖 **Leia:** [AI Agent README](./setup/AI_AGENT_README.md)
+
+---
+
+## 🔌 API Example
+
+### Registrar Decisão de IA
+```bash
+POST /api/xase/v1/ingest
+Content-Type: application/json
+X-API-Key: xase_pk_...
+
+{
+  "input": { "user_id": "123", "amount": 5000 },
+  "output": { "decision": "APPROVED" },
+  "policy_id": "credit_policy_v1",
+  "confidence": 0.95
+}
+```
+
+### Baixar Evidência
+```bash
+GET /api/xase/v1/export/{transaction_id}/download?download=redirect
+X-API-Key: xase_pk_...
+```
+
+📖 **Leia:** [Technical Overview](./architecture/XASE_TECHNICAL_OVERVIEW.md)
 
 ---
 

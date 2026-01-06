@@ -15,7 +15,20 @@
     "test:external-api": "node scripts/test-external-api.js",
     "xase:migrate": "node database/run-migration.js",
     "xase:tenant": "node database/create-tenant.js",
-    "xase:setup": "npm run xase:migrate && npx prisma generate"
+    "xase:setup": "npm run xase:migrate && npx prisma generate",
+    "demo:seed": "tsx tests/insurance-demo/data/seed-claims.ts",
+    "demo:audit": "tsx tests/insurance-demo/scripts/run-audit-demo.ts",
+    "demo:full": "tsx tests/insurance-demo/scripts/run-full-demo.ts",
+    "demo:litigation": "tsx tests/insurance-demo/scripts/run-litigation-demo.ts",
+    "demo:tamper": "tsx tests/insurance-demo/scripts/run-tamper-demo.ts",
+    "demo2:seed": "tsx tests/insurance-advanced/data/seed-claims-v2.ts",
+    "demo2:audit": "tsx tests/insurance-advanced/scripts/run-audit-advanced.ts",
+    "demo2:check": "tsx tests/insurance-advanced/scripts/check-hitl.ts",
+    "demo2:clean": "tsx tests/insurance-advanced/scripts/clean-tenant.ts",
+    "demo2:bundle": "tsx tests/insurance-advanced/scripts/make-audit-bundle.ts",
+    "demo:seed:node": "node tests/insurance-demo/run-seed.cjs",
+    "demo:audit:node": "node tests/insurance-demo/run-audit.cjs",
+    "demo:full:node": "node tests/insurance-demo/run-full.cjs"
   },
   "dependencies": {
     "@auth/core": "^0.34.2",
@@ -78,6 +91,7 @@
     "nodemailer": "^6.10.0",
     "openai": "^4.103.0",
     "otplib": "^12.0.1",
+    "pdf-lib": "^1.17.1",
     "pg": "^8.16.3",
     "qrcode": "^1.5.4",
     "react": "^18.3.1",
@@ -114,6 +128,8 @@
     "postcss": "^8.4.47",
     "prisma": "^6.4.0",
     "tailwindcss": "^3.4.14",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.7.0",
     "typescript": "^5"
   }
 }

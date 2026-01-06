@@ -5,7 +5,7 @@
  * Formato: ZIP com manifest + payloads + assinaturas
  */
 
-import { prisma } from '../prisma';
+import { prisma } from '@/lib/prisma';
 import { hashString } from './crypto';
 import { getKMSProvider } from './kms';
 import { logAudit, AuditActions, ResourceTypes } from './audit';
@@ -88,8 +88,12 @@ export async function generateProofBundle(
 ): Promise<ProofBundleData> {
   const { includePayloads = false, userId } = options;
 
+  if (!prisma) {
+    throw new Error('Prisma client is not initialized');
+  }
+
   // 1. Buscar record
-  const record = await prisma.decisionRecord.findUnique({
+  const record = await prisma.decisionRecord.findFirst({
     where: { transactionId },
     include: {
       tenant: {
@@ -105,18 +109,14 @@ export async function generateProofBundle(
     throw new Error('Record not found');
   }
 
-  // 2. Buscar checkpoint mais próximo
-  const checkpoint = await prisma.checkpointRecord.findFirst({
-    where: {
-      tenantId: record.tenantId,
-      timestamp: {
-        lte: record.timestamp,
-      },
-    },
-    orderBy: {
-      timestamp: 'desc',
-    },
-  });
+  // 2. Buscar checkpoint mais próximo (removido do schema; manter null para compatibilidade)
+  const checkpoint = null as unknown as {
+    checkpointId: string;
+    checkpointHash: string;
+    signature?: string | null;
+    keyId?: string | null;
+    timestamp: Date;
+  } | null;
 
   // 3. Contar posição na chain
   const position = await prisma.decisionRecord.count({
@@ -171,15 +171,7 @@ export async function generateProofBundle(
       next_transaction_id: nextRecord?.transactionId,
     },
 
-    checkpoint: checkpoint
-      ? {
-          checkpoint_id: checkpoint.checkpointId,
-          checkpoint_hash: checkpoint.checkpointHash,
-          signature: checkpoint.signature!,
-          key_id: checkpoint.keyId!,
-          timestamp: checkpoint.timestamp.toISOString(),
-        }
-      : undefined,
+    checkpoint: undefined,
 
     tenant: {
       name: record.tenant.companyName || record.tenant.name,

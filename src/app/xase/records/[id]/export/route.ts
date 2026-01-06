@@ -26,8 +26,8 @@ export async function GET(request: Request, { params }: any) {
     const transactionId = params.id
 
     // Ensure record belongs to current tenant
-    const record = await prisma.decisionRecord.findUnique({
-      where: { transactionId },
+    const record = await prisma.decisionRecord.findFirst({
+      where: { transactionId, tenantId },
       select: { tenantId: true }
     })
     if (!record) {

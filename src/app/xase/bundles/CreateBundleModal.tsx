@@ -7,13 +7,15 @@ interface CreateBundleModalProps {
   onClose: () => void;
   onSuccess: () => void;
   tenantId: string;
+  initialDateFrom?: string;
+  initialDateTo?: string;
 }
 
-export function CreateBundleModal({ onClose, onSuccess, tenantId }: CreateBundleModalProps) {
+export function CreateBundleModal({ onClose, onSuccess, tenantId, initialDateFrom, initialDateTo }: CreateBundleModalProps) {
   const [purpose, setPurpose] = useState('');
   const [description, setDescription] = useState('');
-  const [dateFrom, setDateFrom] = useState('');
-  const [dateTo, setDateTo] = useState('');
+  const [dateFrom, setDateFrom] = useState(initialDateFrom || '');
+  const [dateTo, setDateTo] = useState(initialDateTo || '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 

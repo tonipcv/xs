@@ -1,0 +1,33 @@
+XASE Evidence Report
+====================
+
+Transaction ID: txn_074e4ced98a889b919737878717687e8
+Timestamp: 2025-12-16T21:42:37.058Z
+
+Decision
+  Type: loan_approval
+  Confidence: 0.92
+
+Policy
+  ID: credit_policy
+  Version: v4
+  Hash: sha256:660e9b22015bf0f67e497b97a033d89c70269339b12cc2399fb63da4e19ca117
+
+Model
+  ID: n/a
+  Version: n/a
+  Model Hash: n/a
+  Feature Schema Hash: n/a
+
+Cryptographic Proof
+  Decision Hash: sha256:15ea0b1266dc1f4e6f50e69554a257bf3b268015f0f4f721237bfe41d20e418a
+  Record Hash: 83e300b73f357dd65e9cf67eedd1b0ea101fdd024b02fc66d5198da0a62f63f3
+  Previous Hash: 809053e2b4d1b7413b02e5afe94c5eaa4e6d8e60e12e5d2cc68acd8f54ed6d8f
+  Signature Algorithm: RSA-SHA256
+  Signature (base64): BN4T4MADIJ4z/Uh8R+0pmsEqFR2TuQHymZ32OZzpFSMYpgLY2fGdyHkPe6fKYBOK/0HtTE89D6zX1aWl/8abtSeyHGMOJqzFBBkm7mM4HE4zH4akVRx7VKjiOTETh7dUH1nFSEW3rLW1L6B+jxmE6gZh/5YNvbOMvzvU/hTFunLVKlgKn53usXmrwHSPHEv0I3id7oZbKpMruy11LCEAfZAzg3vrxVuszZXdZuIMXQ+ebW1y2+RO0abWRvJLhWxdmdfhiViXeCnhrirheFdxKp5x9XDQGuEgqNVaF+WHEdocC2CiqbFmRGbcFTe4LrkIq6ViuSFx8oO26PW6oGcixA==
+  Key ID: mock-key-persistent
+  Key Fingerprint: bc6bd0930edf0299...
+
+Verification
+  Run: node verify.js
+  Public Key PEM included in proof.json

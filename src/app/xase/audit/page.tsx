@@ -46,7 +46,7 @@ export default async function AuditPage() {
     const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
 
-    [logs, total, todayCount, weekCount] = await Promise.all([
+    [logs, total, todayCount, weekCount] = await prisma.$transaction([
       prisma.auditLog.findMany({
         where: { tenantId },
         orderBy: { timestamp: 'desc' },
@@ -58,6 +58,9 @@ export default async function AuditPage() {
           resourceId: true,
           status: true,
           timestamp: true,
+          userId: true,
+          ipAddress: true,
+          userAgent: true,
         },
       }),
       prisma.auditLog.count({ where: { tenantId } }),
@@ -87,20 +90,20 @@ export default async function AuditPage() {
 
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-              <p className="text-[10px] text-white/40 tracking-wider">TOTAL</p>
-              <p className="text-3xl font-semibold text-white">{total}</p>
+              <p className="text-[10px] text-white/30 tracking-wider uppercase font-medium">Total</p>
+              <p className="text-2xl font-semibold text-white/90 mt-2">{total}</p>
             </div>
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-              <p className="text-[10px] text-white/40 tracking-wider">TODAY</p>
-              <p className="text-3xl font-semibold text-white">{todayCount}</p>
+              <p className="text-[10px] text-white/30 tracking-wider uppercase font-medium">Today</p>
+              <p className="text-2xl font-semibold text-white/90 mt-2">{todayCount}</p>
             </div>
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-              <p className="text-[10px] text-white/40 tracking-wider">THIS WEEK</p>
-              <p className="text-3xl font-semibold text-white">{weekCount}</p>
+              <p className="text-[10px] text-white/30 tracking-wider uppercase font-medium">This Week</p>
+              <p className="text-2xl font-semibold text-white/90 mt-2">{weekCount}</p>
             </div>
             <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg p-6">
-              <p className="text-[10px] text-white/40 tracking-wider">WORM</p>
-              <p className="text-sm text-white">Immutable</p>
+              <p className="text-[10px] text-white/30 tracking-wider uppercase font-medium">WORM</p>
+              <p className="text-sm text-white/80 mt-2">Immutable</p>
             </div>
           </div>
 

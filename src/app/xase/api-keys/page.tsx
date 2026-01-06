@@ -6,6 +6,7 @@ import { AppLayout } from '@/components/AppSidebar';
 import { getTenantId } from '@/lib/xase/server-auth';
 import { prisma } from '@/lib/prisma';
 import ApiKeyCreatorModal from './ApiKeyCreatorModal';
+import ApiKeyDeleteButton from './ApiKeyDeleteButton';
 
 export const metadata: Metadata = {
   title: 'Xase',
@@ -57,26 +58,27 @@ export default async function ApiKeysPage() {
           </div>
 
           {keys.length > 0 ? (
-            <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl overflow-hidden">
+            <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg overflow-hidden">
               <table className="w-full">
                 <thead>
-                  <tr className="border-b border-white/[0.08]">
-                    <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">NAME</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">KEY PREFIX</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">PERMISSIONS</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">RATE LIMIT</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">LAST USED</th>
-                    <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">STATUS</th>
+                  <tr className="border-b border-white/[0.06]">
+                    <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">Name</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">Key Prefix</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">Permissions</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">Rate Limit</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">Last Used</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">Status</th>
+                    <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
                   {keys.map((key) => (
                     <tr key={key.id} className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors">
-                      <td className="px-6 py-4 text-sm text-white">{key.name}</td>
-                      <td className="px-6 py-4 text-sm text-white/80 font-mono">{key.keyPrefix}...</td>
-                      <td className="px-6 py-4 text-sm text-white/80">{key.permissions}</td>
-                      <td className="px-6 py-4 text-sm text-white/80">{key.rateLimit}/hour</td>
-                      <td className="px-6 py-4 text-sm text-white/80">
+                      <td className="px-6 py-4 text-sm text-white/90">{key.name}</td>
+                      <td className="px-6 py-4 text-sm text-white/60 font-mono">{key.keyPrefix}...</td>
+                      <td className="px-6 py-4 text-sm text-white/60">{key.permissions}</td>
+                      <td className="px-6 py-4 text-sm text-white/60">{key.rateLimit}/hour</td>
+                      <td className="px-6 py-4 text-sm text-white/50">
                         {key.lastUsedAt
                           ? new Date(key.lastUsedAt).toLocaleString('en-US', {
                               day: '2-digit',
@@ -87,9 +89,16 @@ export default async function ApiKeysPage() {
                           : 'Never'}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`text-xs px-2 py-1 rounded ${key.isActive ? 'bg-green-500/10 text-green-400' : 'bg-gray-500/10 text-gray-400'}`}>
+                        <span className={`text-[11px] px-2 py-0.5 rounded border font-medium ${key.isActive ? 'bg-emerald-500/5 text-emerald-400/80 border-emerald-500/20' : 'bg-white/[0.02] text-white/40 border-white/[0.06]'}`}>
                           {key.isActive ? 'Active' : 'Inactive'}
                         </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        {key.isActive ? (
+                          <ApiKeyDeleteButton apiKeyId={key.id} apiKeyName={key.name} />
+                        ) : (
+                          <span className="text-xs text-white/40">—</span>
+                        )}
                       </td>
                     </tr>
                   ))}

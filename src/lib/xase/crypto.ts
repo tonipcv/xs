@@ -36,12 +36,16 @@ export function canonicalizeJSON(obj: any): string {
 }
 
 /**
- * Gera hash SHA-256 de um objeto
+ * Gera hash SHA-256 de um objeto (retorna formato sha256:hex)
  */
 export function hashObject(obj: any): string {
   const canonical = canonicalizeJSON(obj);
-  return crypto.createHash('sha256').update(canonical).digest('hex');
+  const hash = crypto.createHash('sha256').update(canonical).digest('hex');
+  return `sha256:${hash}`;
 }
+
+// Adicionar propriedade canonicalJSON ao hashObject para uso no snapshot service
+hashObject.canonicalJSON = canonicalizeJSON;
 
 /**
  * Gera hash SHA-256 de uma string

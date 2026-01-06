@@ -8,6 +8,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { DecisionType } from '@prisma/client';
 import { checkAndIncrementUsage } from '@/lib/usage';
 import { validateApiKey, checkRateLimit, hasPermission } from '@/lib/xase/auth';
 import {
@@ -29,7 +30,7 @@ const DecisionSchema = z.object({
   context: z.record(z.any()).optional().describe('Additional context'),
   policyId: z.string().optional().describe('Policy or model ID'),
   policyVersion: z.string().optional().describe('Policy version'),
-  decisionType: z.string().optional().describe('Type of decision'),
+  decisionType: z.nativeEnum(DecisionType).optional().describe('Type of decision'),
   confidence: z.number().min(0).max(1).optional().describe('AI confidence score'),
   processingTime: z.number().optional().describe('Processing time in ms'),
   storePayload: z.boolean().optional().default(false).describe('Store full payload'),
@@ -200,7 +201,7 @@ export async function POST(request: NextRequest) {
         contextHash,
         recordHash,
         previousHash: lastRecord?.recordHash || null,
-        decisionType: data.decisionType,
+        decisionType: data.decisionType ?? null,
         confidence: data.confidence,
         processingTime: data.processingTime,
         // Armazenar payload se solicitado

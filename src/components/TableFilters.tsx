@@ -10,6 +10,8 @@ interface FilterOption {
   value: string;
 }
 
+type FilterType = 'select' | 'date' | 'datetime';
+
 interface TableFiltersProps {
   searchPlaceholder?: string;
   searchValue?: string;
@@ -17,12 +19,14 @@ interface TableFiltersProps {
   filters?: {
     label: string;
     key: string;
-    options: FilterOption[];
+    options?: FilterOption[];
+    type?: FilterType;
     value?: string;
   }[];
   onFilterChange?: (key: string, value: string) => void;
   onExportCSV?: () => void;
   onExportJSON?: () => void;
+  onCreateBundle?: () => void;
   onClearFilters?: () => void;
   hasActiveFilters?: boolean;
 }
@@ -35,6 +39,7 @@ export function TableFilters({
   onFilterChange,
   onExportCSV,
   onExportJSON,
+  onCreateBundle,
   onClearFilters,
   hasActiveFilters = false,
 }: TableFiltersProps) {
@@ -116,26 +121,58 @@ export function TableFilters({
 
       {/* Filter Panel */}
       {showFilters && filters.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 bg-white/[0.02] border border-white/[0.08] rounded-lg">
-          {filters.map((filter) => (
-            <div key={filter.key}>
-              <label className="block text-xs text-white/60 mb-1.5">
-                {filter.label}
-              </label>
-              <select
-                value={filter.value || ''}
-                onChange={(e) => onFilterChange?.(filter.key, e.target.value)}
-                className="w-full px-3 py-1.5 text-sm bg-white/[0.03] border border-white/[0.08] rounded text-white outline-none focus:border-white/[0.15]"
+        <div className="p-4 bg-white/[0.02] border border-white/[0.08] rounded-lg space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-3">
+            {filters.map((filter) => (
+              <div key={filter.key}>
+                <label className="block text-xs text-white/60 mb-1.5">
+                  {filter.label}
+                </label>
+                {filter.type === 'date' ? (
+                  <input
+                    type="date"
+                    value={filter.value || ''}
+                    onChange={(e) => onFilterChange?.(filter.key, e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm bg-white/[0.03] border border-white/[0.08] rounded text-white outline-none focus:border-white/[0.15]"
+                  />
+                ) : filter.type === 'datetime' ? (
+                  <input
+                    type="datetime-local"
+                    step="60"
+                    value={filter.value || ''}
+                    onChange={(e) => onFilterChange?.(filter.key, e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm bg-white/[0.03] border border-white/[0.08] rounded text-white outline-none focus:border-white/[0.15]"
+                  />
+                ) : (
+                  <select
+                    value={filter.value || ''}
+                    onChange={(e) => onFilterChange?.(filter.key, e.target.value)}
+                    className="w-full px-3 py-1.5 text-sm bg-white/[0.03] border border-white/[0.08] rounded text-white outline-none focus:border-white/[0.15]"
+                  >
+                    <option value="">All</option>
+                    {(filter.options || []).map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {onCreateBundle && (
+            <div className="flex justify-end pt-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onCreateBundle}
+                className="border-white/15 text-white/80 hover:bg-white/[0.06]"
               >
-                <option value="">All</option>
-                {filter.options.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
+                Create Bundle
+              </Button>
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>

@@ -29,9 +29,7 @@ const menuItems = [
     title: 'XASE AI',
     items: [
       { title: 'Dashboard', url: '/xase' },
-      { title: 'Trust Dashboard', url: '/xase/dashboard' },
       { title: 'Records', url: '/xase/records' },
-      { title: 'Checkpoints', url: '/xase/checkpoints' },
       { title: 'Evidence Bundles', url: '/xase/bundles' },
       { title: 'Audit Log', url: '/xase/audit' },
       { title: 'API Keys', url: '/xase/api-keys' },

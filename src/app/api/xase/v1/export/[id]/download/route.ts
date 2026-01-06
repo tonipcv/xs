@@ -89,8 +89,8 @@ export async function GET(
     const bundle = await generateProofBundle(transactionId, { includePayloads })
 
     // Load record to enrich with policy/model metadata if needed
-    const dbRecord = await prisma.decisionRecord.findUnique({
-      where: { transactionId },
+    const dbRecord = await prisma.decisionRecord.findFirst({
+      where: { transactionId, tenantId: auth.tenantId! },
       select: {
         tenantId: true,
         policyId: true,
@@ -176,14 +176,15 @@ export async function GET(
 
     // Hash + sign decision (canonical JSON)
     const canonical = canonicalizeJSON(decision)
-    const decisionHash = hashObject(decision)
+    const decisionHashFull = hashObject(decision) // 'sha256:<hex>'
+    const decisionHashHex = decisionHashFull.replace(/^sha256:/, '')
 
     // Sign via signing service (validates context + rate limits)
     const sig = await signHash({
       tenantId: auth.tenantId!,
       resourceType: 'export',
       resourceId: transactionId,
-      hash: decisionHash,
+      hash: decisionHashHex,
       metadata: {
         policy_id: bundle.manifest.record.policy_id,
         decision_type: bundle.manifest.record.decision_type,
@@ -199,7 +200,7 @@ export async function GET(
       version: '1.0.0',
       hash_algo: 'SHA-256',
       signature_algo: sig.algorithm,
-      hash: `sha256:${decisionHash}`,
+      hash: `sha256:${decisionHashHex}`,
       signature: sig.signature,
       key_id: sig.keyId,
       key_fingerprint: sig.keyFingerprint.substring(0, 16) + '...',
@@ -374,7 +375,7 @@ main().catch(e=>{ console.error(e); process.exit(1) })
 
     reportLines.push('')
     reportLines.push('Cryptographic Proof')
-    reportLines.push(`  Decision Hash: sha256:${decisionHash}`)
+    reportLines.push(`  Decision Hash: sha256:${decisionHashHex}`)
     reportLines.push(`  Record Hash: ${bundle.manifest.hashes.record_hash}`)
     reportLines.push(`  Previous Hash: ${bundle.manifest.hashes.previous_hash || 'genesis'}`)
     reportLines.push(`  Signature Algorithm: ${proof.signature_algo}`)
@@ -413,8 +414,8 @@ main().catch(e=>{ console.error(e); process.exit(1) })
       bundleSize = uploaded.size
 
       // Persistir EvidenceBundle
-      const record = await prisma.decisionRecord.findUnique({
-        where: { transactionId },
+      const record = await prisma.decisionRecord.findFirst({
+        where: { transactionId, tenantId: auth.tenantId! },
         select: { id: true, tenantId: true },
       })
 
@@ -485,7 +486,9 @@ main().catch(e=>{ console.error(e); process.exit(1) })
     }
 
     // Fallback: stream direto (se storage não configurado ou modo stream)
-    return new Response(nodebuf, {
+    // Use Uint8Array to satisfy BodyInit typing (avoids SharedArrayBuffer union)
+    const body = new Uint8Array(nodebuf)
+    return new Response(body, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="evidence_${transactionId}.zip"`

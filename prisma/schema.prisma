@@ -157,8 +157,8 @@ model Tenant {
   apiKeys           ApiKey[]
   policies          Policy[]
   decisionRecords   DecisionRecord[]
-  checkpointRecords CheckpointRecord[]
   evidenceBundles   EvidenceBundle[]
+  evidenceSnapshots EvidenceSnapshot[]
   interventions     HumanIntervention[]
   modelCards        ModelCard[]
   driftRecords      DriftRecord[]
@@ -254,7 +254,7 @@ model DecisionRecord {
   tenantId        String
   
   // Identificação da decisão
-  transactionId   String    @unique // ID público para recibo
+  transactionId   String    // ID público para recibo
   policyId        String?   // ID da política/modelo usado
   policyVersion   String?   // Versão da política
   policyHash      String?   @map("policy_hash") // Hash da política no momento da decisão
@@ -270,11 +270,11 @@ model DecisionRecord {
   inputHash       String    // Hash do input da decisão
   outputHash      String    // Hash do output/resultado
   contextHash     String?   // Hash do contexto adicional
-  recordHash      String    @unique // Hash encadeado (prev + current)
+  recordHash      String    // Hash encadeado (prev + current)
   previousHash    String?   // Hash do record anterior (chain)
   
   // Metadata da decisão
-  decisionType    String?   // Ex: "loan_approval", "content_moderation"
+  decisionType    DecisionType?   // CLAIM | UNDERWRITING | FRAUD | PRICING | OTHER
   confidence      Float?    // Confiança da IA (0-1)
   processingTime  Int?      // Tempo de processamento em ms
   
@@ -294,6 +294,13 @@ model DecisionRecord {
   hasHumanIntervention Boolean @default(false) @map("hasHumanIntervention")
   finalDecisionSource  String  @default("AI") @map("finalDecisionSource") // AI, HUMAN_APPROVED, HUMAN_REJECTED, HUMAN_OVERRIDE
   
+  // Reproducibility (Insurance Extension - Sprint 1)
+  externalDataSnapshotId   String? @map("external_data_snapshot_id")
+  businessRulesSnapshotId  String? @map("business_rules_snapshot_id")
+  environmentSnapshotId    String? @map("environment_snapshot_id")
+  featureVectorSnapshotId  String? @map("feature_vector_snapshot_id")
+  dataTimestamp            DateTime? @map("data_timestamp") // quando dados externos foram coletados
+  
   // Timestamps
   timestamp       DateTime  @default(now())
   createdAt       DateTime  @default(now())
@@ -302,7 +309,10 @@ model DecisionRecord {
   tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   bundles         EvidenceBundle[]
   interventions   HumanIntervention[]
+  insuranceDecision InsuranceDecision?
   
+  @@unique([tenantId, recordHash])
+  @@unique([tenantId, transactionId])
   @@index([tenantId])
   @@index([transactionId])
   @@index([timestamp])
@@ -311,52 +321,14 @@ model DecisionRecord {
   @@map("xase_decision_records")
 }
 
-// 🔐 CHECKPOINT RECORD - Âncora externa de integridade
-// Checkpoint periódico (horário/diário) com assinatura KMS e TSA
-model CheckpointRecord {
-  id                String    @id @default(cuid())
-  tenantId          String
-  
-  // Identificação do checkpoint
-  checkpointId      String    @unique // ID público
-  checkpointType    String    @default("PERIODIC") // PERIODIC, MANUAL, EMERGENCY
-  checkpointNumber  Int       // Número sequencial por tenant (monotônico)
-  
-  // Dados do checkpoint
-  lastRecordHash    String    // Hash do último record incluído
-  recordCount       Int       // Quantidade de records desde último checkpoint
-  merkleRoot        String?   // Merkle root (se múltiplos tenants)
-  checkpointHash    String    @unique // Hash do checkpoint completo
-  
-  // Assinatura criptográfica (KMS/HSM)
-  signature         String?   @db.Text // Assinatura do checkpointHash
-  signatureAlgo     String?   // Ex: "RSA-SHA256", "ECDSA-SHA256"
-  keyId             String?   // ID da chave no KMS
-  
-  // Carimbo de tempo externo (TSA - RFC3161)
-  tsaToken          String?   @db.Text // Token TSA em base64
-  tsaUrl            String?   // URL do TSA usado
-  tsaTimestamp      DateTime? // Timestamp retornado pelo TSA
-  
-  // Metadata
-  previousCheckpointId String? // Link para checkpoint anterior
-  isVerified        Boolean   @default(false)
-  verifiedAt        DateTime?
-  
-  // Timestamps
-  timestamp         DateTime  @default(now())
-  createdAt         DateTime  @default(now())
-  
-  // Relações
-  tenant            Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  @@index([tenantId])
-  @@index([timestamp])
-  @@index([checkpointHash])
-  @@index([tenantId, checkpointNumber])
-  @@unique([tenantId, checkpointNumber])
-  @@map("xase_checkpoint_records")
-}
+// 🔐 CHECKPOINT RECORD - REMOVED
+// Checkpoints were removed to simplify the system.
+// Legal guarantees are maintained through:
+// - Record chain (previousHash → recordHash)
+// - Evidence bundles (bundleManifestHash + verify.js)
+// - Audit logs (immutable trail)
+// - KMS signing service (available for bundle signing)
+// See: docs/LEGAL_GUARANTEES_WITHOUT_CHECKPOINTS.md
 
 // 📋 AUDIT LOG - Trilha imutável de ações administrativas
 model AuditLog {
@@ -422,6 +394,20 @@ model EvidenceBundle {
   format          String    @default("zip") // zip, tar.gz
   includesPdf     Boolean   @default(false) @map("includes_pdf")
   includesPayloads Boolean  @default(true) @map("includes_payloads")
+  
+  // Insurance Extension - Sprint 2
+  legalFormat          String @default("standard") @map("legal_format") // standard, ediscovery, uk_eidas, us_esign
+  pdfReportUrl         String? @map("pdf_report_url")
+  pdfReportHash        String? @map("pdf_report_hash")
+  pdfReportLogicalHash String? @map("pdf_report_logical_hash")
+  chainOfCustodyReportJson String? @db.Text @map("chain_of_custody_report_json")
+  bundleManifestHash   String? @map("bundle_manifest_hash")
+  
+  // Blockchain (opcional, futuro)
+  merkleRoot           String? @map("merkle_root")
+  blockchainNetwork    String? @map("blockchain_network")
+  blockchainTxHash     String? @map("blockchain_tx_hash")
+  blockchainAnchorAt   DateTime? @map("blockchain_anchor_at")
   
   // Retenção e compliance
   retentionUntil  DateTime? @map("retention_until") // Data de expiração (WORM/legal hold)
@@ -755,4 +741,126 @@ model AlertRule {
   @@index([isActive])
   @@index([metricName])
   @@map("xase_alert_rules")
+}
+
+// ============================================================================
+// 🏥 INSURANCE EXTENSION - Sprint 1
+// ============================================================================
+
+// 🔬 EVIDENCE SNAPSHOT - Snapshots imutáveis para reproducibility
+model EvidenceSnapshot {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  
+  // Tipo de snapshot
+  type        SnapshotType
+  
+  // Storage (S3/MinIO)
+  storageUrl  String @map("storage_url")
+  storageKey  String @map("storage_key")
+  payloadHash String @map("payload_hash") // SHA-256 do JSON canonical
+  payloadSize Int?   @map("payload_size")
+  
+  // Metadata
+  sourceMeta  String? @db.Text @map("source_meta") // JSON: APIs consultadas, versões, etc.
+  capturedAt  DateTime @default(now()) @map("captured_at")
+  
+  // Compression
+  compressed  Boolean @default(false)
+  compressionAlgo String? @map("compression_algo") // gzip, brotli
+  
+  // Relations
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([type])
+  @@index([capturedAt])
+  @@index([payloadHash]) // para deduplicação
+  @@map("xase_evidence_snapshots")
+}
+
+enum SnapshotType {
+  EXTERNAL_DATA
+  BUSINESS_RULES
+  ENVIRONMENT
+  FEATURE_VECTOR
+  
+  @@map("xase_snapshot_type")
+}
+
+// 🏥 INSURANCE DECISION - Overlay com campos específicos de insurance
+model InsuranceDecision {
+  id              String @id @default(cuid())
+  recordId        String @unique @map("record_id") // FK para DecisionRecord
+  
+  // Claim fields
+  claimNumber     String? @map("claim_number")
+  claimType       InsuranceClaimType? @map("claim_type")
+  claimAmount     Decimal? @map("claim_amount") @db.Decimal(15, 2)
+  claimDate       DateTime? @map("claim_date")
+  
+  // Policy fields
+  policyNumber    String? @map("policy_number")
+  policyHolderIdHash String? @map("policy_holder_id_hash") // SHA-256(CPF/SSN)
+  insuredAmount   Decimal? @map("insured_amount") @db.Decimal(15, 2)
+  
+  // Underwriting fields
+  riskScore       Float? @map("risk_score")
+  underwritingDecision String? @map("underwriting_decision") // APPROVED, DECLINED, REFERRED
+  premiumCalculated    Decimal? @map("premium_calculated") @db.Decimal(15, 2)
+  coverageOfferedJson  String? @db.Text @map("coverage_offered_json")
+  
+  // Outcome (genérico para narrativas jurídicas)
+  decisionOutcome       String? @map("decision_outcome")
+  decisionOutcomeReason String? @map("decision_outcome_reason")
+  
+  // Decision Impact (reguladores)
+  decisionImpactFinancial      Decimal? @map("decision_impact_financial") @db.Decimal(15, 2)
+  decisionImpactConsumerImpact DecisionConsumerImpact? @map("decision_impact_consumer")
+  decisionImpactAppealable     Boolean? @map("decision_impact_appealable")
+  
+  // Regulatory
+  regulatoryCaseId String? @map("regulatory_case_id")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  record DecisionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  
+  @@index([claimNumber])
+  @@index([policyNumber])
+  @@index([claimType])
+  @@index([claimDate])
+  @@map("xase_insurance_decisions")
+}
+
+enum InsuranceClaimType {
+  AUTO
+  HEALTH
+  LIFE
+  PROPERTY
+  LIABILITY
+  TRAVEL
+  
+  @@map("xase_insurance_claim_type")
+}
+
+enum DecisionConsumerImpact {
+  LOW
+  MEDIUM
+  HIGH
+  
+  @@map("xase_decision_consumer_impact")
+}
+
+// Tipo de decisão padronizado (evita ambiguidade)
+enum DecisionType {
+  CLAIM
+  UNDERWRITING
+  FRAUD
+  PRICING
+  OTHER
+
+  @@map("xase_decision_type")
 }

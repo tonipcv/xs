@@ -18,6 +18,9 @@ interface EvidenceBundle {
   createdAt: Date;
   completedAt: Date | null;
   expiresAt: Date | null;
+  pdfReportUrl: string | null;
+  legalFormat: string | null;
+  bundleManifestHash: string | null;
 }
 
 interface BundlesTableProps {
@@ -230,8 +233,10 @@ export function BundlesTable({
   const hasActiveFilters = !!(search || statusFilter);
 
   const getStatusColor = (status: string) => {
-    // Neutral palette across all statuses
-    return 'bg-white/[0.04] text-white/80 border-white/[0.08]';
+    if (status === 'READY') return 'bg-emerald-500/5 text-emerald-400/80 border-emerald-500/20';
+    if (status === 'FAILED') return 'bg-rose-500/5 text-rose-400/80 border-rose-500/20';
+    if (status === 'PROCESSING') return 'bg-blue-500/5 text-blue-400/80 border-blue-500/20';
+    return 'bg-amber-500/5 text-amber-400/80 border-amber-500/20';
   };
 
   return (
@@ -263,62 +268,62 @@ export function BundlesTable({
         
         <button
           onClick={() => setShowCreateModal(true)}
-          className="ml-4 px-4 py-2 bg-white/[0.06] hover:bg-white/[0.12] text-white text-sm font-medium rounded-md transition-colors flex items-center gap-2"
+          className="ml-4 px-3 py-1.5 bg-white text-black text-xs font-medium rounded transition-colors flex items-center gap-2 hover:bg-white/90"
         >
-          <Plus className="w-4 h-4" />
+          <Plus className="w-3.5 h-3.5" />
           Create Bundle
         </button>
       </div>
 
-      <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl overflow-hidden">
+      <div className="bg-white/[0.02] border border-white/[0.06] rounded-lg overflow-hidden">
         {loading && (
           <div className="absolute inset-0 bg-black/20 flex items-center justify-center z-10">
-            <div className="w-6 h-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+            <div className="w-5 h-5 rounded-full border-2 border-white/20 border-t-white animate-spin" />
           </div>
         )}
         
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-white/[0.08]">
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
-                  BUNDLE ID
+              <tr className="border-b border-white/[0.06]">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                  Bundle ID
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('status')}
-                    className="flex items-center gap-1 hover:text-white/70"
+                    className="flex items-center gap-1 hover:text-white/50"
                   >
-                    STATUS
+                    Status
                     <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('recordCount')}
-                    className="flex items-center gap-1 hover:text-white/70"
+                    className="flex items-center gap-1 hover:text-white/50"
                   >
-                    RECORDS
+                    Records
                     <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
-                  PURPOSE
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                  Purpose
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
-                  CREATED BY
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                  Created By
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
                   <button
                     onClick={() => handleSort('createdAt')}
-                    className="flex items-center gap-1 hover:text-white/70"
+                    className="flex items-center gap-1 hover:text-white/50"
                   >
-                    CREATED
+                    Created
                     <ArrowUpDown className="w-3 h-3" />
                   </button>
                 </th>
-                <th className="text-left px-6 py-4 text-xs font-medium text-white/50 tracking-wider">
-                  ACTIONS
+                <th className="text-left px-6 py-4 text-xs font-medium text-white/30 tracking-wider uppercase">
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -328,17 +333,40 @@ export function BundlesTable({
                   key={bundle.id}
                   className="border-b border-white/[0.06] hover:bg-white/[0.02] transition-colors"
                 >
-                  <td className="px-6 py-4 text-sm text-white font-mono">
-                    <Link href={`/xase/bundles/${bundle.bundleId}`} className="hover:underline">
+                  <td className="px-6 py-4 text-sm text-white/80 font-mono">
+                    <Link href={`/xase/bundles/${bundle.bundleId}`} className="hover:text-white transition-colors">
                       {bundle.bundleId.substring(0, 16)}...
                     </Link>
                   </td>
                   <td className="px-6 py-4">
-                    <span
-                      className={`text-xs px-2 py-1 rounded border ${getStatusColor(bundle.status)}`}
-                    >
-                      {bundle.status}
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <span
+                        className={`text-[11px] px-2 py-0.5 rounded border font-medium ${getStatusColor(bundle.status)}`}
+                      >
+                        {bundle.status}
+                      </span>
+                      {bundle.pdfReportUrl && (
+                        <span
+                          className="text-[10px] px-1.5 py-0.5 rounded border bg-white/[0.02] text-white/50 border-white/[0.06]"
+                          title="PDF Legal Report"
+                        >
+                          PDF
+                        </span>
+                      )}
+                      {bundle.bundleManifestHash && (
+                        <span
+                          className="text-xs px-2 py-1 rounded border bg-white/[0.04] text-white/80 border-white/[0.08]"
+                          title="Cryptographic Manifest"
+                        >
+                          Manifest
+                        </span>
+                      )}
+                      {bundle.legalFormat === 'uk_insurance' && (
+                        <span className="text-xs px-2 py-1 rounded bg-yellow-500/10 text-yellow-400 border border-yellow-500/20" title="Court-Ready Format">
+                          ⚖️ Court-Ready
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-white/80">
                     {bundle.recordCount.toLocaleString()}

@@ -30,7 +30,7 @@ export default function Navigation() {
               </Link>
 
               <Link 
-                href="/xase/dashboard" 
+                href="/xase" 
                 className="flex flex-col items-center p-2 text-gray-400 hover:text-green-300 transition-colors"
               >
                 <LineChart className="h-6 w-6" />

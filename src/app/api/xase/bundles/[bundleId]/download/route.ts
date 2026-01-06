@@ -6,6 +6,8 @@ import { getTenantContext } from '@/lib/xase/server-auth';
 import JSZip from 'jszip';
 import { createHash } from 'crypto';
 import { getPresignedUrl } from '@/lib/xase/storage';
+import { getKMSProvider } from '@/lib/xase/kms';
+import { getPublicKeyPem } from '@/lib/xase/signing-service';
 import { requireTenant, requireRole, assertResourceInTenant, auditDenied, ForbiddenError, UnauthorizedError } from '@/lib/xase/rbac';
 import { assertRateLimit, RateLimitError } from '@/lib/xase/rate-limit';
 import { logger, ensureRequestId } from '@/lib/observability/logger';
@@ -193,18 +195,31 @@ export async function POST(
 
     // 3. Generate SHA-256 hash of records
     const recordsHash = createHash('sha256').update(recordsJson).digest('hex');
-    
-    // 4. Create signature (in production, use proper KMS)
-    const signature = {
+
+    // 4. Sign hash with KMS (mock or real). Embed public key for offline verification.
+    let signaturePayload: any = {
       algorithm: 'SHA256',
       hash: recordsHash,
       signedAt: new Date().toISOString(),
-      signedBy: 'xase-kms-mock',
-      // In production: use actual cryptographic signature
-      // signature: sign(recordsHash, privateKey)
+      signedBy: 'xase-kms-disabled',
     };
+    try {
+      const kms = getKMSProvider();
+      const sig = await kms.sign(recordsHash);
+      const publicKeyPem = await getPublicKeyPem().catch(() => undefined);
+      signaturePayload = {
+        algorithm: sig.algorithm,
+        hash: recordsHash,
+        signature: sig.signature,
+        keyId: sig.keyId,
+        signedAt: sig.timestamp.toISOString(),
+        publicKeyPem: publicKeyPem || undefined,
+      };
+    } catch (e) {
+      // keep minimal signature payload; verification will only compare hash
+    }
 
-    zip.file('signature.json', JSON.stringify(signature, null, 2));
+    zip.file('signature.json', JSON.stringify(signaturePayload, null, 2));
 
     // 5. Add verification script
     const verificationScript = `#!/usr/bin/env node
@@ -239,7 +254,24 @@ console.log('Expected Hash:', signature.hash);
 console.log('Calculated Hash:', calculatedHash);
 console.log('');
 
-if (calculatedHash === signature.hash) {
+let ok = calculatedHash === signature.hash;
+
+// If KMS signature and public key are present, verify cryptographically
+if (ok && signature.signature && signature.publicKeyPem) {
+  try {
+    const algo = (signature.algorithm || 'RSA-SHA256').toUpperCase();
+    const verifier = crypto.createVerify(algo);
+    verifier.update(signature.hash);
+    verifier.end();
+    const verified = verifier.verify(signature.publicKeyPem, Buffer.from(signature.signature, 'base64'));
+    if (!verified) ok = false;
+    console.log('KMS Signature Verified:', verified ? 'YES' : 'NO');
+  } catch (e) {
+    console.log('KMS verification skipped due to error:', e.message);
+  }
+}
+
+if (ok) {
   console.log('✅ VERIFICATION PASSED');
   console.log('The bundle has not been tampered with.');
   process.exit(0);
@@ -322,7 +354,7 @@ ${new Date().toISOString()}
 
     logger.info('bundle.download:legacy_zip', { requestId, bundleId, recordCount: records.length });
     // Return ZIP file
-    return new NextResponse(zipBuffer, {
+    return new Response(zipBuffer, {
       headers: {
         'Content-Type': 'application/zip',
         'Content-Disposition': `attachment; filename="evidence-bundle-${bundleId}.zip"`,

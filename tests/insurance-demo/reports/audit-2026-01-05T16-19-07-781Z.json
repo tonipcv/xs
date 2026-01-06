@@ -1,0 +1,1019 @@
+{
+  "tenant": {
+    "id": "cmk1cm1un0000i19k9vbsd8w7",
+    "email": "demo-insurance@xase.local",
+    "name": "tenant_demo_insurance"
+  },
+  "period": {
+    "from": "2025-10-07T16:19:05.606Z",
+    "to": "2026-01-05T16:19:07.781Z"
+  },
+  "totals": {
+    "records_available": 1000,
+    "records_selected": 50,
+    "with_intervention": 0
+  },
+  "generated_at": "2026-01-05T16:19:07.781Z",
+  "items": [
+    {
+      "transactionId": "txn_f8c53545bbb7faacf11e0f241e89e287",
+      "timestamp": "2025-12-06T17:10:20.434Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.976329935201558,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "e4c405bf6acf02c347d9472ebcf76ce8c2138e340466416acd199c3634ab52f4",
+      "previousHash": "e00a37dd51e013b2222038f09719a50f5c8e078ac638c3691db7927440cc2576",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-06-0671",
+        "claimType": "AUTO",
+        "claimAmount": "500000",
+        "policyNumber": "POL-49B01617",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_aee8061fbb484d7812bc0226fa5c33c2",
+      "timestamp": "2025-11-18T08:55:25.280Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8457257882127014,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "b61bbf00412d27fd3fbc81889de0c823e100a4175fcf288901f0a3e20f6ee640",
+      "previousHash": "eb8cc7b2eb5380ca5f894307c96a12d7e859050fd554c6bb5d8dc9b894a3d8d2",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-18-0424",
+        "claimType": "LIABILITY",
+        "claimAmount": "18318",
+        "policyNumber": "POL-EF96C198",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_07915c74be9883c53d02559eef8ec4e3",
+      "timestamp": "2025-10-15T12:27:48.421Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9638663618409408,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "4cac1a505eabe09ee6fbf47e6bc7261a43472bd63005c12a88177aa9cd72e3cd",
+      "previousHash": "379b156373ec9d7102232884216b8c6743834d763e253921fdf689062eb55ed7",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-15-0137",
+        "claimType": "TRAVEL",
+        "claimAmount": "6954",
+        "policyNumber": "POL-7354D023",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_08ae9245d13d729931846e9754f7df19",
+      "timestamp": "2025-10-28T11:03:51.833Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.630353469870063,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "b6718815a3e63fa555c995895239df1ca2164fd5e6b988932ae1036e2ecbf4f3",
+      "previousHash": "c38a6bc2b3ff89d5d97d1501841d6efdd144c97a0b0a3b44cf171c057cd382b5",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-28-0074",
+        "claimType": "AUTO",
+        "claimAmount": "995",
+        "policyNumber": "POL-76BB3EA1",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_4111bbd351a5759170d2edefd89e4bcd",
+      "timestamp": "2025-10-12T06:42:13.250Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9627774391081946,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "e2c8077af3f942916d8618d072411bf2e975c1470760bacc614e8179cb68f3ef",
+      "previousHash": "d852fba3943ae2a1b1bad9098cc106849681bcd838bc7b69e95d456e29edd7f2",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-12-0294",
+        "claimType": "AUTO",
+        "claimAmount": "500000",
+        "policyNumber": "POL-03401A7C",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_dadff6c54afa9a4d20355bec5aa05821",
+      "timestamp": "2025-12-03T17:07:53.776Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8362811256513061,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "9fa5854da8527a5460a8b4f4cb1829c6b5e562e20de50e90cebcdb3e5014fca3",
+      "previousHash": "a0b8497be60ef4fcfd037c07c1bbf0516a643a31ff2a3e2c4a567d77015a0620",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-03-0259",
+        "claimType": "PROPERTY",
+        "claimAmount": "23049",
+        "policyNumber": "POL-A9E72608",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_a09fccb1129e61f1659c8e6e248598c8",
+      "timestamp": "2025-12-10T06:01:35.476Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8473507243863441,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "6f6740cd9d675eee6e00160ea284b10f7b0ad28cfac86b099ec5249d49b4a718",
+      "previousHash": "6d628aa9869cf0de6ce0e954ad5ded77c562a7e8735d3c6301c18ceddfac477a",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-10-0823",
+        "claimType": "AUTO",
+        "claimAmount": "83429",
+        "policyNumber": "POL-F58E2928",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_e286df173a5fbf425098fc4ea45b3bd3",
+      "timestamp": "2025-12-17T00:49:07.838Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8640114716397402,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "d8f9cb5a2f89b4173be588fcaa40a499f76ff5b9f8f552c71ecef0f6b75ae69e",
+      "previousHash": "32b66656aed60237386b49cc466bcf8355e25ae5b6f416675c778ce8b55ec5af",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-17-0596",
+        "claimType": "PROPERTY",
+        "claimAmount": "1152",
+        "policyNumber": "POL-FB12091D",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_b16f8aabdaef711f5631a480e04996e4",
+      "timestamp": "2025-12-24T10:23:56.674Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8240990186513537,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "8a4b91d344e02dd5c2986e40bd655c1c6f6375cb37ba1d7b2abe831b5f3e1c3b",
+      "previousHash": "873cb87a34c1d33dd4d67d1b30c8db7e9cfb476bb8b77d350bcededcdc4e300d",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-24-0347",
+        "claimType": "PROPERTY",
+        "claimAmount": "130152",
+        "policyNumber": "POL-6D6D3D8E",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_871979234830a1c70cf3828d02657695",
+      "timestamp": "2025-10-26T17:16:36.467Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8217126678795764,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "ea95446bffa926b8cd4eb6ad0378566539aafc0868bf50b8946ede145230dc7a",
+      "previousHash": "6de9822f594811f87d00559cbf7b3bfc42e885510b694d5ff38de6f0975baced",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-26-0928",
+        "claimType": "AUTO",
+        "claimAmount": "500000",
+        "policyNumber": "POL-7C26D6D0",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_d9bdbb7a81468699ce7d2e458971a811",
+      "timestamp": "2025-12-24T09:25:34.566Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.931769318119263,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "873cb87a34c1d33dd4d67d1b30c8db7e9cfb476bb8b77d350bcededcdc4e300d",
+      "previousHash": "ed53e5224423d6cd265b8b1a78956eff43d7bca55c4b6021ad5de7fcd69ea937",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-24-0488",
+        "claimType": "HEALTH",
+        "claimAmount": "500000",
+        "policyNumber": "POL-127D83F5",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_7aa1edc6e8f7e98837655e9f3e9c846c",
+      "timestamp": "2025-11-04T19:54:28.335Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.6593686872896172,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "0eb2c0ee0eea8f40ee6bac6ff3ce113e3143aed5f51093e03fc788f1671cf80c",
+      "previousHash": "3e36e60e74b80a28707787e18b19b3c8e3219d0d0b6c60f14e3b2c830dc4f253",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-04-0883",
+        "claimType": "LIABILITY",
+        "claimAmount": "8519",
+        "policyNumber": "POL-95F1759D",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_65a3bf0b48f23e846913c1cc89e03c09",
+      "timestamp": "2025-11-28T01:57:22.546Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.7965473199640165,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "13cedc7a61e7fa6d5025e98d64c7c2064c27947b4e179ac1ac2d56a490c250d7",
+      "previousHash": "968ecb59e2f3ccc45d753aa3a2868a31d707e12ed471746b5d94bb7b71c1402a",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-28-0917",
+        "claimType": "AUTO",
+        "claimAmount": "143331",
+        "policyNumber": "POL-5C99054C",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_88ff5886498af2c0c1b219695a70b4a3",
+      "timestamp": "2025-11-20T13:37:40.113Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.7960228806453438,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "3480fc56ee5403b62970ed7d6ca1e7a9eb8dbee75d916b8210189a150b77f3b3",
+      "previousHash": "619463a4f408ef13a64116467d417cd2cfa3a9c71496c3e95d91d0fb47996e9d",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-20-0795",
+        "claimType": "AUTO",
+        "claimAmount": "6239",
+        "policyNumber": "POL-356E327F",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_076ecb57c894db54311a705f6fe06017",
+      "timestamp": "2025-11-15T03:07:06.836Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8688277046959162,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "02cadca7c6100593562798db7586e87560dcb8937dde5cf783c3068f89e11197",
+      "previousHash": "14078fe42b3b18a2958dd65dd7cb13ba1252a48ff43019ae8059b3d54963bf53",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-15-0423",
+        "claimType": "AUTO",
+        "claimAmount": "393589",
+        "policyNumber": "POL-A362ED28",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_ae04f2b8762745a3898c76e76ae40a3c",
+      "timestamp": "2025-12-01T19:21:26.950Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.533563912142565,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "1e6f2818148a3f1795bfbb0eaf3ed276b3c4634b91e07f7e49056f4fc508d235",
+      "previousHash": "d3218eddfd9e1f979d5bd2c637da46f74017c525ad215ad37e248ac4bc73903d",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-01-0149",
+        "claimType": "LIFE",
+        "claimAmount": "2511",
+        "policyNumber": "POL-6A401F24",
+        "decisionOutcome": "MANUAL_REVIEW",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_44ae754a8973680480860ec60ef75d96",
+      "timestamp": "2025-12-04T19:32:22.610Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9216005843712326,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "a6d9ea98fa01f09c27aa88376f640ed2228879825db3a883d524abc3c94bd76a",
+      "previousHash": "5006b570cae56d2270998a8c28dd438bbd1844c065c92f1224df638c139f7839",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-04-0931",
+        "claimType": "HEALTH",
+        "claimAmount": "461713",
+        "policyNumber": "POL-904DAA64",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_51fa3a98763b58b3f011b08e90d18bbc",
+      "timestamp": "2025-11-22T07:22:54.294Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9860675702761955,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "ab1ba20891841955bc7e9daf12e5b63c5b1946ff2ea8a19a59bbbc3df086aacd",
+      "previousHash": "54cc98ee8b198ed362daba6d0037683a3b243a2b7be4b9e85c918fc74da488f7",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-22-0797",
+        "claimType": "LIFE",
+        "claimAmount": "55889",
+        "policyNumber": "POL-D3A871FF",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_9b36e464335ba759177030b14f4e862a",
+      "timestamp": "2025-12-29T13:21:05.067Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8552144826991193,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "fe9559b746dfe745f7d3bc2c806467a56bb6bcd46edc320494ff46fdc4204548",
+      "previousHash": "08d4b48aae71d4c5e89c0150678145b126531653d45be003986753615a11dab6",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-29-0403",
+        "claimType": "HEALTH",
+        "claimAmount": "29904",
+        "policyNumber": "POL-BF28D35E",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_34c2a1ba3869c44207a43186550f5550",
+      "timestamp": "2025-11-01T17:25:38.408Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.7598796960827724,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "a7dcd2b2744b48a4e911e3331883d25fc043478c0558441c32a3c799204910fc",
+      "previousHash": "15eb6fb381f5ab888a191b3cfd02b18883598d844919a4df2f10b21e94f5e4a1",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-01-0893",
+        "claimType": "LIABILITY",
+        "claimAmount": "500000",
+        "policyNumber": "POL-DACBDF14",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_51e99e3bb49f2eec88f2626d1b1e8130",
+      "timestamp": "2025-12-31T13:18:19.781Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9496510491490973,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "b1da0ac3541a23a61acff3db831cf95168c623e93e0d2afbbd4aae9f90591f84",
+      "previousHash": "17cbcf15893bdafb2cca4484f3259c16aa3c686e1e6e2874594bfc872cf1850d",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-31-0477",
+        "claimType": "LIFE",
+        "claimAmount": "50027",
+        "policyNumber": "POL-5B62409D",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_1d0bb1966ce1cc6b4a404f9094c32786",
+      "timestamp": "2025-11-14T07:21:59.730Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9486204323912781,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "4a8ebedc45856b6aa843fcaf3d6572e1c30674d3da13d54cea3beaa273ea0906",
+      "previousHash": "6c1e283ef1c2ba8a9e5ae480bc6c30bfc7216d6d83a99022896a413d4141083b",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-14-0528",
+        "claimType": "AUTO",
+        "claimAmount": "337881",
+        "policyNumber": "POL-3E2913C1",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_303eaf53b1f9538c022a0d225d6dd746",
+      "timestamp": "2025-12-09T19:10:22.031Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8037558811352308,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "710ae6cf2e170049ebb89043a711a50b9a1013a31a0036f9ada8baea3ae379a9",
+      "previousHash": "8b995e9138ef7bdb9c98557971fad1ddbc16e3f635ae32160c22876bee6576ba",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-09-0656",
+        "claimType": "LIABILITY",
+        "claimAmount": "365299",
+        "policyNumber": "POL-7A0FE29E",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_d7e0f0e030029d13b7ee8f2748c15353",
+      "timestamp": "2025-11-10T20:41:49.347Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.5471082650210211,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "838d2aa516a546d7b99d4eca0e04bf26d776aa6fefce44e0ff49b1f36ce84172",
+      "previousHash": "d58f4e2fe2f65476546770fbda01d2c722dbcbf0122084561d2ce19857d1f9b0",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-10-0908",
+        "claimType": "HEALTH",
+        "claimAmount": "21496",
+        "policyNumber": "POL-445BB979",
+        "decisionOutcome": "MANUAL_REVIEW",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_fd28df16598180bbf491c446d904eaa4",
+      "timestamp": "2026-01-03T22:48:15.699Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9959787166259169,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "853835568ef52014f914ae96642b38cbc59195ec7fede8086c26a38866bf67b7",
+      "previousHash": "1797138f263266eefd92e5773103a4b241c7139b613e515aa981d5994c665ead",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2026-01-03-0328",
+        "claimType": "LIABILITY",
+        "claimAmount": "143875",
+        "policyNumber": "POL-6A6D4900",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_14390cedbccc087737277aed5c0e21c4",
+      "timestamp": "2025-12-07T11:29:57.168Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9826278592296328,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "75d59e1ff2df26279385018197449454df057915f964a62e55515f08a5657a5b",
+      "previousHash": "14267790f0e974e91f539e78d0806593b4bc3d4e28279bf854896f1c421b366c",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-07-0072",
+        "claimType": "LIFE",
+        "claimAmount": "323659",
+        "policyNumber": "POL-45489A75",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_5b55efac2fe40723cc9840222e3077cd",
+      "timestamp": "2025-10-10T08:03:58.592Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.7103602593926546,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "ff5423317ae7a923888356b844f16285e0fcd1ed52fba9f67ccf755e47e83959",
+      "previousHash": "53e6af25063f4a483da5a974d9725aaf596a04f9be47a5c225324cacf68db6d2",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-10-0969",
+        "claimType": "AUTO",
+        "claimAmount": "873",
+        "policyNumber": "POL-BFE73D58",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_e670a2d4810c2ed658e687539b6b3295",
+      "timestamp": "2026-01-02T12:55:47.887Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8440602210528848,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "e1af96842e14bf09ca723a557e953067de35baba6f4b39824c80a6cb19f5c19d",
+      "previousHash": "d9f57f4c735ef074bde33bca0bac44924623ef93e51259cd747c269a48e3540b",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2026-01-02-0860",
+        "claimType": "LIABILITY",
+        "claimAmount": "500000",
+        "policyNumber": "POL-81E555F3",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_9a42dc0ae21ad2860dcc03ddca97ec1f",
+      "timestamp": "2025-12-25T12:15:48.509Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.6939972226309222,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "4f234334184a67b4c2063c3b556df3158b209a299ae79f0b8fb1ef3a1830ddb3",
+      "previousHash": "00a9b566c53ca79a3e1e5c7877763399ff07409ff8062933685bcf049819c612",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-25-0941",
+        "claimType": "PROPERTY",
+        "claimAmount": "811",
+        "policyNumber": "POL-692703F2",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_ad038ff47a81e2e408a8525df61990ba",
+      "timestamp": "2025-11-05T03:49:00.794Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.6576659379989819,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "c828e9e2968d4e0e6de0606578b2404b69c175252b293008bd281057becbbf9c",
+      "previousHash": "e071b53f9a763855bae90ad8082326f77deaad019a53e451ba26000b5de44c4f",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-05-0806",
+        "claimType": "PROPERTY",
+        "claimAmount": "500000",
+        "policyNumber": "POL-11D38D48",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_4280f27b6ae077dde1d6ba69ec7ff053",
+      "timestamp": "2025-10-12T21:23:11.212Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9001374517902552,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "12eb6a3c4075f3ff2165179a05dbc20a96358963c884f472214f8c685db89603",
+      "previousHash": "fa06b7f333d018a2d19f305ed9788f899f0527944184a14971a4528aedbc73d9",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-12-0530",
+        "claimType": "PROPERTY",
+        "claimAmount": "1780",
+        "policyNumber": "POL-84A2CBAE",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_b6fc660e311b10d3e3bbe936f6abbb44",
+      "timestamp": "2025-11-15T10:03:56.794Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.6560653321518168,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "1ca579a41e90efe746ff1999fe36c7d7789fed464c5c77b21ec1b21e773f8ac9",
+      "previousHash": "267dd54ff056effb0e9cbb698da4fad22dcc8516deec50510676e53782fd730a",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-15-0934",
+        "claimType": "AUTO",
+        "claimAmount": "20940",
+        "policyNumber": "POL-67D70CE7",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_4d8aa2967f9ea41b8d62735000569912",
+      "timestamp": "2025-10-11T15:07:12.772Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.7684374713867141,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "08aeb402ccfe50733d6f339eec37865f4acb8e65cc721cfd44dd23e161d63dc0",
+      "previousHash": "b124d7b1c0ec8691f1d601f78d3a6f83d6504c8ccb74022600159e67a8b9616a",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-11-0378",
+        "claimType": "AUTO",
+        "claimAmount": "25691",
+        "policyNumber": "POL-0614B4B1",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_4e307551f9e3328746a7ef4886395031",
+      "timestamp": "2025-10-28T03:33:18.569Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.848291798244141,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "1904a447e95078d8185759b9c86ba07dad3077f5ba8bc643dc5d261657040c1c",
+      "previousHash": "f4cd2bac77ff82bac34254d672ffa01516c7627283d383863574f20fe7ed0ab8",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-28-0015",
+        "claimType": "AUTO",
+        "claimAmount": "41846",
+        "policyNumber": "POL-43F53DD1",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_79d07333638a57c06778d430df58b79a",
+      "timestamp": "2025-10-21T12:27:42.598Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.6926509659468648,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "0451114767b39e40abf70855ce5adc6d1fd997df8320bbebecb111e30b61a4dd",
+      "previousHash": "1466ef5049b46d7f87f050318699dca998a71c5aa1d5fbac5fa293ee203f9c3f",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-21-0897",
+        "claimType": "AUTO",
+        "claimAmount": "611",
+        "policyNumber": "POL-3DE7CA41",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_c155433955d4c2b2d701b350c63739dc",
+      "timestamp": "2025-12-25T10:22:28.937Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.693547224519863,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "45e10bfeb0c12a0fe2a206814a97f0f212dbae8a92c9fba543eb5d59f0603ffe",
+      "previousHash": "db2a901ac3d8a1f241628c617eb94f983934b78c3b5b33e51a19d20fd7d29578",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-25-0824",
+        "claimType": "TRAVEL",
+        "claimAmount": "162766",
+        "policyNumber": "POL-7E4B3137",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_26f234eca657484efbba0f7bb3e917b6",
+      "timestamp": "2025-10-18T22:06:32.664Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8756663867807667,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "cde2ef91c9010b8cb1905074dbc7457cf74d10f95d4650d8a9334789fb89981a",
+      "previousHash": "7675d9432d16f037fb06eb870f233ab82a3304fbff3b3a001fc0e4fb99433781",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-18-0683",
+        "claimType": "HEALTH",
+        "claimAmount": "214633",
+        "policyNumber": "POL-B55B5C20",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_50d20ad64c1fc4064e37fc685bc24a0c",
+      "timestamp": "2025-12-12T22:52:07.631Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8872102722528246,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "e86f2b6580446cd6ad7aa65ae62f260840bb8f238654b3e1cacc909b98f05c63",
+      "previousHash": "4809766c8bc2deb28a1883798982a3f6ff7ae84519ba5eb8bf676e439df9c1ff",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-12-0817",
+        "claimType": "PROPERTY",
+        "claimAmount": "8409",
+        "policyNumber": "POL-2618C710",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_4f90aa418d53dd3129d7fedc8dc09b2e",
+      "timestamp": "2025-10-15T07:20:16.954Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8343998984084443,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "dc6da248c49cbe3e360311d56cac319e5390cc9255cff51a769724ee683b99b7",
+      "previousHash": "a3fd2ad2a1c3253cd4fac3f3b316eb81cbb6a14d55b22018ae24f7a9c5a6c9fb",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-15-0461",
+        "claimType": "AUTO",
+        "claimAmount": "51686",
+        "policyNumber": "POL-CB66FBFC",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_a9ffa5eeedfb23ab0cd43e1256ecf7ac",
+      "timestamp": "2025-12-06T20:18:10.472Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8710047227873007,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "fe4c9eeccf261bc6125270e74474d9fe855e8186ea7dcd63c58541f138ee21c0",
+      "previousHash": "e4c405bf6acf02c347d9472ebcf76ce8c2138e340466416acd199c3634ab52f4",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-06-0500",
+        "claimType": "AUTO",
+        "claimAmount": "477289",
+        "policyNumber": "POL-35D909DF",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_7d017b5ba0c0bd1850bd869548620cba",
+      "timestamp": "2025-10-18T22:52:14.626Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.799425029364821,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "7ae1de3d7752aa15b39faf8953b0c3d6627e4a1a0f1d5caf3f513c5ceec68797",
+      "previousHash": "22177f30af7e03681ce355127ba1af9e8aff331185e351212de9f850475ae6bc",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-18-0542",
+        "claimType": "HEALTH",
+        "claimAmount": "15166",
+        "policyNumber": "POL-A53F9D1A",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_7fb77943f03eec40bc7d6a3506475d4f",
+      "timestamp": "2025-11-30T11:03:26.577Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.704234299540051,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "ac19caf569d1bccf724e5124d53e6c4c76bf0da32eb123cb13391cc93fc88b4a",
+      "previousHash": "fa90586eb84568367e9407520eea46182a73e9476437b401fb0eeb892702f651",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-11-30-0571",
+        "claimType": "HEALTH",
+        "claimAmount": "270297",
+        "policyNumber": "POL-7FA165B4",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_adc9b154c399cd61f42aa9ac3f96dcc7",
+      "timestamp": "2025-10-10T19:47:59.653Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.886713391083185,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "1ea086583ae2f847a7442cf0ab9efae10844fc1765af3c70ba0f2ac3e7880647",
+      "previousHash": "8953f43f97bf6a707dc384be87f8f8a397311afec70af8e064c1285f617b87d2",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-10-0221",
+        "claimType": "AUTO",
+        "claimAmount": "51649",
+        "policyNumber": "POL-11D547B5",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_41789f0c97c94f3b7e83fb00df962daf",
+      "timestamp": "2025-12-02T04:59:14.353Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.7920114659037755,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "6902b974ac474672503cc020ec522ef9a57bda9916dedcc3efe4ca5cae673a1e",
+      "previousHash": "201ceaf4ddf43e34bdc84c8ea61862a59abb6e1fe65affa22f5cb779eca0cd1e",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-02-0427",
+        "claimType": "AUTO",
+        "claimAmount": "4298",
+        "policyNumber": "POL-B95887DF",
+        "decisionOutcome": "REJECTED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_50dfc6fe47289333884600bd33309b76",
+      "timestamp": "2025-10-11T02:12:24.932Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8960316268860382,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "5c05f385b822851a34b3f3af1523ef0aa4469792bfacd36992c53f64314c2f26",
+      "previousHash": "069d7e257a6ff42903db18401d6008c66ab578ef6df157ad89404b9a60ee6450",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-11-0520",
+        "claimType": "AUTO",
+        "claimAmount": "37971",
+        "policyNumber": "POL-2E3F2046",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_96817a9895e6e048902b443fe608436b",
+      "timestamp": "2025-12-06T00:11:42.640Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8178464445967045,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "3911bb72225152a7381e345c15f3445919c42cb2a5e323127cb22fc8d31eb6ae",
+      "previousHash": "a7fb4e1b3afdfb3f6b8f1de617b7caf214f360a388d88e4ca29a543e2a7711e1",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-06-0495",
+        "claimType": "LIFE",
+        "claimAmount": "10908",
+        "policyNumber": "POL-7316FE44",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "MEDIUM"
+      }
+    },
+    {
+      "transactionId": "txn_2604427b5aa3d6499aa41f936afc6ea7",
+      "timestamp": "2025-10-30T01:26:33.449Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.8958340143499299,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "90dec6e1266524e05f50e374cda916c610326141a41536ad39c20db14cac03b5",
+      "previousHash": "2194ba7da969b662c9a6f44cce5961ca7c753a960460502695a4c7b26f9dccfe",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-10-30-0330",
+        "claimType": "AUTO",
+        "claimAmount": "2971",
+        "policyNumber": "POL-FCF081A1",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_044ca11c5afd9b6a243a8dbdbab165ca",
+      "timestamp": "2025-12-10T07:22:29.422Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9431622844037656,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "863cf1efb6b5bec4b58792d14089fe00a6909ab07620710b745363a7c85d6ed9",
+      "previousHash": "1e461e5b2985de307670b32bb85c62faf81bdb449d9bad98e2e55623f588af4e",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2025-12-10-0215",
+        "claimType": "AUTO",
+        "claimAmount": "175423",
+        "policyNumber": "POL-0A6935B8",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    },
+    {
+      "transactionId": "txn_a85e5184d948d923f00161fa5a7f8f63",
+      "timestamp": "2026-01-02T01:47:36.992Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9806055629050354,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "fe816e12cb2a6548f7c8e5e2309a6312008a3cc31899a131023f9e96c6a7d8c6",
+      "previousHash": "d11f779ac321d12cf08fc94000032c2255f49db8167998e6f816d40a82691606",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2026-01-02-0007",
+        "claimType": "PROPERTY",
+        "claimAmount": "4890",
+        "policyNumber": "POL-331C584D",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "LOW"
+      }
+    },
+    {
+      "transactionId": "txn_a50f301112d80439e7d74f4fa51da792",
+      "timestamp": "2026-01-01T23:24:03.818Z",
+      "decisionType": "CLAIM",
+      "confidence": 0.9035046041079615,
+      "policyId": "insurance_policy_demo",
+      "policyVersion": "v1.0",
+      "recordHash": "110d69535b65616e3c0f145971fc01b403468b2f25469f2e2e22aeff19e15004",
+      "previousHash": "4c6217fccf888345262d220c9305797b8af64a0def29d516f1f0f25948235fc8",
+      "finalDecisionSource": "AI",
+      "hasHumanIntervention": false,
+      "insurance": {
+        "claimNumber": "CLM-2026-01-01-0737",
+        "claimType": "AUTO",
+        "claimAmount": "500000",
+        "policyNumber": "POL-5DFABE3A",
+        "decisionOutcome": "APPROVED",
+        "decisionImpact": "HIGH"
+      }
+    }
+  ]
+}

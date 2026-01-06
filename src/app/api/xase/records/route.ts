@@ -25,6 +25,8 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status') || undefined;
     const from = searchParams.get('from') || undefined;
     const to = searchParams.get('to') || undefined;
+    const claimType = searchParams.get('claimType') || undefined;
+    const consumerImpact = searchParams.get('consumerImpact') || undefined;
     const sortField = searchParams.get('sortField') || 'timestamp';
     const sortDir = (searchParams.get('sortDir') || 'desc') as 'asc' | 'desc';
     const limit = 20;
@@ -33,7 +35,10 @@ export async function GET(request: NextRequest) {
     const where: any = { tenantId };
 
     if (search) {
-      where.transactionId = { contains: search, mode: 'insensitive' };
+      where.OR = [
+        { transactionId: { contains: search, mode: 'insensitive' } },
+        { insuranceDecision: { claimNumber: { contains: search, mode: 'insensitive' } } },
+      ];
     }
 
     if (policy) {
@@ -46,6 +51,16 @@ export async function GET(request: NextRequest) {
 
     if (status) {
       where.isVerified = status === 'verified';
+    }
+
+    if (claimType) {
+      where.insuranceDecision = where.insuranceDecision || {};
+      where.insuranceDecision.claimType = claimType;
+    }
+
+    if (consumerImpact) {
+      where.insuranceDecision = where.insuranceDecision || {};
+      where.insuranceDecision.decisionImpactConsumerImpact = consumerImpact;
     }
 
     if (from || to) {
@@ -72,13 +87,78 @@ export async function GET(request: NextRequest) {
           confidence: true,
           isVerified: true,
           timestamp: true,
+          recordHash: true,
+          insuranceDecision: {
+            select: {
+              claimNumber: true,
+              claimType: true,
+              claimAmount: true,
+              policyNumber: true,
+              decisionOutcome: true,
+              decisionImpactConsumerImpact: true,
+            },
+          },
         },
       }),
       prisma.decisionRecord.count({ where }),
     ]);
 
     const hasMore = records.length > limit;
-    const data = hasMore ? records.slice(0, limit) : records;
+    const rawData = hasMore ? records.slice(0, limit) : records;
+
+    // Serialize to plain objects and coerce Decimal to number
+    const data = rawData.map((r: any) => {
+      // Coerce confidence if Prisma Decimal
+      let confidence: number | null = null;
+      if (r.confidence != null) {
+        try {
+          const v: any = r.confidence;
+          if (typeof v === 'object' && typeof v.toNumber === 'function') {
+            const n = v.toNumber();
+            confidence = Number.isFinite(n) ? n : null;
+          } else {
+            const n = Number(typeof v === 'object' && typeof v.toString === 'function' ? v.toString() : v);
+            confidence = Number.isFinite(n) ? n : null;
+          }
+        } catch {
+          confidence = null;
+        }
+      }
+
+      const src = r.insuranceDecision;
+      let coerced: number | null = null;
+      if (src && src.claimAmount != null) {
+        try {
+          const v: any = src.claimAmount;
+          if (typeof v === 'object' && typeof v.toNumber === 'function') {
+            const n = v.toNumber();
+            coerced = Number.isFinite(n) ? n : null;
+          } else {
+            const n = Number(typeof v === 'object' && typeof v.toString === 'function' ? v.toString() : v);
+            coerced = Number.isFinite(n) ? n : null;
+          }
+        } catch {
+          coerced = null;
+        }
+      }
+      const ins = src
+        ? {
+            ...src,
+            claimAmount: coerced,
+          }
+        : null;
+      return {
+        id: r.id,
+        transactionId: r.transactionId,
+        policyId: r.policyId,
+        decisionType: r.decisionType ?? null,
+        confidence,
+        isVerified: r.isVerified,
+        timestamp: r.timestamp instanceof Date ? r.timestamp.toISOString() : r.timestamp,
+        recordHash: r.recordHash ?? null,
+        insuranceDecision: ins,
+      } as const;
+    });
     const nextCursor = hasMore ? encodeCursor(data[data.length - 1].id) : undefined;
 
     return NextResponse.json({

@@ -1,0 +1,129 @@
+{
+  "tenant": {
+    "id": "cmk1dvfxw0000i1kdq6qhp7bd",
+    "email": "demo-insurance-advanced@xase.local",
+    "name": "tenant_demo_insurance_v2"
+  },
+  "period": {
+    "from": "2025-10-07T17:17:03.340Z",
+    "to": "2026-01-05T17:17:05.607Z"
+  },
+  "totals": {
+    "records": 1018
+  },
+  "breakdown": {
+    "byClaimType": {
+      "UNKNOWN": 1018
+    },
+    "byOutcome": {
+      "APPROVED": 0,
+      "REJECTED": 0,
+      "MANUAL_REVIEW": 0
+    },
+    "byImpact": {
+      "UNKNOWN": 1018
+    },
+    "withHumanIntervention": 158,
+    "riskFlags": {
+      "confidence_lt_0_70": 250
+    },
+    "averageAmount": {
+      "approved": 0,
+      "rejected": 0
+    }
+  },
+  "samples": [
+    {
+      "tx": "txn_04f463640b884e5bae16dc7155e58b76",
+      "ts": "2026-01-05T16:23:40.107Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.9139168071674569,
+      "model": "claims_classifier_v2@2.1.5",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_622fabd33d3dd9ca46642c9ad2ef4793",
+      "ts": "2026-01-05T14:18:16.923Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.8403588065305477,
+      "model": "claims_classifier_v2@2.1.4",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_4604b35efa9574fb42583d68b4fb1e43",
+      "ts": "2026-01-05T13:28:20.867Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.6981051005447997,
+      "model": "claims_classifier_v2@2.1.4",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_07f1587ee8e8d906aeee89ac73ea5e76",
+      "ts": "2026-01-05T06:52:33.554Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.6592994922608205,
+      "model": "claims_classifier_v2@2.1.4",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_d87ee99f9ec8571ed784ce64c7ef4c27",
+      "ts": "2026-01-05T06:08:01.597Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.8687211654670552,
+      "model": "claims_classifier_v2@2.1.5",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_851b6e1d667faf19eb02817f8fb9e2c4",
+      "ts": "2026-01-05T05:04:30.636Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.6179444218724384,
+      "model": "claims_classifier_v2@2.1.1",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_8b71a49955d3c8c506f14b66d84b269f",
+      "ts": "2026-01-05T01:37:12.688Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.9525169823162045,
+      "model": "claims_classifier_v2@2.1.2",
+      "hasHumanIntervention": true
+    },
+    {
+      "tx": "txn_aa3f7fedd3ae0038ba29cdd2b95d5a37",
+      "ts": "2026-01-05T00:02:51.908Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.9902612317797689,
+      "model": "claims_classifier_v2@2.1.3",
+      "hasHumanIntervention": true
+    },
+    {
+      "tx": "txn_1ab0f2aaa947afaa2870e689f1e8cbd0",
+      "ts": "2026-01-04T22:48:55.450Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.661762874866286,
+      "model": "claims_classifier_v2@2.1.4",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_4d51e099daedb510edb28d8abcbf87c9",
+      "ts": "2026-01-04T22:27:20.141Z",
+      "claimType": "UNKNOWN",
+      "amount": 0,
+      "confidence": 0.8817995441857925,
+      "model": "fraud_detector_v1@1.3.2",
+      "hasHumanIntervention": false
+    }
+  ],
+  "generated_at": "2026-01-05T17:17:05.607Z",
+  "duration_ms": 5055
+}

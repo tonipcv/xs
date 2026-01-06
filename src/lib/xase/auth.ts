@@ -18,15 +18,23 @@ export interface AuthResult {
 }
 
 /**
- * Valida API Key do header X-API-Key
+ * Valida API Key do header X-API-Key ou Authorization Bearer
  */
 export async function validateApiKey(request: Request | NextRequest): Promise<AuthResult> {
-  const apiKey = request.headers.get('X-API-Key') || request.headers.get('x-api-key');
+  // Aceitar X-API-Key ou Authorization: Bearer
+  let apiKey = request.headers.get('X-API-Key') || request.headers.get('x-api-key');
+  
+  if (!apiKey) {
+    const authHeader = request.headers.get('Authorization') || request.headers.get('authorization');
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      apiKey = authHeader.substring(7); // Remove "Bearer "
+    }
+  }
   
   if (!apiKey) {
     return { 
       valid: false, 
-      error: 'Missing X-API-Key header' 
+      error: 'Missing X-API-Key or Authorization header' 
     };
   }
   

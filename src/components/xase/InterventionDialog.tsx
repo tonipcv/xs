@@ -68,17 +68,24 @@ export function InterventionDialog({
         }),
       });
 
-      const data = await res.json();
+      // Try parse JSON, but don't fail UI if body is empty
+      let data: any = null;
+      try { data = await res.json(); } catch {}
+
+      if (res.status === 403) {
+        setError(data?.error || 'Insufficient role to create intervention. Contact an administrator.');
+        return;
+      }
 
       if (!res.ok) {
-        throw new Error(data.error || 'Failed to create intervention');
+        throw new Error(data?.error || 'Failed to create intervention');
       }
 
       // Sucesso
       onSuccess();
       handleClose();
     } catch (err: any) {
-      setError(err.message || 'An error occurred');
+      setError(err.message || 'An error occurred')
     } finally {
       setLoading(false);
     }
@@ -101,8 +108,8 @@ export function InterventionDialog({
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-white/[0.08]">
           <div>
-            <h2 className="text-xl font-semibold text-white">Add Human Intervention</h2>
-            <p className="text-sm text-white/50 mt-1 font-mono">{transactionId}</p>
+            <h2 className="text-base font-semibold text-white">Add Human Intervention</h2>
+            <p className="text-xs text-white/50 mt-1 font-mono">{transactionId}</p>
           </div>
           <button
             onClick={handleClose}
@@ -117,23 +124,23 @@ export function InterventionDialog({
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           {/* Error Alert */}
           {error && (
-            <div className="flex items-start gap-3 p-4 bg-red-500/10 border border-red-500/20 rounded-lg">
-              <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" />
+            <div className="flex items-start gap-2.5 p-3 bg-white/[0.04] border border-white/[0.08] rounded-lg">
+              <AlertCircle className="w-4 h-4 text-white/50 flex-shrink-0 mt-0.5" />
               <div className="flex-1">
-                <p className="text-sm text-red-300">{error}</p>
+                <p className="text-xs text-white/80">{error}</p>
               </div>
             </div>
           )}
 
           {/* Action Selector */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">
-              Action <span className="text-red-400">*</span>
+            <label className="block text-xs font-medium text-white">
+              Action <span className="text-white/50">*</span>
             </label>
             <select
               value={action}
               onChange={(e) => setAction(e.target.value as InterventionAction)}
-              className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="w-full px-3 py-1.5 text-xs bg-white/[0.03] border border-white/[0.08] rounded-full text-white focus:outline-none focus:ring-2 focus:ring-white/20"
               disabled={loading}
             >
               <option value="APPROVED">Approved - Confirm AI decision</option>
@@ -153,32 +160,32 @@ export function InterventionDialog({
 
           {/* Reason */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">
-              Reason {requiresReason && <span className="text-red-400">*</span>}
+            <label className="block text-xs font-medium text-white">
+              Reason {requiresReason && <span className="text-white/50">*</span>}
             </label>
             <textarea
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               placeholder="Explain why you are taking this action..."
               rows={3}
-              className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
+              className="w-full px-3 py-2 text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
               disabled={loading}
               required={requiresReason}
             />
-            <p className="text-xs text-white/40">
+            <p className="text-[11px] text-white/40">
               {requiresReason ? 'Required for this action' : 'Optional justification'}
             </p>
           </div>
 
           {/* Notes */}
           <div className="space-y-2">
-            <label className="block text-sm font-medium text-white">Additional Notes</label>
+            <label className="block text-xs font-medium text-white">Additional Notes</label>
             <textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               placeholder="Any additional context or observations..."
               rows={2}
-              className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
+              className="w-full px-3 py-2 text-xs bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none"
               disabled={loading}
             />
           </div>
@@ -186,19 +193,19 @@ export function InterventionDialog({
           {/* New Outcome (only for OVERRIDE) */}
           {requiresNewOutcome && (
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-white">
-                New Outcome (JSON) <span className="text-red-400">*</span>
+              <label className="block text-xs font-medium text-white">
+                New Outcome (JSON) <span className="text-white/50">*</span>
               </label>
               <textarea
                 value={newOutcome}
                 onChange={(e) => setNewOutcome(e.target.value)}
                 placeholder='{"decision": "APPROVED", "reason": "Manual override"}'
                 rows={6}
-                className="w-full px-4 py-2.5 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none font-mono text-sm"
+                className="w-full px-3 py-2 bg-white/[0.03] border border-white/[0.08] rounded-lg text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-white/20 resize-none font-mono text-xs"
                 disabled={loading}
                 required
               />
-              <p className="text-xs text-white/40">
+              <p className="text-[11px] text-white/40">
                 Provide the new decision outcome in JSON format
               </p>
             </div>
@@ -209,7 +216,7 @@ export function InterventionDialog({
             <button
               type="button"
               onClick={handleClose}
-              className="px-4 py-2 text-sm font-medium text-white/70 hover:text-white hover:bg-white/[0.06] rounded-lg transition-colors"
+              className="px-3 py-1.5 text-xs font-medium text-white/70 hover:text-white hover:bg-white/[0.06] rounded-full transition-colors"
               disabled={loading}
             >
               Cancel
@@ -217,16 +224,16 @@ export function InterventionDialog({
             <button
               type="submit"
               disabled={loading}
-              className="inline-flex items-center gap-2 px-6 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="inline-flex items-center gap-2 px-4 py-1.5 bg-white text-black rounded-full text-xs font-medium hover:bg-white/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {loading ? (
                 <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <Loader2 className="w-3 h-3 animate-spin" />
                   Submitting...
                 </>
               ) : (
                 <>
-                  <CheckCircle2 className="w-4 h-4" />
+                  <CheckCircle2 className="w-3 h-3" />
                   Submit Intervention
                 </>
               )}
