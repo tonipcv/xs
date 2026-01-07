@@ -44,7 +44,7 @@ export function InterventionDialog({
     }
 
     // Validar JSON se OVERRIDE
-    let parsedOutcome = null;
+    let parsedOutcome: any = undefined;
     if (requiresNewOutcome) {
       try {
         parsedOutcome = JSON.parse(newOutcome);
@@ -57,15 +57,18 @@ export function InterventionDialog({
     setLoading(true);
 
     try {
+      const payload: Record<string, any> = {
+        action,
+        reason: reason.trim() || undefined,
+        notes: notes.trim() || undefined,
+      };
+      if (requiresNewOutcome) {
+        payload.newOutcome = parsedOutcome;
+      }
       const res = await fetch(`/api/records/${transactionId}/intervene`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action,
-          reason: reason.trim() || undefined,
-          notes: notes.trim() || undefined,
-          newOutcome: parsedOutcome,
-        }),
+        body: JSON.stringify(payload),
       });
 
       // Try parse JSON, but don't fail UI if body is empty
@@ -78,7 +81,10 @@ export function InterventionDialog({
       }
 
       if (!res.ok) {
-        throw new Error(data?.error || 'Failed to create intervention');
+        const details = Array.isArray(data?.details)
+          ? `: ${data.details.map((d: any) => d?.message || '').filter(Boolean).join(' | ')}`
+          : '';
+        throw new Error((data?.error || 'Failed to create intervention') + details);
       }
 
       // Sucesso

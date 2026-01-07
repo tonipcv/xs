@@ -87,7 +87,7 @@ export async function POST(
       tenantId,
       action: data.action as any,
       actorUserId: session.user.id,
-      actorName: session.user.name || undefined,
+      actorName: (session.user.name as string | undefined) || (session.user.email as string),
       actorEmail: session.user.email,
       actorRole: role,
       reason: data.reason,

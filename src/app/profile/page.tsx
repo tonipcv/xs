@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect } from 'react';
@@ -7,6 +8,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useSession, signOut } from "next-auth/react";
 import Link from 'next/link';
+import { Playfair_Display } from 'next/font/google';
+
+const heading = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] });
 
 interface UserProfile {
   id: string;
@@ -31,6 +35,7 @@ export default function ProfilePage() {
   const [usage, setUsage] = useState<UsageData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [twoFactorEnabled, setTwoFactorEnabled] = useState<boolean | null>(null);
+  const [role, setRole] = useState<string | null>(null);
   const [isLoadingPortal, setIsLoadingPortal] = useState(false);
   const { data: session } = useSession();
 
@@ -66,6 +71,9 @@ export default function ProfilePage() {
         if (!res.ok) return;
         const data = await res.json()
         setTwoFactorEnabled(Boolean(data.twoFactorEnabled))
+        if (typeof data.role === 'string') {
+          setRole(data.role)
+        }
       } catch {}
     }
     load2fa()
@@ -110,11 +118,11 @@ export default function ProfilePage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-[#121316]">
+      <div className="min-h-screen bg-[#0e0f12]">
         <div className="max-w-[1100px] mx-auto px-8 py-8 space-y-8">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
-              <h1 className="text-2xl font-semibold text-white tracking-tight">Profile</h1>
+              <h1 className={`${heading.className} text-2xl font-semibold text-white tracking-tight`}>Profile</h1>
               <p className="text-sm text-white/60">Manage your account information, security and preferences.</p>
             </div>
             <Button
@@ -130,7 +138,7 @@ export default function ProfilePage() {
               <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-sm font-semibold text-white/80">Account</h2>
+                    <h2 className={`${heading.className} text-sm font-semibold text-white/90`}>Account</h2>
                     <p className="text-xs text-white/50">Update your personal information</p>
                   </div>
                   <Button
@@ -164,6 +172,12 @@ export default function ProfilePage() {
                     />
                   </div>
                   <div>
+                    <Label className="text-white/70">Role</Label>
+                    <div className="mt-2 inline-flex items-center gap-2 px-2 py-1 rounded border border-white/[0.12] text-xs text-white/80">
+                      {role ? role : 'Loading...'}
+                    </div>
+                  </div>
+                  <div>
                     <Label htmlFor="phone" className="text-white/70">Phone</Label>
                     <Input
                       id="phone"
@@ -192,7 +206,7 @@ export default function ProfilePage() {
               <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h2 className="text-sm font-semibold text-white/80">Preferences</h2>
+                    <h2 className={`${heading.className} text-sm font-semibold text-white/90`}>Preferences</h2>
                     <p className="text-xs text-white/50">Language, notifications and theme</p>
                   </div>
                 </div>
@@ -209,7 +223,7 @@ export default function ProfilePage() {
               <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-white/80">Security</h2>
+                    <h2 className={`${heading.className} text-sm font-semibold text-white/90`}>Security</h2>
                     <p className="text-xs text-white/50">Add an extra layer of protection to your account</p>
                   </div>
                   {twoFactorEnabled !== null && (
@@ -226,7 +240,7 @@ export default function ProfilePage() {
               <div className="bg-white/[0.03] border border-white/[0.08] rounded-xl p-6">
                 <div className="flex items-center justify-between mb-3">
                   <div>
-                    <h2 className="text-sm font-semibold text-white/80">Plan & Usage</h2>
+                    <h2 className={`${heading.className} text-sm font-semibold text-white/90`}>Plan & Usage</h2>
                     <p className="text-xs text-white/50">Current tier and monthly consumption</p>
                   </div>
                 </div>

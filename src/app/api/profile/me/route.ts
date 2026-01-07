@@ -12,10 +12,10 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { twoFactorEnabled: true }
+      select: { twoFactorEnabled: true, xaseRole: true }
     })
 
-    return NextResponse.json({ twoFactorEnabled: !!user?.twoFactorEnabled })
+    return NextResponse.json({ twoFactorEnabled: !!user?.twoFactorEnabled, role: user?.xaseRole || null })
   } catch (e) {
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   } finally {

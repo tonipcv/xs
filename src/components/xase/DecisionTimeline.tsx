@@ -43,15 +43,22 @@ export function DecisionTimeline({ record, interventions, docMode = false }: Dec
 
     // 2. Human Interventions
     interventions.forEach((intervention) => {
+      const email = (intervention?.actor && intervention.actor.email)
+        || intervention?.actorEmail
+        || undefined;
+      const name = (intervention?.actor && intervention.actor.name)
+        || intervention?.actorName
+        || email
+        || 'Unknown';
+      const role = (intervention?.actor && intervention.actor.role)
+        || intervention?.actorRole
+        || undefined;
+
       events.push({
         id: intervention.id,
         timestamp: new Date(intervention.timestamp),
         type: 'HUMAN_INTERVENTION',
-        actor: {
-          name: intervention.actorName || 'Unknown',
-          email: intervention.actorEmail,
-          role: intervention.actorRole,
-        },
+        actor: { name, email, role },
         action: intervention.action,
         details: intervention.reason || intervention.notes,
         metadata: intervention,

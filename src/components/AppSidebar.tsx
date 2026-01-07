@@ -74,7 +74,7 @@ export function AppSidebar() {
       className="border-r border-white/[0.08] bg-[#0e0f12]"
     >
       <SidebarHeader className="border-none bg-[#0e0f12] h-14 flex items-center px-4">
-        <BrandLogo />
+        <BrandLogo showText={false} />
       </SidebarHeader>
 
       <SidebarContent className="bg-transparent py-2">

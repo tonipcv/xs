@@ -120,17 +120,17 @@ function RegisterContent() {
   };
 
   return (
-    <div className="min-h-screen bg-[#1c1d20] font-normal tracking-[-0.01em]">
+    <div className="min-h-screen bg-[#0e0f12] font-normal tracking-[-0.01em]">
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-full max-w-[380px] bg-[#1c1d20] p-8">
+        <div className="w-full max-w-[420px]">
           <div className="text-center mb-8">
             <div className="flex justify-center mb-3">
-              <BrandLogo />
+              <BrandLogo showText={false} />
             </div>
             <h1 className="text-xl font-medium text-[#f5f5f7] tracking-tight">
               {t.register.createAccount}
             </h1>
-            <p className="text-sm text-[#f5f5f7]/60 mt-1">{t.register.startJourney}</p>
+            <p className="text-sm text-[#f5f5f7]/70 mt-1">{t.register.startJourney}</p>
           </div>
 
           {/* Mensagem de erro */}
@@ -152,7 +152,7 @@ function RegisterContent() {
                 name="name"
                 required
                 autoComplete="off"
-                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
+                className="w-full px-3 py-2.5 text-sm bg-transparent border border-white/[0.08] rounded focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
                 placeholder={t.register.namePlaceholder}
               />
             </div>
@@ -167,7 +167,7 @@ function RegisterContent() {
                 name="email"
                 required
                 autoComplete="off"
-                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
+                className="w-full px-3 py-2.5 text-sm bg-transparent border border-white/[0.08] rounded focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
                 placeholder={t.register.emailPlaceholder}
               />
             </div>
@@ -181,7 +181,7 @@ function RegisterContent() {
                 name="region"
                 value={region}
                 onChange={(e) => setRegion(e.target.value as Region)}
-                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
+                className="w-full px-3 py-2.5 text-sm bg-transparent border border-white/[0.08] rounded focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
               >
                 {Object.entries(REGION_NAMES).map(([key, name]) => (
                   <option key={key} value={key}>
@@ -201,7 +201,7 @@ function RegisterContent() {
                 name="password"
                 required
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
+                className="w-full px-3 py-2.5 text-sm bg-transparent border border-white/[0.08] rounded focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
                 placeholder={t.register.passwordPlaceholder}
               />
             </div>
@@ -216,18 +216,18 @@ function RegisterContent() {
                 name="confirmPassword"
                 required
                 autoComplete="new-password"
-                className="w-full px-3 py-2.5 text-sm bg-[#2a2b2d] border-none rounded focus:outline-none focus:ring-1 focus:ring-[#f5f5f7]/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
+                className="w-full px-3 py-2.5 text-sm bg-transparent border border-white/[0.08] rounded focus:outline-none focus:ring-1 focus:ring-white/20 focus:border-white/20 text-[#f5f5f7] placeholder-[#f5f5f7]/40"
                 placeholder={t.register.confirmPasswordPlaceholder}
               />
             </div>
 
             <button
               type="submit"
-              className="w-full py-2.5 px-4 text-sm font-medium text-[#f5f5f7] bg-[#2a2b2d] hover:bg-[#3a3b3d] rounded transition-colors duration-200 flex items-center justify-center gap-2 mt-6"
+              className="w-full py-2.5 px-4 text-sm font-medium text-black bg-white hover:bg-white/90 rounded transition-colors duration-200 flex items-center justify-center gap-2 mt-6"
               disabled={isSubmitting}
             >
               {isSubmitting ? t.register.signingUp : t.register.signUp}
-              <ArrowRight className="h-4 w-4" />
+              <ArrowRight className="h-4 w-4 text-black/70" />
             </button>
           </form>
 
