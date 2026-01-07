@@ -35,11 +35,11 @@ export default function ApiKeyDeleteButton({ apiKeyId, apiKeyName }: Props) {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <button className="px-3 py-1.5 bg-white/[0.06] hover:bg-white/[0.12] text-white text-xs font-medium rounded-md transition-colors">
+        <button className="px-3 py-1.5 border border-white/12 bg-transparent text-white/85 text-xs font-medium rounded-md hover:bg-white/[0.04] hover:border-white/20 transition-colors">
           Delete
         </button>
       </DialogTrigger>
-      <DialogContent className="bg-[#121316] border-white/[0.08]">
+      <DialogContent className="bg-[#0e0f12] border-white/[0.08]">
         <DialogHeader>
           <DialogTitle className="text-white">Delete API Key</DialogTitle>
           <DialogDescription>
@@ -52,14 +52,14 @@ export default function ApiKeyDeleteButton({ apiKeyId, apiKeyName }: Props) {
         <div className="mt-4 flex items-center justify-end gap-2">
           <button
             onClick={() => setOpen(false)}
-            className="px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] text-white text-xs rounded-md"
+            className="px-3 py-1.5 border border-white/12 bg-transparent text-white/85 text-xs rounded-md hover:bg-white/[0.04] hover:border-white/20"
             disabled={loading}
           >
             Cancel
           </button>
           <button
             onClick={handleDelete}
-            className="px-3 py-1.5 bg-white text-black text-xs rounded-md disabled:opacity-60"
+            className="px-3 py-1.5 border border-white/12 bg-transparent text-white/90 text-xs rounded-md disabled:opacity-60 hover:bg-white/[0.04] hover:border-white/20"
             disabled={loading}
           >
             {loading ? 'Deleting...' : 'Confirm delete'}

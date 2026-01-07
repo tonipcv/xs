@@ -241,7 +241,7 @@ function LoginContent() {
               href={registerHref}
               className="text-[#f5f5f7] hover:text-white transition-colors duration-200 font-medium"
             >
-              Create account
+              Get a demo
             </Link>
           </div>
         </div>
