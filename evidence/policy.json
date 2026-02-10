@@ -1,0 +1,24 @@
+{
+  "name": "Credit Policy v4",
+  "thresholds": {
+    "min_score": 680,
+    "max_amount": 100000
+  },
+  "rules": [
+    {
+      "id": "rule_score",
+      "if": "credit_score >= 680",
+      "then": "allow"
+    },
+    {
+      "id": "rule_amount",
+      "if": "amount <= 100000",
+      "then": "allow"
+    },
+    {
+      "id": "rule_else",
+      "if": "otherwise",
+      "then": "manual_review"
+    }
+  ]
+}

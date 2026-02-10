@@ -1,0 +1,75 @@
+version: "0.1"
+policy_id: "pol_healthcare_training_001"
+name: "Healthcare Audio Training Policy"
+description: "Policy for AI labs training speech recognition models on healthcare call center data"
+
+dataset:
+  id: "ds_healthcare_calls_2024"
+  columns:
+    - audio_key
+    - duration
+    - language
+    - call_type
+    - patient_age
+    - patient_name
+    - patient_ssn
+    - patient_dob
+    - diagnosis_code
+
+principals:
+  allow:
+    - "tenant_stanford_ai_lab"
+    - "tenant_openai_research"
+  deny:
+    - "tenant_competitor_xyz"
+
+purposes:
+  - "speech_recognition_training"
+  - "medical_terminology_extraction"
+
+validity:
+  not_before: "2024-01-01T00:00:00Z"
+  not_after: "2024-12-31T23:59:59Z"
+  environments:
+    - "training"
+    - "validation"
+
+consent:
+  required: true
+  status: "VERIFIED_BY_XASE"
+  min_version: "1.0"
+  proof_required: true
+
+rules:
+  columns:
+    allow:
+      - "audio_key"
+      - "duration"
+      - "language"
+      - "call_type"
+      - "patient_age"
+    deny:
+      - "patient_ssn"
+      - "patient_dob"
+      - "diagnosis_code"
+    masking:
+      - column: "patient_name"
+        method: "hash"
+        except_principals:
+          - "tenant_stanford_ai_lab"  # Stanford pode ver nomes para pesquisa
+
+  rows:
+    allow:
+      - field: "consent_status"
+        op: "="
+        value: "VERIFIED_BY_XASE"
+      - field: "patient_age"
+        op: ">="
+        value: 18
+      - field: "language"
+        op: "in"
+        value: ["en", "es", "pt"]
+    deny:
+      - field: "call_type"
+        op: "="
+        value: "emergency"  # Excluir chamadas de emergência

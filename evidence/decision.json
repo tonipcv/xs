@@ -1,0 +1,22 @@
+{
+  "transaction_id": "txn_074e4ced98a889b919737878717687e8",
+  "policy_id": "credit_policy",
+  "policy_version": "v4",
+  "policy_hash": "sha256:660e9b22015bf0f67e497b97a033d89c70269339b12cc2399fb63da4e19ca117",
+  "decision_type": "loan_approval",
+  "confidence": 0.92,
+  "input": {
+    "user_id": "u_1002",
+    "amount": 55000,
+    "credit_score": 710
+  },
+  "output": {
+    "decision": "REVIEW"
+  },
+  "context": {
+    "channel": "web",
+    "policy_used": "v4"
+  },
+  "timestamp": "2025-12-16T21:42:37.058Z",
+  "model": {}
+}

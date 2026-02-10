@@ -1,0 +1,77 @@
+# Node / Next.js
+node_modules/
+.npm/
+.pnpm-store/
+yarn.lock
+package-lock.json
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+.next/
+out/
+.next-static/
+.vercel/
+
+# Build outputs
+build/
+dist/
+.cache/
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+
+# Logs
+logs/
+*.log
+*.log.*
+
+# Coverage
+coverage/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editors/IDE
+.vscode/
+.idea/
+*.swp
+
+# Python
+__pycache__/
+*.py[cod]
+*.so
+.venv/
+.venv-*/
+.envrc
+.mypy_cache/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Prisma/DB local
+prisma/dev.db
+*.db
+*.sqlite
+*.sqlite-journal
+
+# Docker
+*.pid
+
+# Misc cache
+.tmp/
+.temp/
+.cache/
+
+# Next/Image cache
+**/public/og-image-*.png
+
+# Ignore artifacts
+.evidence_tmp/
+
+# Keep migrations and SQL (do NOT ignore)
+!database/migrations/
+!migrations/sql/
+!**/*.sql

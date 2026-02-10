@@ -1,0 +1,51 @@
+version: "0.1"
+policy_id: "pol_marketing_segment_001"
+name: "Marketing Segmentation Policy"
+description: "Policy for marketing team to segment customers with privacy controls"
+
+dataset:
+  id: "ds_customers_2024"
+
+principals:
+  allow:
+    - "tenant_marketing_team"
+
+purposes:
+  - "customer_segmentation"
+  - "campaign_targeting"
+
+validity:
+  not_after: "2024-06-30T23:59:59Z"
+
+consent:
+  required: true
+  status: "SELF_DECLARED"
+  min_version: "2.0"
+
+rules:
+  columns:
+    allow:
+      - "customer_id"
+      - "age_group"
+      - "country"
+      - "purchase_frequency"
+      - "total_spent"
+    deny:
+      - "email"
+      - "phone"
+      - "address"
+    masking:
+      - column: "customer_id"
+        method: "hash"  # Hash IDs para privacidade
+
+  rows:
+    allow:
+      - field: "marketing_consent"
+        op: "="
+        value: true
+      - field: "age_group"
+        op: "in"
+        value: ["25-34", "35-44", "45-54"]  # Target demographics
+      - field: "total_spent"
+        op: ">="
+        value: 100  # Clientes com gasto >= $100

@@ -1,0 +1,38 @@
+@import 'react-day-picker/dist/style.css';
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* SF Pro Font (Apple System Font) */
+@layer base {
+  * {
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  body {
+    @apply bg-[#1c1d20] text-white;
+  }
+  
+  /* Remove default margins */
+  html, body {
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* Harmonize autofill styles on dark backgrounds (e.g. auth/register forms) */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover,
+  input:-webkit-autofill:focus,
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0 30px #0e0f12 inset !important;
+    box-shadow: 0 0 0 30px #0e0f12 inset !important;
+    -webkit-text-fill-color: #f5f5f7 !important;
+    caret-color: #f5f5f7 !important;
+    transition: background-color 9999s ease-out 0s;
+  }
+}
+

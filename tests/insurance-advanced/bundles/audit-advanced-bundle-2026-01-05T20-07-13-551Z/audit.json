@@ -1,0 +1,156 @@
+{
+  "tenant": {
+    "id": "cmk1k3n0v0000t99iemltv1n8",
+    "email": "demo-insurance-advanced+run3@xase.local",
+    "name": "tenant_demo-insurance-advanced+run3_xase_local"
+  },
+  "period": {
+    "from": "2025-10-07T19:54:42.840Z",
+    "to": "2026-01-05T19:54:51.401Z"
+  },
+  "totals": {
+    "records": 1000
+  },
+  "breakdown": {
+    "byClaimType": {
+      "LIFE": 106,
+      "TRAVEL": 67,
+      "HEALTH": 198,
+      "AUTO": 327,
+      "PROPERTY": 204,
+      "LIABILITY": 98
+    },
+    "byOutcome": {
+      "APPROVED": 592,
+      "REJECTED": 308,
+      "MANUAL_REVIEW": 100
+    },
+    "byImpact": {
+      "LOW": 325,
+      "HIGH": 471,
+      "MEDIUM": 204
+    },
+    "withHumanIntervention": 131,
+    "riskFlags": {
+      "confidence_lt_0_70": 261
+    },
+    "averageAmount": {
+      "approved": 158656,
+      "rejected": 157953
+    }
+  },
+  "samples": [
+    {
+      "tx": "txn_27b45f07e724db8b580fb074a8dcaa8f",
+      "ts": "2026-01-05T17:22:16.489Z",
+      "claimType": "LIFE",
+      "outcome": "REJECTED",
+      "amount": 2239,
+      "impact": "LOW",
+      "confidence": 0.6137336192328885,
+      "model": "fraud_detector_v1@1.3.2",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_e4898f791f0ce391142ff92dc88c6a5c",
+      "ts": "2026-01-05T16:59:34.552Z",
+      "claimType": "TRAVEL",
+      "outcome": "APPROVED",
+      "amount": 687,
+      "impact": "LOW",
+      "confidence": 0.928128144978122,
+      "model": "claims_classifier_v2@2.1.4",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_a0cb903e664acfd67e39a9fa822e4eda",
+      "ts": "2026-01-05T16:45:20.413Z",
+      "claimType": "TRAVEL",
+      "outcome": "APPROVED",
+      "amount": 92216,
+      "impact": "HIGH",
+      "confidence": 0.8949851327427778,
+      "model": "fraud_detector_v1@1.3.2",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_bea217a267b9b1b756f22fa9886cc1cd",
+      "ts": "2026-01-05T13:39:26.591Z",
+      "claimType": "LIFE",
+      "outcome": "REJECTED",
+      "amount": 24229,
+      "impact": "MEDIUM",
+      "confidence": 0.672892825022889,
+      "model": "claims_classifier_v2@2.1.5",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_8723c2f72ed334755748a398bbaa0528",
+      "ts": "2026-01-05T12:11:04.253Z",
+      "claimType": "HEALTH",
+      "outcome": "APPROVED",
+      "amount": 133863,
+      "impact": "HIGH",
+      "confidence": 0.8714947712946152,
+      "model": "claims_classifier_v2@2.1.3",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_37c81fdbb0ac22dbaa4e26bc47575059",
+      "ts": "2026-01-05T10:16:33.252Z",
+      "claimType": "TRAVEL",
+      "outcome": "REJECTED",
+      "amount": 200208,
+      "impact": "HIGH",
+      "confidence": 0.669730215577334,
+      "model": "claims_classifier_v2@2.1.5",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_39e953c5dc8c66c4ae0b85b49a157513",
+      "ts": "2026-01-05T09:05:51.182Z",
+      "claimType": "HEALTH",
+      "outcome": "REJECTED",
+      "amount": 500000,
+      "impact": "HIGH",
+      "confidence": 0.7634008090623488,
+      "model": "claims_classifier_v2@2.1.2",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_60f824fcfe952a0014a486e50884fcc2",
+      "ts": "2026-01-05T08:06:34.007Z",
+      "claimType": "AUTO",
+      "outcome": "APPROVED",
+      "amount": 500000,
+      "impact": "HIGH",
+      "confidence": 0.8789898124691204,
+      "model": "claims_classifier_v2@2.1.5",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_31ef879b3d312e42d0b0fcdc3e891da6",
+      "ts": "2026-01-05T07:40:49.922Z",
+      "claimType": "PROPERTY",
+      "outcome": "MANUAL_REVIEW",
+      "amount": 32735,
+      "impact": "MEDIUM",
+      "confidence": 0.4697151952932124,
+      "model": "claims_classifier_v2@2.1.3",
+      "hasHumanIntervention": false
+    },
+    {
+      "tx": "txn_854e54f8d3b1228c0bf1c517434f9691",
+      "ts": "2026-01-05T06:07:46.420Z",
+      "claimType": "LIABILITY",
+      "outcome": "APPROVED",
+      "amount": 500000,
+      "impact": "HIGH",
+      "confidence": 0.9909936722722044,
+      "model": "fraud_detector_v1@1.3.2",
+      "hasHumanIntervention": true
+    }
+  ],
+  "generated_at": "2026-01-05T19:54:51.401Z",
+  "duration_ms": 10251
+}

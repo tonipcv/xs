@@ -1,0 +1,100 @@
+# Node / Next
+node_modules/
+.next/
+.next/cache/
+.out/
+out/
+coverage/
+.build/
+build/
+dist/
+.tmp/
+.temp/
+**/.DS_Store
+
+# Env and secrets
+.env
+.env.*
+!.env.example
+*.env.local
+*.env.development
+*.env.production
+*.env.test
+.envrc
+.envrc.local
+.npmrc
+.yarnrc
+.pnp.*
+.direnv/
+*.key
+*.pem
+*.p12
+*.cer
+*.crt
+*.pfx
+*.jks
+*.keystore
+secrets/
+certs/
+keys/
+
+# Databases
+*.sqlite
+*.sqlite3
+*.db
+*.db-journal
+*.sqlite-wal
+*.sqlite-shm
+prisma/dev.db
+
+# Python venvs (sdk-py)
+.venv/
+**/.venv/
+venv/
+**/venv/
+__pycache__/
+*.pyc
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.nyc_output/
+
+# OS / IDE
+*.swp
+*.swo
+.vscode/
+.idea/
+*.iml
+.history/
+
+# Build artifacts (packages)
+packages/**/dist/
+packages/**/build/
+
+# Evidence and temp artifacts
+evidence.zip
+extracted-bundle/
+
+# Misc tools
+.vercel/
+.netlify/
+.eslintcache
+stylelintcache
+.next/types/
+.turbo/
+.swc/
+.cache/
+.parcel-cache/
+.vite/
+playwright-report/
+test-results/
+blob-report/
+cypress/screenshots/
+cypress/videos/
+cypress/downloads/
+

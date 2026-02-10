@@ -1,0 +1,14 @@
+README.md
+setup.py
+xase/__init__.py
+xase/auth.py
+xase/client.py
+xase/dp_client.py
+xase/exceptions.py
+xase/helpers.py
+xase/streaming.py
+xase.egg-info/PKG-INFO
+xase.egg-info/SOURCES.txt
+xase.egg-info/dependency_links.txt
+xase.egg-info/requires.txt
+xase.egg-info/top_level.txt

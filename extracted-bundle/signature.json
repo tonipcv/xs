@@ -1,0 +1,7 @@
+{
+  "algorithm": "ECDSA_SHA_256",
+  "keyId": "alias/xase-evidence-bundles",
+  "signedAt": "2025-12-27T21:55:48.752Z",
+  "hash": "cec3230c9f8088d7523ec76cf7fd6c22e1e5c3c01a0afca1ddd16566ea5ee272",
+  "signature": "MEUCIQCktIYyGUeJ+DO/AfQNe4YKfQpDbKSpPufw5wAU0dW34gIgNJigZFHrKTnOJGpn1DOFUhxkSQ6bhxdUFcR6FdRHwzQ="
+}

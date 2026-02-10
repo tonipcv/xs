@@ -1,0 +1,1100 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = "postgres://postgres:f4c3d9b8d88fa9dbefb2@dpbdp1.easypanel.host:643/aa?sslmode=disable"
+}
+
+   model User {
+  id                   String             @id @default(cuid())
+  name                 String?
+  email                String             @unique
+  emailVerified        DateTime?
+  image                String?
+  password             String?
+  resetToken           String?            @unique
+  resetTokenExpiry     DateTime?
+  verificationToken    String?            @unique
+  language             String?
+  region               String             @default("OTHER")
+  createdAt            DateTime           @default(now())
+  updatedAt            DateTime           @updatedAt
+  phone                String?
+  passwordResetToken   String?            @map("password_reset_token")
+  passwordResetExpires DateTime?          @map("password_reset_expires")
+  emailOtpCode         String?
+  emailOtpExpires      DateTime?
+  twoFactorEnabled     Boolean            @default(false)
+  totpSecret           String?
+  twoFactorVerifiedAt  DateTime?
+  twoFactorBackupCodes String?
+  
+  // 🎯 XASE CORE: Link opcional para Tenant
+  tenantId             String?            // Acesso ao console Xase
+  xaseRole             XaseRole?          // Papel no Xase (OWNER, ADMIN, VIEWER)
+  
+  accounts             Account[]
+  sessions             Session[]
+  tenant               Tenant?            @relation(fields: [tenantId], references: [id])
+  
+  @@index([tenantId])
+   }
+
+   model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+     @@unique([provider, providerAccountId])
+   }
+
+   model Session {
+     id           String   @id @default(cuid())
+     sessionToken String   @unique
+     userId       String
+     expires      DateTime
+     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+   }
+
+   model VerificationToken {
+     identifier String
+     token      String   @unique
+     expires    DateTime
+
+     @@unique([identifier, token])
+   }
+
+    model Subscription {
+  id                 String   @id @default(cuid())
+  userId             String
+  priceId            String
+  status             String
+  stripeId           String   @unique
+     currentPeriodStart DateTime
+     currentPeriodEnd   DateTime
+     cancelAtPeriodEnd  Boolean  @default(false)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  user               User     @relation(fields: [userId], references: [id])
+   }
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+ 
+
+// ============================================
+// 🎯 XASE CORE - IMMUTABLE DECISION LEDGER
+// ============================================
+// Módulo de evidência forense para decisões de IA
+// Coexiste com o sistema existente sem conflitos
+
+// 🏢 TENANT - Empresas clientes do Xase (adaptado para Voice Data Governance)
+model Tenant {
+  id              String           @id @default(cuid())
+  name            String
+  email           String           @unique
+  companyName     String?
+  industry        String?
+  website         String?
+  
+  // Voice Data Governance: tipo de organização
+  organizationType OrganizationType? @map("organization_type")
+  
+  // Status e billing
+  status          TenantStatus     @default(ACTIVE)
+  plan            String           @default("free")
+  
+  // Timestamps
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  
+  // Relações
+  users             User[]             // Usuários com acesso a este tenant
+  apiKeys           ApiKey[]
+  
+  // Voice Data Governance relations
+  datasets          Dataset[]
+  clientPolicies    VoiceAccessPolicy[] @relation("ClientPolicies")
+  creditLedger      CreditLedger[]
+  
+  @@map("xase_tenants")
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+  
+  @@map("xase_tenant_status")
+}
+
+enum OrganizationType {
+  SUPPLIER        // Call center que fornece dados
+  CLIENT          // AI Lab que consome dados
+  PLATFORM_ADMIN  // Xase admin
+  
+  @@map("organization_type")
+}
+
+// 👤 Papéis de usuários no Xase Core
+enum XaseRole {
+  OWNER    // Dono do tenant, acesso total
+  ADMIN    // Administrador, pode gerenciar usuários e ver todas as provas
+  VIEWER   // Visualizador, apenas lê provas
+  
+  @@map("xase_roles")
+}
+
+// ============================================
+// XASE CORE MODELS REMOVED FOR MVP VOICE
+// ============================================
+// Removidos: Policy, DecisionRecord, EvidenceBundle, HumanIntervention,
+// ModelCard, DriftRecord, Alert, MetricsSnapshot, AlertRule,
+// EvidenceSnapshot, InsuranceDecision, Subscription e enums relacionados.
+// Motivo: Foco 100% no primeiro contrato de Voice Data Governance.
+// Billing agora via CreditLedger, não Stripe/tokens.
+// ============================================
+
+// 🔑 API KEY - Autenticação para acesso aos datasets
+model ApiKey {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Identificação da política
+  policyId        String    @map("policy_id") // Ex: "credit_policy", "fraud_detection"
+  version         String    // Ex: "v1", "2025-01-15", "1.2.3"
+  
+  // Documento da política
+  document        String    @db.Text // JSON ou texto completo da política
+  documentHash    String    @map("document_hash") // SHA-256 do documento
+  
+  // Metadata
+  name            String?   // Nome amigável
+  description     String?   @db.Text
+  
+  // Status
+  isActive        Boolean   @default(true) @map("is_active")
+  activatedAt     DateTime  @default(now()) @map("activated_at")
+  deactivatedAt   DateTime? @map("deactivated_at")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, policyId, version])
+  @@index([tenantId])
+  @@index([policyId])
+  @@index([isActive])
+  @@map("xase_policies")
+}
+
+// 🔑 API KEY - Autenticação para ingestão de decisões
+model ApiKey {
+  id          String    @id @default(cuid())
+  tenantId    String
+  name        String    // Ex: "Production API", "Development"
+  keyHash     String    @unique // bcrypt hash da chave
+  keyPrefix   String    // Primeiros 8 chars para identificação
+  
+  // Permissões e limites
+  isActive    Boolean   @default(true)
+  permissions String    @default("ingest,verify") // Comma-separated: ingest,export,verify
+  rateLimit   Int       @default(1000) // requests por hora
+  
+  // Metadata
+  lastUsedAt  DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  
+  // Relações
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([keyHash])
+  @@map("xase_api_keys")
+}
+
+// PLACEHOLDER - DecisionRecord removido
+model DecisionRecordPlaceholder {
+  id              String    @id @default(cuid())
+  tenantId        String
+  
+  // Identificação da decisão
+  transactionId   String    // ID público para recibo
+  policyId        String?   // ID da política/modelo usado
+  policyVersion   String?   // Versão da política
+  policyHash      String?   @map("policy_hash") // Hash da política no momento da decisão
+  
+  // Metadata do modelo de IA
+  modelId         String?   @map("model_id") // Ex: "credit_model", "fraud_detector"
+  modelVersion    String?   @map("model_version") // Ex: "2025-01-15", "v2.1"
+  modelHash       String?   @map("model_hash") // Hash dos pesos/artefatos do modelo
+  featureSchemaHash String? @map("feature_schema_hash") // Hash do schema de features usado
+  explanationJson String?   @db.Text @map("explanation_json") // SHAP, LIME, ou explicação custom (JSON)
+  
+  // Hashes criptográficos (SHA-256)
+  inputHash       String    // Hash do input da decisão
+  outputHash      String    // Hash do output/resultado
+  contextHash     String?   // Hash do contexto adicional
+  recordHash      String    // Hash encadeado (prev + current)
+  previousHash    String?   // Hash do record anterior (chain)
+  
+  // Metadata da decisão
+  decisionType    DecisionType?   // CLAIM | UNDERWRITING | FRAUD | PRICING | OTHER
+  confidence      Float?    // Confiança da IA (0-1)
+  processingTime  Int?      // Tempo de processamento em ms
+  
+  // Payload opcional (se cliente quiser armazenar)
+  inputPayload    String?   @db.Text // JSON stringificado
+  outputPayload   String?   @db.Text // JSON stringificado
+  contextPayload  String?   @db.Text // JSON stringificado
+  
+  // Storage externo (S3/R2)
+  storageUrl      String?   // URL do payload completo em storage
+  
+  // Verificação de integridade
+  isVerified      Boolean   @default(true)
+  verifiedAt      DateTime  @default(now())
+  
+  // Human-in-the-Loop (campos derivados para facilitar queries)
+  hasHumanIntervention Boolean @default(false) @map("hasHumanIntervention")
+  finalDecisionSource  String  @default("AI") @map("finalDecisionSource") // AI, HUMAN_APPROVED, HUMAN_REJECTED, HUMAN_OVERRIDE
+  
+  // Reproducibility (Insurance Extension - Sprint 1)
+  externalDataSnapshotId   String? @map("external_data_snapshot_id")
+  businessRulesSnapshotId  String? @map("business_rules_snapshot_id")
+  environmentSnapshotId    String? @map("environment_snapshot_id")
+  featureVectorSnapshotId  String? @map("feature_vector_snapshot_id")
+  dataTimestamp            DateTime? @map("data_timestamp") // quando dados externos foram coletados
+  
+  // Timestamps
+  timestamp       DateTime  @default(now())
+  createdAt       DateTime  @default(now())
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  bundles         EvidenceBundle[]
+  interventions   HumanIntervention[]
+  insuranceDecision InsuranceDecision?
+  
+  @@unique([tenantId, recordHash])
+  @@unique([tenantId, transactionId])
+  @@index([tenantId])
+  @@index([transactionId])
+  @@index([timestamp])
+  @@index([policyId])
+  @@index([recordHash])
+  @@map("xase_decision_records")
+}
+
+// 🔐 CHECKPOINT RECORD - REMOVED
+// Checkpoints were removed to simplify the system.
+// Legal guarantees are maintained through:
+// - Record chain (previousHash → recordHash)
+// - Evidence bundles (bundleManifestHash + verify.js)
+// - Audit logs (immutable trail)
+// - KMS signing service (available for bundle signing)
+// See: docs/LEGAL_GUARANTEES_WITHOUT_CHECKPOINTS.md
+
+// 📋 AUDIT LOG - Trilha imutável de ações administrativas
+model AuditLog {
+  id            String    @id @default(cuid())
+  tenantId      String?
+  userId        String?
+  
+  // Ação realizada
+  action        String    // Ex: "KEY_ROTATED", "EXPORT_CREATED", "PAYLOAD_ACCESSED"
+  resourceType  String    // Ex: "API_KEY", "DECISION_RECORD", "CHECKPOINT"
+  resourceId    String?   // ID do recurso afetado
+  
+  // Contexto
+  metadata      String?   @db.Text // JSON com detalhes adicionais
+  ipAddress     String?
+  userAgent     String?
+  
+  // Resultado
+  status        String    @default("SUCCESS") // SUCCESS, FAILED, DENIED
+  errorMessage  String?
+  
+  // Timestamps (IMUTÁVEL via trigger)
+  timestamp     DateTime  @default(now())
+  
+  @@index([tenantId])
+  @@index([userId])
+  @@index([action])
+  @@index([timestamp])
+  @@map("xase_audit_logs")
+}
+
+// PLACEHOLDER - EvidenceBundle removido
+model EvidenceBundlePlaceholder {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  recordId        String?   @map("record_id") // FK para DecisionRecord (opcional para bundles multi-record)
+  
+  // Identificação
+  bundleId        String    @unique @map("bundle_id") // ID público do bundle
+  transactionId   String?   @map("transaction_id") // Cópia do transactionId do record (opcional)
+  
+  // Status do bundle (para geração assíncrona)
+  status          String    @default("PENDING") // PENDING, PROCESSING, READY, FAILED
+  
+  // Compliance metadata
+  purpose         String?   // AUDIT, COMPLIANCE, LEGAL, INVESTIGATION, BACKUP, OTHER
+  description     String?   @db.Text // Descrição do propósito
+  recordCount     Int       @default(0) @map("record_count") // Número de records no bundle
+  
+  // Filtros aplicados
+  dateFrom        DateTime? @map("date_from") // Início do período
+  dateTo          DateTime? @map("date_to") // Fim do período
+  
+  // Armazenamento
+  storageUrl      String?   @map("storage_url") // S3/R2 URL do ZIP
+  storageKey      String?   @map("storage_key") // Chave no bucket
+  bundleHash      String?   @map("bundle_hash") // SHA-256 do ZIP completo
+  bundleSize      Int?      @map("bundle_size") // Tamanho em bytes
+  
+  // Metadata
+  format          String    @default("zip") // zip, tar.gz
+  includesPdf     Boolean   @default(false) @map("includes_pdf")
+  includesPayloads Boolean  @default(true) @map("includes_payloads")
+  
+  // Insurance Extension - Sprint 2
+  legalFormat          String @default("standard") @map("legal_format") // standard, ediscovery, uk_eidas, us_esign
+  pdfReportUrl         String? @map("pdf_report_url")
+  pdfReportHash        String? @map("pdf_report_hash")
+  pdfReportLogicalHash String? @map("pdf_report_logical_hash")
+  chainOfCustodyReportJson String? @db.Text @map("chain_of_custody_report_json")
+  bundleManifestHash   String? @map("bundle_manifest_hash")
+  
+  // Blockchain (opcional, futuro)
+  merkleRoot           String? @map("merkle_root")
+  blockchainNetwork    String? @map("blockchain_network")
+  blockchainTxHash     String? @map("blockchain_tx_hash")
+  blockchainAnchorAt   DateTime? @map("blockchain_anchor_at")
+  
+  // Retenção e compliance
+  retentionUntil  DateTime? @map("retention_until") // Data de expiração (WORM/legal hold)
+  expiresAt       DateTime? @map("expires_at") // Data de expiração do download
+  legalHold       Boolean   @default(false) @map("legal_hold")
+  
+  // Auditoria
+  createdBy       String    @map("created_by") // Email/ID do usuário que criou
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  completedAt     DateTime? @map("completed_at") // Quando ficou READY
+  accessedAt      DateTime? @map("accessed_at") // Última vez que foi baixado
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  record          DecisionRecord? @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([recordId])
+  @@index([transactionId])
+  @@index([bundleId])
+  @@index([status])
+  @@index([createdBy])
+  @@map("xase_evidence_bundles")
+}
+
+// 👤 HUMAN INTERVENTION - Registro de intervenções humanas em decisões de IA
+// IMUTÁVEL: Nunca é atualizado ou deletado após criado (via trigger SQL)
+enum InterventionActionPlaceholder {
+  REVIEW_REQUESTED  // Decisão marcada para revisão humana
+  APPROVED          // Humano aprovou decisão da IA
+  REJECTED          // Humano rejeitou decisão da IA
+  OVERRIDE          // Humano alterou o resultado da IA
+  ESCALATED         // Decisão escalada para nível superior
+  
+  @@map("xase_intervention_action")
+}
+
+model HumanInterventionPlaceholder {
+  id              String    @id @default(cuid())
+  tenantId        String
+  recordId        String    @map("record_id")
+  
+  // Ação e ator
+  action          InterventionAction
+  actorUserId     String?   @map("actorUserId")  // ID do usuário que interveio
+  actorName       String?   @map("actorName")    // Nome do ator (snapshot)
+  actorEmail      String?   @map("actorEmail")   // Email do ator (snapshot)
+  actorRole       String?   @map("actorRole")    // Papel do ator no momento (snapshot)
+  
+  // Contexto da intervenção
+  reason          String?   // Justificativa da intervenção
+  notes           String?   @db.Text // Notas adicionais
+  metadata        String?   @db.Text // JSON com contexto adicional
+  
+  // Resultado (para OVERRIDE)
+  newOutcome      String?   @db.Text @map("newOutcome")      // JSON com novo resultado (se OVERRIDE)
+  previousOutcome String?   @db.Text @map("previousOutcome") // JSON com resultado anterior da IA
+  
+  // Rastreabilidade
+  ipAddress       String?   @map("ipAddress")
+  userAgent       String?   @map("userAgent")
+  timestamp       DateTime  @default(now())
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  record          DecisionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([recordId])
+  @@index([action])
+  @@index([actorUserId])
+  @@index([timestamp])
+  @@map("xase_human_interventions")
+}
+
+model ModelCardPlaceholder {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Identificação do modelo
+  modelId         String    @map("model_id")
+  modelVersion    String    @map("model_version")
+  modelHash       String    @map("model_hash") // SHA-256 dos pesos/artefatos
+  
+  // Metadata do modelo
+  modelName       String?   @map("model_name")
+  modelType       String?   @map("model_type") // Ex: "random_forest", "neural_network"
+  framework       String?   // Ex: "scikit-learn", "tensorflow", "pytorch"
+  description     String?   @db.Text
+  
+  // Treinamento
+  trainingDate    DateTime? @map("training_date")
+  datasetHash     String?   @map("dataset_hash")
+  datasetSize     Int?      @map("dataset_size")
+  trainingDuration Int?     @map("training_duration_seconds")
+  
+  // Performance Metrics (JSON)
+  performanceMetrics String? @db.Text @map("performance_metrics")
+  fairnessMetrics    String? @db.Text @map("fairness_metrics")
+  validationMetrics  String? @db.Text @map("validation_metrics")
+  
+  // Uso pretendido
+  intendedUse            String? @db.Text @map("intended_use")
+  limitations            String? @db.Text
+  ethicalConsiderations  String? @db.Text @map("ethical_considerations")
+  
+  // Feature Schema
+  featureSchemaHash String? @map("feature_schema_hash")
+  featureSchema     String? @db.Text @map("feature_schema")
+  featureImportance String? @db.Text @map("feature_importance")
+  
+  // Status
+  isActive      Boolean   @default(true) @map("is_active")
+  deployedAt    DateTime? @map("deployed_at")
+  deprecatedAt  DateTime? @map("deprecated_at")
+  
+  // Timestamps
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+  
+  // Relações
+  tenant        Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, modelId, modelVersion])
+  @@index([tenantId])
+  @@index([modelId])
+  @@index([modelHash])
+  @@index([isActive])
+  @@map("xase_model_cards")
+}
+
+model DriftRecordPlaceholder {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  modelId         String    @map("model_id")
+  modelVersion    String    @map("model_version")
+  
+  // Tipo de drift
+  driftType       String    @map("drift_type") // DATA_DRIFT, CONCEPT_DRIFT, PREDICTION_DRIFT
+  severity        String    // LOW, MEDIUM, HIGH, CRITICAL
+  
+  // Métricas de drift
+  driftScore      Float     @map("drift_score")
+  threshold       Float
+  metricName      String?   @map("metric_name")
+  
+  // Detalhes
+  affectedFeatures      String?   @db.Text @map("affected_features")
+  baselinePeriodStart   DateTime? @map("baseline_period_start")
+  baselinePeriodEnd     DateTime? @map("baseline_period_end")
+  detectionPeriodStart  DateTime? @map("detection_period_start")
+  detectionPeriodEnd    DateTime? @map("detection_period_end")
+  
+  // Estatísticas
+  baselineStats   String?   @db.Text @map("baseline_stats")
+  currentStats    String?   @db.Text @map("current_stats")
+  sampleSize      Int?      @map("sample_size")
+  
+  // Ações
+  alertSent       Boolean   @default(false) @map("alert_sent")
+  alertSentAt     DateTime? @map("alert_sent_at")
+  resolved        Boolean   @default(false)
+  resolvedAt      DateTime? @map("resolved_at")
+  resolutionNotes String?   @db.Text @map("resolution_notes")
+  
+  // Timestamps
+  detectedAt      DateTime  @default(now()) @map("detected_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([modelId])
+  @@index([severity])
+  @@index([detectedAt])
+  @@index([resolved])
+  @@map("xase_drift_records")
+}
+
+model AlertPlaceholder {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Tipo e severidade
+  alertType       String    @map("alert_type")
+  severity        String
+  status          String    @default("OPEN")
+  
+  // Contexto
+  title           String
+  message         String    @db.Text
+  resourceType    String?   @map("resource_type")
+  resourceId      String?   @map("resource_id")
+  
+  // Métricas relacionadas
+  metricName      String?   @map("metric_name")
+  metricValue     Float?    @map("metric_value")
+  thresholdValue  Float?    @map("threshold_value")
+  
+  // Detalhes
+  details         String?   @db.Text
+  recommendations String?   @db.Text
+  
+  // Notificações
+  notificationSent     Boolean   @default(false) @map("notification_sent")
+  notificationSentAt   DateTime? @map("notification_sent_at")
+  notificationChannels String?   @db.Text @map("notification_channels")
+  
+  // Resolução
+  acknowledgedBy  String?   @map("acknowledged_by")
+  acknowledgedAt  DateTime? @map("acknowledged_at")
+  resolvedBy      String?   @map("resolved_by")
+  resolvedAt      DateTime? @map("resolved_at")
+  resolutionNotes String?   @db.Text @map("resolution_notes")
+  
+  // Timestamps
+  triggeredAt     DateTime  @default(now()) @map("triggered_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([alertType])
+  @@index([severity])
+  @@index([status])
+  @@index([triggeredAt])
+  @@map("xase_alerts")
+}
+
+model MetricsSnapshotPlaceholder {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Período
+  snapshotType    String    @map("snapshot_type")
+  periodStart     DateTime  @map("period_start")
+  periodEnd       DateTime  @map("period_end")
+  
+  // Métricas agregadas
+  totalDecisions      Int   @default(0) @map("total_decisions")
+  aiDecisions         Int   @default(0) @map("ai_decisions")
+  humanInterventions  Int   @default(0) @map("human_interventions")
+  overrideCount       Int   @default(0) @map("override_count")
+  approvalCount       Int   @default(0) @map("approval_count")
+  rejectionCount      Int   @default(0) @map("rejection_count")
+  
+  // Taxas calculadas
+  overrideRate      Float?  @map("override_rate")
+  interventionRate  Float?  @map("intervention_rate")
+  approvalRate      Float?  @map("approval_rate")
+  
+  // Performance
+  avgConfidence         Float?  @map("avg_confidence")
+  avgProcessingTimeMs   Float?  @map("avg_processing_time_ms")
+  p95ProcessingTimeMs   Float?  @map("p95_processing_time_ms")
+  p99ProcessingTimeMs   Float?  @map("p99_processing_time_ms")
+  
+  // Por modelo (JSON)
+  metricsByModel        String? @db.Text @map("metrics_by_model")
+  metricsByPolicy       String? @db.Text @map("metrics_by_policy")
+  metricsByDecisionType String? @db.Text @map("metrics_by_decision_type")
+  
+  // Top motivos de override
+  topOverrideReasons    String? @db.Text @map("top_override_reasons")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@unique([tenantId, snapshotType, periodStart])
+  @@index([tenantId])
+  @@index([periodStart, periodEnd])
+  @@index([snapshotType])
+  @@map("xase_metrics_snapshots")
+}
+
+model AlertRulePlaceholder {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Identificação
+  ruleName        String    @map("rule_name")
+  ruleType        String    @map("rule_type")
+  description     String?   @db.Text
+  
+  // Condições
+  metricName          String  @map("metric_name")
+  operator            String
+  thresholdValue      Float   @map("threshold_value")
+  timeWindowMinutes   Int?    @map("time_window_minutes")
+  
+  // Filtros
+  modelId         String?   @map("model_id")
+  policyId        String?   @map("policy_id")
+  decisionType    String?   @map("decision_type")
+  
+  // Ações
+  severity                String  @map("severity")
+  notificationChannels    String? @db.Text @map("notification_channels")
+  notificationTemplate    String? @db.Text @map("notification_template")
+  
+  // Status
+  isActive            Boolean   @default(true) @map("is_active")
+  lastTriggeredAt     DateTime? @map("last_triggered_at")
+  triggerCount        Int       @default(0) @map("trigger_count")
+  
+  // Cooldown
+  cooldownMinutes     Int       @default(60) @map("cooldown_minutes")
+  
+  // Timestamps
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Relações
+  tenant          Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([isActive])
+  @@index([metricName])
+  @@map("xase_alert_rules")
+}
+
+// ============================================================================
+// 🏥 INSURANCE EXTENSION - Sprint 1
+// ============================================================================
+
+model EvidenceSnapshotPlaceholder {
+  id          String @id @default(cuid())
+  tenantId    String @map("tenant_id")
+  
+  // Tipo de snapshot
+  type        SnapshotType
+  
+  // Storage (S3/MinIO)
+  storageUrl  String @map("storage_url")
+  storageKey  String @map("storage_key")
+  payloadHash String @map("payload_hash") // SHA-256 do JSON canonical
+  payloadSize Int?   @map("payload_size")
+  
+  // Metadata
+  sourceMeta  String? @db.Text @map("source_meta") // JSON: APIs consultadas, versões, etc.
+  capturedAt  DateTime @default(now()) @map("captured_at")
+  
+  // Compression
+  compressed  Boolean @default(false)
+  compressionAlgo String? @map("compression_algo") // gzip, brotli
+  
+  // Relations
+  tenant      Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([type])
+  @@index([capturedAt])
+  @@index([payloadHash]) // para deduplicação
+  @@map("xase_evidence_snapshots")
+}
+
+enum SnapshotType {
+  EXTERNAL_DATA
+  BUSINESS_RULES
+  ENVIRONMENT
+  FEATURE_VECTOR
+  
+  @@map("xase_snapshot_type")
+}
+
+model InsuranceDecisionPlaceholder {
+  id              String @id @default(cuid())
+  recordId        String @unique @map("record_id") // FK para DecisionRecord
+  
+  // Claim fields
+  claimNumber     String? @map("claim_number")
+  claimType       InsuranceClaimType? @map("claim_type")
+  claimAmount     Decimal? @map("claim_amount") @db.Decimal(15, 2)
+  claimDate       DateTime? @map("claim_date")
+  
+  // Policy fields
+  policyNumber    String? @map("policy_number")
+  policyHolderIdHash String? @map("policy_holder_id_hash") // SHA-256(CPF/SSN)
+  insuredAmount   Decimal? @map("insured_amount") @db.Decimal(15, 2)
+  
+  // Underwriting fields
+  riskScore       Float? @map("risk_score")
+  underwritingDecision String? @map("underwriting_decision") // APPROVED, DECLINED, REFERRED
+  premiumCalculated    Decimal? @map("premium_calculated") @db.Decimal(15, 2)
+  coverageOfferedJson  String? @db.Text @map("coverage_offered_json")
+  
+  // Outcome (genérico para narrativas jurídicas)
+  decisionOutcome       String? @map("decision_outcome")
+  decisionOutcomeReason String? @map("decision_outcome_reason")
+  
+  // Decision Impact (reguladores)
+  decisionImpactFinancial      Decimal? @map("decision_impact_financial") @db.Decimal(15, 2)
+  decisionImpactConsumerImpact DecisionConsumerImpact? @map("decision_impact_consumer")
+  decisionImpactAppealable     Boolean? @map("decision_impact_appealable")
+  
+  // Regulatory
+  regulatoryCaseId String? @map("regulatory_case_id")
+  
+  // Timestamps
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  // Relations
+  record DecisionRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  
+  @@index([claimNumber])
+  @@index([policyNumber])
+  @@index([claimType])
+  @@index([claimDate])
+  @@map("xase_insurance_decisions")
+}
+
+enum InsuranceClaimTypePlaceholder {
+  AUTO
+  HEALTH
+  LIFE
+  PROPERTY
+  LIABILITY
+  TRAVEL
+  
+  @@map("xase_insurance_claim_type")
+}
+
+enum DecisionConsumerImpactPlaceholder {
+  LOW
+  MEDIUM
+  HIGH
+  
+  @@map("xase_decision_consumer_impact")
+}
+
+enum DecisionTypePlaceholder {
+  CLAIM
+  UNDERWRITING
+  FRAUD
+  PRICING
+  OTHER
+
+  @@map("xase_decision_type")
+}
+
+// ============================================
+// 🎯 VOICE DATA GOVERNANCE - NEW MODELS
+// ============================================
+
+// 📦 DATASET - Catálogo de datasets de voz (4 camadas de metadados)
+model Dataset {
+  id              String    @id @default(cuid())
+  tenantId        String    @map("tenant_id")
+  
+  // Identificação
+  datasetId       String    @unique @map("dataset_id")
+  version         String    @default("1.0")
+  name            String
+  description     String?   @db.Text
+  
+  // CAMADA 1: Físicos (determinísticos)
+  totalDurationHours  Float     @map("total_duration_hours")
+  numRecordings       Int       @map("num_recordings")
+  sampleRate          Int       @default(16000) @map("sample_rate")
+  codec               String    @default("wav")
+  channelCount        Int       @default(1) @map("channel_count")
+  collectionStartTs   DateTime? @map("collection_start_ts")
+  collectionEndTs     DateTime? @map("collection_end_ts")
+  storageLocation     String    @map("storage_location")
+  storageSize         BigInt?   @map("storage_size")
+  datasetHash         String?   @map("dataset_hash")
+  
+  // CAMADA 2: Operacionais (automático)
+  language            String
+  avgSnr              Float?    @map("avg_snr")
+  avgSpeechRatio      Float?    @map("avg_speech_ratio")
+  avgOverlapRatio     Float?    @map("avg_overlap_ratio")
+  avgSilenceRatio     Float?    @map("avg_silence_ratio")
+  noiseLevel          String?   @map("noise_level")
+  
+  // CAMADA 3: Semânticos leves (probabilístico)
+  callType            String?   @map("call_type")
+  intentCluster       String?   @map("intent_cluster")
+  emotionBand         String?   @map("emotion_band")
+  outcomeFlag         String?   @map("outcome_flag")
+  
+  // CAMADA 4: Governança
+  consentStatus       ConsentStatus     @default(PENDING)
+  consentProofUri     String?           @map("consent_proof_uri")
+  consentProofHash    String?           @map("consent_proof_hash")
+  consentVersion      String?           @map("consent_version")
+  allowedPurposes     String[]          @map("allowed_purposes")
+  jurisdiction        String?
+  retentionExpiresAt  DateTime?         @map("retention_expires_at")
+  
+  // Processamento
+  processingStatus    ProcessingStatus  @default(PENDING)
+  processingError     String?           @db.Text
+  
+  // Status
+  status              DatasetStatus     @default(DRAFT)
+  publishedAt         DateTime?         @map("published_at")
+  archivedAt          DateTime?         @map("archived_at")
+  createdAt           DateTime          @default(now()) @map("created_at")
+  updatedAt           DateTime          @updatedAt @map("updated_at")
+  
+  // Relations
+  tenant              Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  policies            VoiceAccessPolicy[]
+  accessLogs          VoiceAccessLog[]
+  audioSegments       AudioSegment[]
+  
+  @@index([tenantId])
+  @@index([status])
+  @@index([language])
+  @@index([noiseLevel])
+  @@index([callType])
+  @@index([processingStatus])
+  @@index([consentStatus])
+  @@map("xase_voice_datasets")
+}
+
+enum ConsentStatus {
+  PENDING
+  VERIFIED_BY_XASE
+  SELF_DECLARED
+  MISSING
+  @@map("consent_status")
+}
+
+enum ProcessingStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+  @@map("processing_status")
+}
+
+enum DatasetStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  DELETED
+  @@map("dataset_status")
+}
+
+// 📄 AUDIO SEGMENT (pós-MVP, granularidade por arquivo)
+model AudioSegment {
+  id             String   @id @default(cuid())
+  datasetId      String   @map("dataset_id")
+  segmentId      String   @unique @map("segment_id")
+  fileKey        String   @map("file_key")
+  
+  durationSec    Float    @map("duration_sec")
+  sampleRate     Int      @map("sample_rate")
+  codec          String
+  channelCount   Int      @map("channel_count")
+  startTs        DateTime? @map("start_ts")
+  endTs          DateTime? @map("end_ts")
+  fileSize       BigInt?  @map("file_size")
+  fileHash       String?  @map("file_hash")
+  
+  language       String
+  snr            Float?
+  speechRatio    Float?   @map("speech_ratio")
+  overlapRatio   Float?   @map("overlap_ratio")
+  silenceRatio   Float?   @map("silence_ratio")
+  emotionBand    String?
+  intentCluster  String?
+  callType       String?
+  
+  createdAt DateTime @default(now()) @map("created_at")
+  dataset   Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  
+  @@index([datasetId])
+  @@index([language])
+  @@index([callType])
+  @@map("xase_audio_segments")
+}
+
+// 🔐 VOICE ACCESS POLICY
+model VoiceAccessPolicy {
+  id              String    @id @default(cuid())
+  datasetId       String    @map("dataset_id")
+  clientTenantId  String    @map("client_tenant_id")
+  policyId        String    @unique @map("policy_id")
+  usagePurpose    String    @map("usage_purpose")
+  
+  maxHours            Float?    @map("max_hours")
+  maxDownloads        Int?      @map("max_downloads")
+  allowedEnvironment  String?   @map("allowed_environment")
+  expiresAt           DateTime? @map("expires_at")
+  canStream           Boolean   @default(false) @map("can_stream")
+  canBatchDownload    Boolean   @default(false) @map("can_batch_download")
+  
+  pricePerHour        Decimal?  @map("price_per_hour") @db.Decimal(10, 2)
+  currency            String    @default("USD")
+  hoursConsumed       Float     @default(0) @map("hours_consumed")
+  downloadsCount      Int       @default(0) @map("downloads_count")
+  lastAccessAt        DateTime? @map("last_access_at")
+  
+  status              PolicyStatus @default(ACTIVE)
+  revokedAt           DateTime? @map("revoked_at")
+  revokedReason       String?   @db.Text @map("revoked_reason")
+  createdAt           DateTime  @default(now()) @map("created_at")
+  updatedAt           DateTime  @updatedAt @map("updated_at")
+  
+  dataset         Dataset           @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  clientTenant    Tenant            @relation("ClientPolicies", fields: [clientTenantId], references: [id], onDelete: Cascade)
+  accessLogs      VoiceAccessLog[]
+  
+  @@index([datasetId])
+  @@index([clientTenantId])
+  @@index([status])
+  @@index([expiresAt])
+  @@map("xase_voice_access_policies")
+}
+
+enum PolicyStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  SUSPENDED
+  @@map("policy_status")
+}
+
+// 📊 VOICE ACCESS LOG (imutável)
+model VoiceAccessLog {
+  id              String    @id @default(cuid())
+  datasetId       String    @map("dataset_id")
+  policyId        String    @map("policy_id")
+  clientTenantId  String    @map("client_tenant_id")
+  userId          String?   @map("user_id")
+  apiKeyId        String?   @map("api_key_id")
+  
+  action          VoiceAccessAction
+  filesAccessed   Int       @default(0) @map("files_accessed")
+  hoursAccessed   Float     @default(0) @map("hours_accessed")
+  bytesTransferred BigInt?  @map("bytes_transferred")
+  
+  outcome         String
+  errorMessage    String?   @db.Text @map("error_message")
+  ipAddress       String?   @map("ip_address")
+  userAgent       String?   @db.Text @map("user_agent")
+  requestId       String?   @map("request_id")
+  timestamp       DateTime  @default(now())
+  
+  dataset     Dataset            @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  policy      VoiceAccessPolicy  @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  
+  @@index([datasetId])
+  @@index([policyId])
+  @@index([clientTenantId])
+  @@index([timestamp])
+  @@map("xase_voice_access_logs")
+}
+
+enum VoiceAccessAction {
+  BATCH_DOWNLOAD
+  STREAM_ACCESS
+  METADATA_VIEW
+  POLICY_CHECK
+  @@map("voice_access_action")
+}
+
+// 💰 CREDIT LEDGER (append-only)
+model CreditLedger {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("tenant_id")
+  amount          Decimal  @db.Decimal(15, 4)
+  eventType       String
+  description     String?  @db.Text
+  metadata        Json?
+  balanceAfter    Decimal  @db.Decimal(15, 4)
+  createdAt       DateTime @default(now()) @map("created_at")
+  
+  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([createdAt])
+  @@map("xase_credit_ledger")
+}

@@ -1,0 +1,248 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: production
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: xase-config
+  namespace: production
+data:
+  NODE_ENV: "production"
+  LOG_LEVEL: "info"
+  PORT: "3000"
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: xase-secrets
+  namespace: production
+type: Opaque
+stringData:
+  DATABASE_URL: "postgresql://xase_admin:PASSWORD@rds-endpoint:5432/xase"
+  REDIS_URL: "redis://redis-endpoint:6379"
+  CLICKHOUSE_URL: "http://clickhouse-ip:8123"
+  XASE_HMAC_SECRET: "your-hmac-secret"
+  OIDC_CLIENT_SECRET: "your-oidc-secret"
+  AWS_ACCESS_KEY_ID: "your-access-key"
+  AWS_SECRET_ACCESS_KEY: "your-secret-key"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xase-app
+  namespace: production
+  labels:
+    app: xase-app
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: xase-app
+  template:
+    metadata:
+      labels:
+        app: xase-app
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "3000"
+        prometheus.io/path: "/api/metrics"
+    spec:
+      containers:
+      - name: xase-app
+        image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/xase-app:latest
+        ports:
+        - containerPort: 3000
+          name: http
+        envFrom:
+        - configMapRef:
+            name: xase-config
+        - secretRef:
+            name: xase-secrets
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "2000m"
+        livenessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          httpGet:
+            path: /api/health
+            port: 3000
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 15"]
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: xase-federated-agent
+  namespace: production
+  labels:
+    app: xase-federated-agent
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: xase-federated-agent
+  template:
+    metadata:
+      labels:
+        app: xase-federated-agent
+    spec:
+      containers:
+      - name: xase-federated-agent
+        image: ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/xase-federated-agent:latest
+        ports:
+        - containerPort: 8080
+          name: http
+        envFrom:
+        - configMapRef:
+            name: xase-config
+        - secretRef:
+            name: xase-secrets
+        resources:
+          requests:
+            memory: "256Mi"
+            cpu: "250m"
+          limits:
+            memory: "1Gi"
+            cpu: "1000m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /health
+            port: 8080
+          initialDelaySeconds: 5
+          periodSeconds: 5
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xase-app
+  namespace: production
+  labels:
+    app: xase-app
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 3000
+    protocol: TCP
+    name: http
+  selector:
+    app: xase-app
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: xase-federated-agent
+  namespace: production
+  labels:
+    app: xase-federated-agent
+spec:
+  type: ClusterIP
+  ports:
+  - port: 8080
+    targetPort: 8080
+    protocol: TCP
+    name: http
+  selector:
+    app: xase-federated-agent
+
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: xase-ingress
+  namespace: production
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/certificate-arn: arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERT_ID
+    alb.ingress.kubernetes.io/ssl-policy: ELBSecurityPolicy-TLS-1-2-2017-01
+    alb.ingress.kubernetes.io/listen-ports: '[{"HTTP": 80}, {"HTTPS": 443}]'
+    alb.ingress.kubernetes.io/ssl-redirect: '443'
+spec:
+  rules:
+  - host: api.xase.ai
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: xase-app
+            port:
+              number: 80
+
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: xase-app-hpa
+  namespace: production
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: xase-app
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: xase-app-pdb
+  namespace: production
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: xase-app

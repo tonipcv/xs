@@ -1,0 +1,20 @@
+{
+  "transaction_id": "txn_442adfd6bee9301bc8b56cc9f1f367da",
+  "policy_id": "credit_policy_v4",
+  "policy_version": "v4",
+  "decision_type": "CREDIT_APPROVAL",
+  "confidence": 0.9,
+  "input": {
+    "user_id": 123,
+    "amount": 7288
+  },
+  "output": {
+    "decision": "APPROVED",
+    "score": "0.177"
+  },
+  "context": {
+    "source": "script",
+    "env": "dev"
+  },
+  "timestamp": "2025-12-16T13:44:51.317Z"
+}

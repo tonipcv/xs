@@ -1,0 +1,56 @@
+version: "0.1"
+policy_id: "pol_financial_analytics_001"
+name: "Financial Data Analytics Policy"
+description: "Policy for analytics on financial transaction data with PII protection"
+
+dataset:
+  id: "ds_transactions_2024"
+
+principals:
+  allow:
+    - "tenant_analytics_team"
+    - "tenant_compliance_team"
+
+purposes:
+  - "fraud_detection"
+  - "risk_analysis"
+  - "compliance_reporting"
+
+validity:
+  environments:
+    - "production"
+    - "staging"
+
+consent:
+  required: false  # Dados anonimizados não requerem consentimento
+
+rules:
+  columns:
+    deny:
+      - "account_number"
+      - "ssn"
+      - "credit_card_number"
+    masking:
+      - column: "customer_name"
+        method: "hash"
+      - column: "email"
+        method: "regex"
+        regex: "^(.{3}).*(@.*)$"
+        replace: "$1***$2"  # Mask email: abc***@domain.com
+      - column: "phone"
+        method: "regex"
+        regex: "\\d"
+        replace: "X"  # Mask all digits
+
+  rows:
+    allow:
+      - field: "amount"
+        op: "<="
+        value: 10000  # Apenas transações <= $10K
+      - field: "status"
+        op: "="
+        value: "completed"
+    deny:
+      - field: "flagged_suspicious"
+        op: "="
+        value: true  # Excluir transações suspeitas

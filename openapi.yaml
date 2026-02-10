@@ -1,0 +1,569 @@
+openapi: 3.0.3
+info:
+  title: Xase API
+  description: |
+    Xase - The Trust Layer for the AI Economy
+    
+    Secure, compliant, and privacy-preserving data access for AI training.
+    
+    ## Features
+    - Policy-based access control
+    - Privacy toolkit (k-anonymity, differential privacy, PII detection)
+    - Federated query engine
+    - JIT and break-glass access
+    - Multi-factor authentication
+    - Comprehensive audit trail
+    
+  version: 1.0.0
+  contact:
+    name: Xase Support
+    email: support@xase.ai
+    url: https://xase.ai
+  license:
+    name: Proprietary
+    url: https://xase.ai/license
+
+servers:
+  - url: https://api.xase.ai
+    description: Production
+  - url: https://staging-api.xase.ai
+    description: Staging
+  - url: http://localhost:3000
+    description: Local development
+
+tags:
+  - name: Health
+    description: Health check endpoints
+  - name: Datasets
+    description: Dataset management
+  - name: Leases
+    description: Access lease management
+  - name: Policies
+    description: Policy validation and management
+  - name: Privacy
+    description: Privacy analysis and PII detection
+  - name: Federated
+    description: Federated query execution
+  - name: Auth
+    description: Authentication and authorization
+  - name: JIT Access
+    description: Just-in-time access provisioning
+  - name: Break-glass
+    description: Emergency access
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /api/health:
+    get:
+      tags: [Health]
+      summary: Health check
+      description: Check API health status
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /api/v1/datasets:
+    get:
+      tags: [Datasets]
+      summary: List datasets
+      description: Get list of available datasets
+      parameters:
+        - name: tenantId
+          in: query
+          schema:
+            type: string
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of datasets
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datasets:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Dataset'
+                  total:
+                    type: integer
+
+  /api/v1/datasets/{datasetId}/stream:
+    get:
+      tags: [Datasets]
+      summary: Stream dataset
+      description: Stream dataset with policy enforcement
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: leaseId
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Streaming response
+          content:
+            application/x-ndjson:
+              schema:
+                type: object
+
+  /api/v1/leases:
+    get:
+      tags: [Leases]
+      summary: List leases
+      description: Get list of access leases
+      responses:
+        '200':
+          description: List of leases
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Lease'
+    
+    post:
+      tags: [Leases]
+      summary: Create lease
+      description: Mint new access lease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LeaseRequest'
+      responses:
+        '201':
+          description: Lease created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lease'
+
+  /api/v1/policies/validate:
+    post:
+      tags: [Policies]
+      summary: Validate policy
+      description: Validate YAML policy
+      requestBody:
+        required: true
+        content:
+          text/plain:
+            schema:
+              type: string
+              example: |
+                apiVersion: xase.ai/v1
+                kind: DataAccessPolicy
+                metadata:
+                  name: healthcare-training
+                spec:
+                  dataset: patient-records
+                  purpose: TRAINING
+      responses:
+        '200':
+          description: Validation result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyValidation'
+
+  /api/v1/privacy/analyze:
+    post:
+      tags: [Privacy]
+      summary: Analyze privacy
+      description: Perform comprehensive privacy analysis
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PrivacyAnalysisRequest'
+      responses:
+        '200':
+          description: Privacy analysis result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PrivacyAnalysisResult'
+
+  /api/v1/privacy/pii-detect:
+    post:
+      tags: [Privacy]
+      summary: Detect PII
+      description: Detect personally identifiable information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                data:
+                  type: array
+                  items:
+                    type: object
+      responses:
+        '200':
+          description: PII detection result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PIIDetectionResult'
+
+  /api/v1/federated/query:
+    post:
+      tags: [Federated]
+      summary: Execute federated query
+      description: Execute SQL query on federated data source
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FederatedQueryRequest'
+      responses:
+        '200':
+          description: Query results
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FederatedQueryResult'
+
+  /api/v1/auth/oidc/callback:
+    get:
+      tags: [Auth]
+      summary: OIDC callback
+      description: OAuth2/OIDC callback endpoint
+      security: []
+      parameters:
+        - name: code
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: state
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResult'
+
+  /api/v1/auth/mfa/setup:
+    post:
+      tags: [Auth]
+      summary: Setup MFA
+      description: Setup multi-factor authentication
+      responses:
+        '200':
+          description: MFA setup information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MFASetup'
+
+  /api/v1/jit-access/request:
+    post:
+      tags: [JIT Access]
+      summary: Request JIT access
+      description: Request just-in-time access to resource
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JITAccessRequest'
+      responses:
+        '200':
+          description: Access granted
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JITAccessGrant'
+
+  /api/v1/break-glass/activate:
+    post:
+      tags: [Break-glass]
+      summary: Activate break-glass
+      description: Activate emergency break-glass access
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BreakGlassRequest'
+      responses:
+        '200':
+          description: Break-glass activated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BreakGlassSession'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  schemas:
+    Dataset:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        tenantId:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Lease:
+      type: object
+      properties:
+        leaseId:
+          type: string
+        datasetId:
+          type: string
+        tenantId:
+          type: string
+        purpose:
+          type: string
+          enum: [TRAINING, INFERENCE, ANALYTICS]
+        expiresAt:
+          type: string
+          format: date-time
+
+    LeaseRequest:
+      type: object
+      required:
+        - datasetId
+        - purpose
+      properties:
+        datasetId:
+          type: string
+        purpose:
+          type: string
+          enum: [TRAINING, INFERENCE, ANALYTICS]
+        duration:
+          type: integer
+          description: Duration in seconds
+
+    PolicyValidation:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        errors:
+          type: array
+          items:
+            type: string
+        rewritePlan:
+          type: object
+
+    PrivacyAnalysisRequest:
+      type: object
+      required:
+        - datasetId
+      properties:
+        datasetId:
+          type: string
+        quasiIdentifiers:
+          type: array
+          items:
+            type: string
+        k:
+          type: integer
+          default: 5
+
+    PrivacyAnalysisResult:
+      type: object
+      properties:
+        privacyScore:
+          type: number
+          minimum: 0
+          maximum: 100
+        kAnonymity:
+          type: object
+        differentialPrivacy:
+          type: object
+        piiDetection:
+          type: object
+        recommendations:
+          type: array
+          items:
+            type: object
+
+    PIIDetectionResult:
+      type: object
+      properties:
+        findings:
+          type: array
+          items:
+            type: object
+            properties:
+              field:
+                type: string
+              type:
+                type: string
+              confidence:
+                type: number
+
+    FederatedQueryRequest:
+      type: object
+      required:
+        - dataSource
+        - query
+      properties:
+        dataSource:
+          type: string
+        query:
+          type: string
+
+    FederatedQueryResult:
+      type: object
+      properties:
+        results:
+          type: array
+          items:
+            type: object
+        rowCount:
+          type: integer
+        executionTime:
+          type: number
+
+    AuthResult:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        user:
+          type: object
+        tokens:
+          type: object
+
+    MFASetup:
+      type: object
+      properties:
+        secret:
+          type: string
+        qrCodeUrl:
+          type: string
+        backupCodes:
+          type: array
+          items:
+            type: string
+
+    JITAccessRequest:
+      type: object
+      required:
+        - userId
+        - tenantId
+        - resourceType
+        - resourceId
+        - permissions
+        - reason
+      properties:
+        userId:
+          type: string
+        tenantId:
+          type: string
+        resourceType:
+          type: string
+          enum: [DATASET, POLICY, LEASE, ADMIN]
+        resourceId:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        reason:
+          type: string
+        duration:
+          type: integer
+          default: 3600
+
+    JITAccessGrant:
+      type: object
+      properties:
+        grantId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time
+
+    BreakGlassRequest:
+      type: object
+      required:
+        - userId
+        - tenantId
+        - resourceType
+        - resourceId
+        - reason
+      properties:
+        userId:
+          type: string
+        tenantId:
+          type: string
+        resourceType:
+          type: string
+        resourceId:
+          type: string
+        reason:
+          type: string
+        severity:
+          type: string
+          enum: [CRITICAL, HIGH, MEDIUM]
+          default: HIGH
+
+    BreakGlassSession:
+      type: object
+      properties:
+        sessionId:
+          type: string
+        expiresAt:
+          type: string
+          format: date-time

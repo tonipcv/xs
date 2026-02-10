@@ -1,0 +1,44 @@
+{
+  "tenant": {
+    "id": "cmk1cm1un0000i19k9vbsd8w7",
+    "email": "demo-insurance@xase.local",
+    "name": "tenant_demo_insurance"
+  },
+  "generated_at": "2026-01-05T16:21:25.192Z",
+  "denied": {
+    "transactionId": "txn_14c8ad7d0befe06c286bdcac27eca186",
+    "timestamp": "2025-12-29T04:51:53.138Z",
+    "decisionType": "CLAIM",
+    "confidence": 0.6534114532443928,
+    "modelId": null,
+    "modelVersion": null,
+    "recordHash": "5bb03e3a89b058caaf43afcb2c8d3c7a5f738ca067b7e0a9018cb107cdac1a14",
+    "insurance": {
+      "claimNumber": "CLM-2025-12-29-0873",
+      "claimType": "AUTO",
+      "claimAmount": "259056",
+      "policyNumber": "POL-E91E9D3B",
+      "decisionOutcome": "REJECTED"
+    }
+  },
+  "approved": {
+    "transactionId": "txn_b3f69abe088276744c26d5fd8c3496f8",
+    "timestamp": "2026-01-05T14:15:56.053Z",
+    "decisionType": "CLAIM",
+    "confidence": 0.9580511749003578,
+    "modelId": null,
+    "modelVersion": null,
+    "recordHash": "02983f52d32a5ce67bdc209e8bdc7b92da49da21931f004f9fadf50c2b52faff",
+    "insurance": {
+      "claimNumber": "CLM-2026-01-05-0781",
+      "claimType": "AUTO",
+      "claimAmount": "228933",
+      "policyNumber": "POL-FFD21ECD",
+      "decisionOutcome": "APPROVED"
+    }
+  },
+  "hints": {
+    "counterfactual": "Adjust risk factors or business rules to test minimal change explanations (placeholder).",
+    "similarity_criteria": "claimType match + amount within 20% range"
+  }
+}

@@ -1,0 +1,581 @@
+# xase-sdk
+
+> Official Xase SDK for Python - Evidence Layer for AI Agents
+
+[![PyPI version](https://img.shields.io/pypi/v/xase-sdk.svg)](https://pypi.org/project/xase-sdk/)
+[![Python versions](https://img.shields.io/pypi/pyversions/xase-sdk.svg)](https://pypi.org/project/xase-sdk/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+Turn automated decisions into immutable legal records. Don't just log what your AI did—**prove why it was right**.
+
+## Features
+
+- ⚡ **Zero Latency Impact** - Fire-and-forget mode with async queue
+- 🔒 **Immutable Evidence** - Cryptographic hash chain + KMS signatures
+- 🔄 **Automatic Retry** - Exponential backoff with jitter
+- 🎯 **Idempotency** - Built-in deduplication
+- 📊 **Type-Safe** - Full type hints support
+- 🚀 **Production Ready** - Battle-tested reliability
+
+---
+
+## Installation
+
+```bash
+pip install xase-sdk
+```
+
+**Requirements:** Python >= 3.9
+
+---
+
+## Quick Start
+
+### 1. Get your API Key
+
+Sign up at [xase.ai](https://xase.ai) and create an API key in your dashboard.
+
+### 2. Initialize the client
+
+```python
+from xase import XaseClient
+
+xase = XaseClient({
+    "api_key": "xase_pk_...",
+    "fire_and_forget": True,  # Zero latency impact
+})
+```
+
+### 3. Record decisions
+
+```python
+xase.record({
+    "policy": "credit_policy_v4",
+    "input": {"user_id": "u_4829", "amount": 50000, "credit_score": 720},
+    "output": {"decision": "APPROVED"},
+    "confidence": 0.94,
+})
+```
+
+That's it! Your AI decision is now immutable evidence.
+
+---
+
+## Configuration
+
+### XaseClientConfig
+
+| Option | Type | Default | Description |
+|--------|------|---------|-------------|
+| `api_key` | `str` | **required** | Your Xase API key |
+| `base_url` | `str` | `http://localhost:3000/api/xase/v1` | API base URL |
+| `fire_and_forget` | `bool` | `True` | Enable async queue for zero latency |
+| `timeout` | `float` | `3.0` | Request timeout in seconds |
+| `max_retries` | `int` | `3` | Maximum retry attempts |
+| `queue_max_size` | `int` | `10000` | Maximum queue size (fire-and-forget mode) |
+| `on_success` | `Callable` | `None` | Callback on successful record |
+| `on_error` | `Callable` | `None` | Callback on error |
+
+### Example with all options
+
+```python
+from xase import XaseClient
+
+xase = XaseClient({
+    "api_key": "xase_pk_...",
+    "base_url": "https://api.xase.ai/v1",
+    "fire_and_forget": True,
+    "timeout": 5.0,
+    "max_retries": 5,
+    "queue_max_size": 50000,
+    "on_success": lambda result: print(f"Evidence recorded: {result['transaction_id']}"),
+    "on_error": lambda error: print(f"Failed: {error.code} - {error.message}"),
+})
+```
+
+---
+
+## API Reference
+
+### `record(payload, *, idempotency_key=None, skip_queue=False)`
+
+Records an AI decision as immutable evidence.
+
+#### Payload
+
+```python
+from typing import TypedDict, Optional
+
+class RecordPayload(TypedDict, total=False):
+    policy: str                          # Policy/model ID (e.g., "credit_policy_v4")
+    input: dict                          # Decision input data
+    output: dict                         # Decision output/result
+    confidence: Optional[float]          # AI confidence score (0-1)
+    context: Optional[dict]              # Additional context metadata
+    transaction_id: Optional[str]        # For idempotency
+    policy_version: Optional[str]        # Policy version
+    decision_type: Optional[str]         # Type of decision
+    processing_time: Optional[float]     # Processing time in ms
+    store_payload: Optional[bool]        # Store full payload (default: False)
+```
+
+#### Options
+
+- `idempotency_key` (str, optional): Custom idempotency key (UUID or 16-64 alphanumeric)
+- `skip_queue` (bool, optional): Force synchronous mode
+
+#### Returns
+
+- **Fire-and-forget mode** (`fire_and_forget=True`): `None`
+- **Synchronous mode** (`fire_and_forget=False` or `skip_queue=True`): `RecordResult`
+
+```python
+class RecordResult(TypedDict):
+    success: bool
+    transaction_id: str
+    receipt_url: str
+    timestamp: str
+    record_hash: str
+    chain_position: Literal["chained", "genesis"]
+```
+
+---
+
+### `flush(timeout_s=5.0)`
+
+Flushes all pending queue items (fire-and-forget mode only).
+
+```python
+xase.flush(5.0)  # Wait up to 5 seconds
+```
+
+**Use cases:**
+- Before process exit
+- Before critical operations
+- For testing
+
+---
+
+### `close()`
+
+Closes the client and flushes the queue.
+
+```python
+xase.close()
+```
+
+---
+
+### `get_stats()`
+
+Returns queue statistics (fire-and-forget mode only).
+
+```python
+stats = xase.get_stats()
+print(stats)
+# {'size': 42, 'closed': False}
+```
+
+---
+
+## Usage Examples
+
+### Fire-and-Forget (Zero Latency)
+
+```python
+from xase import XaseClient
+import os
+
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),
+    "fire_and_forget": True,
+})
+
+def approve_loan(user_data):
+    # Your AI decision logic
+    decision = "APPROVED" if user_data["credit_score"] >= 700 else "DENIED"
+    
+    # Record evidence (returns immediately, queued for async processing)
+    xase.record({
+        "policy": "credit_policy_v4",
+        "input": user_data,
+        "output": {"decision": decision},
+        "confidence": 0.94,
+        "transaction_id": f"loan_{user_data['user_id']}",
+    })
+    
+    return decision  # Zero latency impact!
+
+# Flush before exit
+import atexit
+atexit.register(lambda: xase.flush(2.0))
+```
+
+---
+
+### Synchronous Mode (Immediate Response)
+
+```python
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),
+    "fire_and_forget": False,  # Synchronous mode
+})
+
+def detect_fraud(transaction):
+    is_fraud = # your logic
+    
+    # Wait for response
+    result = xase.record({
+        "policy": "fraud_detection_v2",
+        "input": transaction,
+        "output": {"is_fraud": is_fraud},
+        "confidence": 0.87,
+    })
+    
+    print(f"Evidence recorded: {result['transaction_id']}")
+    print(f"Receipt URL: {result['receipt_url']}")
+    
+    return {"is_fraud": is_fraud, "evidence": result}
+```
+
+---
+
+### Type-Safe Usage
+
+```python
+from xase import XaseClient, RecordPayload, XaseError
+
+xase = XaseClient({"api_key": os.getenv("XASE_API_KEY")})
+
+def process_loan(app: dict) -> dict:
+    decision = # your logic
+    
+    payload: RecordPayload = {
+        "policy": "credit_policy_v4",
+        "input": app,
+        "output": decision,
+        "confidence": app["credit_score"] / 850,
+    }
+    
+    try:
+        xase.record(payload)
+    except XaseError as error:
+        print(f"Failed: {error.code} - {error.message}")
+        raise
+    
+    return decision
+```
+
+---
+
+### Idempotency
+
+Prevent duplicate records with idempotency keys:
+
+```python
+# Automatic (using transaction_id)
+xase.record({
+    "policy": "credit_policy_v4",
+    "input": {...},
+    "output": {...},
+    "transaction_id": "loan_12345",  # Auto-generates idempotency key
+})
+
+# Manual
+xase.record({
+    "policy": "credit_policy_v4",
+    "input": {...},
+    "output": {...},
+}, idempotency_key="my-custom-key-12345")
+```
+
+**Idempotency key format:**
+- UUID v4: `550e8400-e29b-41d4-a716-446655440000`
+- Alphanumeric: `my_key_1234567890` (16-64 chars)
+
+---
+
+### Error Handling
+
+```python
+from xase import XaseError
+
+try:
+    xase.record({...}, skip_queue=True)
+except XaseError as error:
+    print(f"Code: {error.code}")
+    print(f"Status: {error.status_code}")
+    print(f"Details: {error.details}")
+    
+    if error.code == "UNAUTHORIZED":
+        # Invalid API key
+        pass
+    elif error.code == "RATE_LIMIT_EXCEEDED":
+        # Too many requests
+        pass
+    elif error.code == "VALIDATION_ERROR":
+        # Invalid payload
+        pass
+```
+
+**Common error codes:**
+- `UNAUTHORIZED` - Invalid API key
+- `FORBIDDEN` - Missing permissions
+- `RATE_LIMIT_EXCEEDED` - Rate limit hit
+- `VALIDATION_ERROR` - Invalid payload
+- `QUEUE_FULL` - Queue size exceeded
+- `FLUSH_TIMEOUT` - Flush timeout
+- `MAX_RETRIES` - Max retries exceeded
+
+---
+
+## Advanced Usage
+
+### Custom Context
+
+Enrich records with custom metadata:
+
+```python
+xase.record({
+    "policy": "credit_policy_v4",
+    "input": {...},
+    "output": {...},
+    "context": {
+        "user_agent": request.headers.get("user-agent"),
+        "ip_address": request.remote_addr,
+        "session_id": session.id,
+        "feature_flags": {"new_model": True},
+    },
+})
+```
+
+**Note:** Runtime context (Python version, hostname, etc.) is automatically captured.
+
+---
+
+### Store Full Payload
+
+By default, only hashes are stored. To store full payloads:
+
+```python
+xase.record({
+    "policy": "credit_policy_v4",
+    "input": {...},
+    "output": {...},
+    "store_payload": True,  # Store full input/output
+})
+```
+
+**Warning:** Storing payloads may expose PII. Use with caution.
+
+---
+
+### Callbacks
+
+Monitor success and errors:
+
+```python
+def on_success(result):
+    metrics.increment("xase.records.success")
+    logger.info(f"Evidence recorded: {result['transaction_id']}")
+
+def on_error(error):
+    metrics.increment("xase.records.error")
+    logger.error(f"Failed to record: {error.code}")
+
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),
+    "on_success": on_success,
+    "on_error": on_error,
+})
+```
+
+---
+
+## Best Practices
+
+### 1. Use Fire-and-Forget for Production
+
+```python
+# ✅ Recommended
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),
+    "fire_and_forget": True,  # Zero latency
+})
+
+# ❌ Avoid in hot path
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),
+    "fire_and_forget": False,  # Blocks your code
+})
+```
+
+---
+
+### 2. Flush Before Exit
+
+```python
+import atexit
+import signal
+
+atexit.register(lambda: xase.flush(2.0))
+
+def signal_handler(sig, frame):
+    xase.close()
+    exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
+```
+
+---
+
+### 3. Use Idempotency
+
+```python
+# ✅ Idempotent
+xase.record({
+    "policy": "credit_policy_v4",
+    "input": {...},
+    "output": {...},
+    "transaction_id": f"loan_{user_id}_{timestamp}",
+})
+
+# ❌ Not idempotent (may create duplicates on retry)
+xase.record({
+    "policy": "credit_policy_v4",
+    "input": {...},
+    "output": {...},
+})
+```
+
+---
+
+### 4. Handle Errors Gracefully
+
+```python
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),
+    "on_error": lambda error: logger.error(f"Xase error: {error.code}"),
+})
+```
+
+---
+
+### 5. Use Environment Variables
+
+```python
+# ✅ Secure
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),
+    "base_url": os.getenv("XASE_BASE_URL"),
+})
+
+# ❌ Never hardcode
+xase = XaseClient({
+    "api_key": "xase_pk_1234567890abcdef",  # DON'T DO THIS
+})
+```
+
+---
+
+## Troubleshooting
+
+### "Missing X-API-Key header"
+
+**Cause:** API key not provided or invalid.
+
+**Fix:**
+```python
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),  # Make sure this is set
+})
+```
+
+---
+
+### "Rate limit exceeded"
+
+**Cause:** Too many requests.
+
+**Fix:**
+- Use fire-and-forget mode (queues requests)
+- Increase rate limit in dashboard
+- Implement backpressure in your app
+
+---
+
+### "Queue full, item dropped"
+
+**Cause:** Queue size exceeded.
+
+**Fix:**
+```python
+xase = XaseClient({
+    "api_key": os.getenv("XASE_API_KEY"),
+    "queue_max_size": 50000,  # Increase queue size
+})
+```
+
+---
+
+### "Flush timeout"
+
+**Cause:** Queue didn't flush in time.
+
+**Fix:**
+```python
+xase.flush(10.0)  # Increase timeout
+```
+
+---
+
+## Performance
+
+### Benchmarks
+
+- **Fire-and-forget mode:** ~0.1ms overhead
+- **Synchronous mode:** ~50-200ms (network dependent)
+- **Queue throughput:** ~10,000 records/sec
+
+### Memory Usage
+
+- **Base:** ~5MB
+- **Per queued item:** ~1KB
+- **Max (10k queue):** ~15MB
+
+---
+
+## Compliance
+
+Xase SDK helps you comply with:
+
+- **EU AI Act** - Immutable audit trail
+- **GDPR** - Right to explanation
+- **SOC 2** - Access controls & logging
+- **ISO 42001** - AI management system
+
+---
+
+## Support
+
+- **Documentation:** [docs.xase.ai](https://docs.xase.ai)
+- **API Reference:** [api.xase.ai/docs](https://api.xase.ai/docs)
+- **GitHub Issues:** [github.com/xase/sdk-py/issues](https://github.com/xase/sdk-py/issues)
+- **Email:** support@xase.ai
+
+---
+
+## License
+
+MIT © Xase
+
+---
+
+## Contributing
+
+Contributions welcome! Please read our [Contributing Guide](CONTRIBUTING.md).
+
+---
+
+**Built with ❤️ by the Xase team**
