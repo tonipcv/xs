@@ -1,0 +1,212 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+env:
+  NODE_VERSION: '20'
+  GO_VERSION: '1.21'
+  AWS_REGION: us-east-1
+  ECR_REGISTRY: ${{ secrets.AWS_ACCOUNT_ID }}.dkr.ecr.us-east-1.amazonaws.com
+  EKS_CLUSTER: xase-production
+
+jobs:
+  # Lint and Test
+  lint-and-test:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint
+        run: npm run lint
+
+      - name: Run TypeScript check
+        run: npm run type-check
+
+      - name: Run tests
+        run: npm test -- --coverage
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+  # Security Scan
+  security-scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Run Snyk security scan
+        uses: snyk/actions/node@master
+        env:
+          SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
+        with:
+          args: --severity-threshold=high
+
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: '.'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy results to GitHub Security
+        uses: github/codeql-action/upload-sarif@v2
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  # Build and Push Docker Images
+  build-and-push:
+    runs-on: ubuntu-latest
+    needs: [lint-and-test, security-scan]
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build, tag, and push Next.js image
+        env:
+          ECR_REPOSITORY: xase-app
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+      - name: Build, tag, and push Federated Agent image
+        env:
+          ECR_REPOSITORY: xase-federated-agent
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          cd federated-agent
+          docker build -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG .
+          docker tag $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG $ECR_REGISTRY/$ECR_REPOSITORY:latest
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
+          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
+
+  # Deploy to Kubernetes
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Update kubeconfig
+        run: |
+          aws eks update-kubeconfig --name $EKS_CLUSTER --region $AWS_REGION
+
+      - name: Deploy to Kubernetes
+        env:
+          IMAGE_TAG: ${{ github.sha }}
+        run: |
+          kubectl set image deployment/xase-app xase-app=$ECR_REGISTRY/xase-app:$IMAGE_TAG -n production
+          kubectl set image deployment/xase-federated-agent xase-federated-agent=$ECR_REGISTRY/xase-federated-agent:$IMAGE_TAG -n production
+          kubectl rollout status deployment/xase-app -n production
+          kubectl rollout status deployment/xase-federated-agent -n production
+
+      - name: Run database migrations
+        run: |
+          kubectl exec -n production deployment/xase-app -- npm run migrate:deploy
+
+      - name: Verify deployment
+        run: |
+          kubectl get pods -n production
+          kubectl get services -n production
+
+  # Load Testing
+  load-test:
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup k6
+        run: |
+          sudo gpg -k
+          sudo gpg --no-default-keyring --keyring /usr/share/keyrings/k6-archive-keyring.gpg --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys C5AD17C747E3415A3642D57D77C6C491D6AC1D69
+          echo "deb [signed-by=/usr/share/keyrings/k6-archive-keyring.gpg] https://dl.k6.io/deb stable main" | sudo tee /etc/apt/sources.list.d/k6.list
+          sudo apt-get update
+          sudo apt-get install k6
+
+      - name: Run load tests
+        env:
+          API_URL: https://api.xase.ai
+          API_KEY: ${{ secrets.LOAD_TEST_API_KEY }}
+        run: |
+          k6 run tests/load/api-load-test.js --out json=load-test-results.json
+
+      - name: Upload load test results
+        uses: actions/upload-artifact@v3
+        with:
+          name: load-test-results
+          path: load-test-results.json
+
+  # Notify
+  notify:
+    runs-on: ubuntu-latest
+    needs: [deploy, load-test]
+    if: always()
+    
+    steps:
+      - name: Notify Slack
+        uses: 8398a7/action-slack@v3
+        with:
+          status: ${{ job.status }}
+          text: |
+            Deployment ${{ job.status }}
+            Commit: ${{ github.sha }}
+            Author: ${{ github.actor }}
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+        if: always()
+
+      - name: Create PagerDuty alert on failure
+        if: failure()
+        uses: PagerDuty/pagerduty-change-events-action@v1
+        with:
+          integration-key: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+          summary: 'Deployment failed for commit ${{ github.sha }}'
+          severity: 'error'

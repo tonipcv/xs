@@ -1,0 +1,83 @@
+# Xase Sidecar Helm Chart Values
+
+# Contract configuration
+contract:
+  id: ""  # Set via --set contract.id=ctr_abc123
+  apiKey: ""  # Set via --set contract.apiKey=xase_pk_...
+  leaseId: ""  # Set via --set contract.leaseId=lease_...
+
+# Xase Brain configuration
+xase:
+  baseUrl: "https://xase.ai"
+
+# Sidecar configuration
+sidecar:
+  image:
+    repository: xase/sidecar
+    tag: "latest"
+    pullPolicy: IfNotPresent
+  
+  resources:
+    requests:
+      memory: "100Gi"  # RAM cache
+      cpu: "8"
+    limits:
+      memory: "120Gi"
+      cpu: "16"
+  
+  # Storage configuration
+  storage:
+    bucketName: ""  # S3 bucket name
+    bucketPrefix: ""  # Optional prefix
+  
+  # Cache configuration
+  cache:
+    sizeGb: 100
+  
+  # Socket path
+  socketPath: "/var/run/xase/sidecar.sock"
+
+# Training pod configuration
+training:
+  image:
+    repository: pytorch/pytorch
+    tag: "2.0-cuda11.8-cudnn8-runtime"
+    pullPolicy: IfNotPresent
+  
+  command: []  # Override with your training script
+  
+  resources:
+    requests:
+      memory: "32Gi"
+      cpu: "8"
+      nvidia.com/gpu: "1"
+    limits:
+      memory: "64Gi"
+      cpu: "16"
+      nvidia.com/gpu: "1"
+
+# Service account
+serviceAccount:
+  create: true
+  name: "xase-sidecar"
+
+# Pod security
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  allowPrivilegeEscalation: false
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+
+# Autoscaling configuration
+autoscaling:
+  enabled: true
+  minReplicas: 6
+  maxReplicas: 30
+  targetCPUUtilizationPercentage: 65
+  targetMemoryUtilizationPercentage: 70

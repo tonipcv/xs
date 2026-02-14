@@ -1,0 +1,217 @@
+# Prometheus Alerting Rules
+# Gap #13 P1: SLA Monitoring & Alerts
+#
+# Target SLAs:
+# - Uptime: 99.95% (21.6 min/month downtime)
+# - Latency p95: <500ms (Brain API)
+# - Throughput: >10 GB/s (Sidecar)
+# - Error Rate: <0.1%
+
+groups:
+  - name: xase_sla
+    interval: 30s
+    rules:
+      # Error Rate Alert
+      - alert: HighErrorRate
+        expr: |
+          (
+            sum(rate(http_requests_total{status=~"5.."}[5m]))
+            /
+            sum(rate(http_requests_total[5m]))
+          ) > 0.001
+        for: 5m
+        labels:
+          severity: critical
+          component: brain
+        annotations:
+          summary: "Error rate above SLA (0.1%)"
+          description: "Current error rate: {{ $value | humanizePercentage }}"
+          runbook: "https://xase.ai/runbooks/high-error-rate"
+      
+      # Latency Alert
+      - alert: HighLatency
+        expr: |
+          histogram_quantile(0.95, 
+            rate(http_request_duration_seconds_bucket[5m])
+          ) > 0.5
+        for: 5m
+        labels:
+          severity: warning
+          component: brain
+        annotations:
+          summary: "p95 latency above 500ms"
+          description: "Current p95: {{ $value | humanizeDuration }}"
+          runbook: "https://xase.ai/runbooks/high-latency"
+      
+      # Throughput Alert
+      - alert: LowThroughput
+        expr: |
+          rate(sidecar_bytes_sent_total[5m]) < 10e9
+        for: 10m
+        labels:
+          severity: warning
+          component: sidecar
+        annotations:
+          summary: "Sidecar throughput below 10 GB/s"
+          description: "Current throughput: {{ $value | humanize1024 }}B/s"
+          runbook: "https://xase.ai/runbooks/low-throughput"
+      
+      # Cache Hit Rate Alert
+      - alert: LowCacheHitRate
+        expr: |
+          (
+            sum(rate(sidecar_cache_hits_total[5m]))
+            /
+            sum(rate(sidecar_cache_requests_total[5m]))
+          ) < 0.90
+        for: 10m
+        labels:
+          severity: warning
+          component: sidecar
+        annotations:
+          summary: "Cache hit rate below 90%"
+          description: "Current hit rate: {{ $value | humanizePercentage }}"
+          runbook: "https://xase.ai/runbooks/low-cache-hit-rate"
+      
+      # Database Connection Pool Alert
+      - alert: DatabaseConnectionPoolExhausted
+        expr: |
+          pg_stat_activity_count > 90
+        for: 5m
+        labels:
+          severity: critical
+          component: database
+        annotations:
+          summary: "Database connection pool near exhaustion"
+          description: "Active connections: {{ $value }}/100"
+          runbook: "https://xase.ai/runbooks/db-connection-pool"
+      
+      # Disk Space Alert
+      - alert: DiskSpaceRunningOut
+        expr: |
+          (
+            node_filesystem_avail_bytes{mountpoint="/"}
+            /
+            node_filesystem_size_bytes{mountpoint="/"}
+          ) < 0.10
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Disk space below 10%"
+          description: "Available: {{ $value | humanizePercentage }}"
+          runbook: "https://xase.ai/runbooks/disk-space"
+      
+      # Memory Pressure Alert
+      - alert: HighMemoryUsage
+        expr: |
+          (
+            1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)
+          ) > 0.90
+        for: 5m
+        labels:
+          severity: warning
+          component: infrastructure
+        annotations:
+          summary: "Memory usage above 90%"
+          description: "Current usage: {{ $value | humanizePercentage }}"
+          runbook: "https://xase.ai/runbooks/high-memory"
+      
+      # CPU Throttling Alert
+      - alert: CPUThrottling
+        expr: |
+          rate(container_cpu_cfs_throttled_seconds_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "Container CPU throttling detected"
+          description: "Throttled time: {{ $value | humanizeDuration }}"
+          runbook: "https://xase.ai/runbooks/cpu-throttling"
+      
+      # Pod Restart Alert
+      - alert: PodRestartingFrequently
+        expr: |
+          rate(kube_pod_container_status_restarts_total[15m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "Pod restarting frequently"
+          description: "Restart rate: {{ $value }} restarts/min"
+          runbook: "https://xase.ai/runbooks/pod-restarts"
+      
+      # HPA Scaling Alert
+      - alert: HPAMaxedOut
+        expr: |
+          kube_horizontalpodautoscaler_status_current_replicas
+          ==
+          kube_horizontalpodautoscaler_spec_max_replicas
+        for: 15m
+        labels:
+          severity: warning
+          component: kubernetes
+        annotations:
+          summary: "HPA at maximum replicas"
+          description: "Current replicas: {{ $value }}"
+          runbook: "https://xase.ai/runbooks/hpa-maxed-out"
+      
+      # Watermark Detection Failure Alert
+      - alert: WatermarkDetectionFailure
+        expr: |
+          rate(watermark_detection_failures_total[5m]) > 0.01
+        for: 5m
+        labels:
+          severity: critical
+          component: watermark
+        annotations:
+          summary: "Watermark detection failing"
+          description: "Failure rate: {{ $value | humanizePercentage }}"
+          runbook: "https://xase.ai/runbooks/watermark-detection-failure"
+      
+      # Evidence Generation Failure Alert
+      - alert: EvidenceGenerationFailure
+        expr: |
+          rate(evidence_generation_failures_total[5m]) > 0
+        for: 5m
+        labels:
+          severity: critical
+          component: evidence
+        annotations:
+          summary: "Evidence generation failing"
+          description: "Failures in last 5min: {{ $value }}"
+          runbook: "https://xase.ai/runbooks/evidence-generation-failure"
+
+  - name: xase_business_metrics
+    interval: 1m
+    rules:
+      # Revenue Alert (for monitoring, not paging)
+      - alert: RevenueDropDetected
+        expr: |
+          (
+            sum(rate(contract_revenue_total[1h]))
+            <
+            sum(rate(contract_revenue_total[1h] offset 24h)) * 0.5
+          )
+        for: 1h
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: "Revenue dropped >50% compared to yesterday"
+          description: "Current hourly revenue: ${{ $value }}"
+      
+      # New Contract Alert (for monitoring)
+      - alert: NoNewContractsIn24h
+        expr: |
+          sum(increase(contracts_created_total[24h])) == 0
+        for: 1h
+        labels:
+          severity: info
+          component: business
+        annotations:
+          summary: "No new contracts in 24 hours"
+          description: "Check marketplace visibility and pricing"

@@ -1,0 +1,360 @@
+openapi: 3.0.3
+info:
+  title: Xase Voice Data Governance API (MVP)
+  version: 1.0.0
+  description: API para governança de dados de voz. MVP com datasets, upload/webhook, policies, access, logs e ledger.
+servers:
+  - url: https://api.example.com
+security:
+  - ApiKeyAuth: []
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+  schemas:
+    Dataset:
+      type: object
+      properties:
+        datasetId: { type: string }
+        name: { type: string }
+        language: { type: string }
+        status: { type: string, enum: [DRAFT, ACTIVE, ARCHIVED] }
+        processingStatus: { type: string, enum: [PENDING, QUEUED, PROCESSING, COMPLETED, FAILED] }
+        storageLocation: { type: string }
+        createdAt: { type: string, format: date-time }
+    CreateDatasetRequest:
+      type: object
+      required: [name, language]
+      properties:
+        name: { type: string }
+        language: { type: string }
+        description: { type: string }
+    UploadRequest:
+      type: object
+      required: [fileName]
+      properties:
+        fileName: { type: string }
+        contentType: { type: string }
+    UploadResponse:
+      type: object
+      properties:
+        uploadUrl: { type: string }
+        key: { type: string }
+    Policy:
+      type: object
+      properties:
+        policyId: { type: string }
+        datasetId: { type: string, description: Public datasetId }
+        clientTenantId: { type: string }
+        status: { type: string, enum: [ACTIVE, EXPIRED, REVOKED, SUSPENDED] }
+        usagePurpose: { type: string }
+        maxHours: { type: number }
+        hoursConsumed: { type: number }
+        maxDownloads: { type: integer }
+        downloadsCount: { type: integer }
+        canStream: { type: boolean }
+        canBatchDownload: { type: boolean }
+        pricePerHour: { type: number }
+        currency: { type: string }
+        expiresAt: { type: string, format: date-time }
+    CreatePolicyRequest:
+      type: object
+      required: [datasetId, clientTenantId, usagePurpose]
+      properties:
+        datasetId: { type: string, description: Public datasetId }
+        clientTenantId: { type: string }
+        usagePurpose: { type: string }
+        maxHours: { type: number }
+        maxDownloads: { type: integer }
+        expiresAt: { type: string, format: date-time }
+        canStream: { type: boolean }
+        canBatchDownload: { type: boolean }
+        pricePerHour: { type: number }
+        currency: { type: string }
+    AccessRequest:
+      type: object
+      required: [files]
+      properties:
+        files:
+          type: array
+          items: { type: string }
+        hoursRequested: { type: number }
+        requestId: { type: string }
+    AccessResponse:
+      type: object
+      properties:
+        accessGranted: { type: boolean }
+        downloadUrls:
+          type: array
+          items: { type: string }
+        expiresIn: { type: integer }
+        hoursConsumed: { type: number }
+        currency: { type: string }
+    AccessLog:
+      type: object
+      properties:
+        id: { type: string }
+        datasetId: { type: string }
+        policyId: { type: string }
+        clientTenantId: { type: string }
+        action: { type: string, enum: [BATCH_DOWNLOAD, STREAM_ACCESS, METADATA_VIEW, POLICY_CHECK] }
+        filesAccessed: { type: integer }
+        hoursAccessed: { type: number }
+        outcome: { type: string }
+        errorMessage: { type: string }
+        requestId: { type: string }
+        timestamp: { type: string, format: date-time }
+    LedgerEntry:
+      type: object
+      properties:
+        id: { type: string }
+        amount: { type: number }
+        eventType: { type: string }
+        description: { type: string }
+        balanceAfter: { type: number }
+        createdAt: { type: string, format: date-time }
+paths:
+  /api/v1/datasets:
+    post:
+      summary: Criar dataset
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDatasetRequest' }
+      responses:
+        '201':
+          description: Criado
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Dataset' }
+    get:
+      summary: Listar datasets
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: language
+          schema: { type: string }
+        - in: query
+          name: consentStatus
+          schema: { type: string, enum: [VERIFIED_BY_XASE, MISSING, SUPPLIER_ATTESTED] }
+        - in: query
+          name: status
+          schema: { type: string, enum: [DRAFT, ACTIVE, ARCHIVED] }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 100 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  datasets:
+                    type: array
+                    items: { $ref: '#/components/schemas/Dataset' }
+  /api/v1/datasets/{datasetId}:
+    get:
+      summary: Detalhar dataset
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: datasetId
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: OK
+  /api/v1/datasets/{datasetId}/upload:
+    post:
+      summary: Gerar URL de upload (presigned)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: datasetId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UploadRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UploadResponse' }
+  /api/v1/webhooks/minio:
+    post:
+      summary: Webhook MinIO (ObjectCreated)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+      responses:
+        '200': { description: OK }
+  /api/v1/datasets/{datasetId}/publish:
+    post:
+      summary: Publicar dataset (DRAFT -> ACTIVE)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: datasetId
+          required: true
+          schema: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/v1/policies:
+    post:
+      summary: Criar policy de acesso
+      security:
+        - ApiKeyAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreatePolicyRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Policy' }
+    get:
+      summary: Listar policies
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: datasetId
+          schema: { type: string }
+        - in: query
+          name: clientTenantId
+          schema: { type: string }
+        - in: query
+          name: status
+          schema: { type: string, enum: [ACTIVE, EXPIRED, REVOKED, SUSPENDED] }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200': { description: OK }
+  /api/v1/policies/{policyId}/revoke:
+    post:
+      summary: Revogar policy
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: policyId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '200': { description: OK }
+  /api/v1/datasets/{datasetId}/access:
+    post:
+      summary: Solicitar acesso aos arquivos (batch download)
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: path
+          name: datasetId
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccessRequest' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessResponse' }
+  /api/v1/access-logs:
+    get:
+      summary: Listar access logs
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: datasetId
+          schema: { type: string }
+        - in: query
+          name: clientTenantId
+          schema: { type: string }
+        - in: query
+          name: action
+          schema: { type: string, enum: [BATCH_DOWNLOAD, STREAM_ACCESS, METADATA_VIEW, POLICY_CHECK] }
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  logs:
+                    type: array
+                    items: { $ref: '#/components/schemas/AccessLog' }
+  /api/v1/ledger:
+    get:
+      summary: Listar ledger e saldo atual
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - in: query
+          name: from
+          schema: { type: string, format: date-time }
+        - in: query
+          name: to
+          schema: { type: string, format: date-time }
+        - in: query
+          name: eventType
+          schema: { type: string }
+        - in: query
+          name: limit
+          schema: { type: integer, minimum: 1, maximum: 200 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  balance: { type: number }
+                  entries:
+                    type: array
+                    items: { $ref: '#/components/schemas/LedgerEntry' }

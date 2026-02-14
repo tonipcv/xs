@@ -1,0 +1,308 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: xase-app-network-policy
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: xase-app
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+    # Allow traffic from federated agent
+    - from:
+        - podSelector:
+            matchLabels:
+              app: xase-federated-agent
+      ports:
+        - protocol: TCP
+          port: 3000
+    # Allow traffic from monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow PostgreSQL
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow Redis
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow ClickHouse
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8123
+        - protocol: TCP
+          port: 9000
+    # Allow HTTPS to external services
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow federated agent
+    - to:
+        - podSelector:
+            matchLabels:
+              app: xase-federated-agent
+      ports:
+        - protocol: TCP
+          port: 8080
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: xase-federated-agent-network-policy
+  namespace: production
+spec:
+  podSelector:
+    matchLabels:
+      app: xase-federated-agent
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow traffic from xase-app
+    - from:
+        - podSelector:
+            matchLabels:
+              app: xase-app
+      ports:
+        - protocol: TCP
+          port: 8080
+    # Allow traffic from monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow PostgreSQL (outbound-only federated queries)
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Allow Redis
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Allow ClickHouse
+    - to:
+        - podSelector: {}
+      ports:
+        - protocol: TCP
+          port: 8123
+        - protocol: TCP
+          port: 9000
+    # Allow S3 (HTTPS)
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns
+  namespace: production
+spec:
+  podSelector: {}
+  policyTypes:
+    - Egress
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: prometheus-network-policy
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: prometheus
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow Grafana
+    - from:
+        - podSelector:
+            matchLabels:
+              app: grafana
+      ports:
+        - protocol: TCP
+          port: 9090
+    # Allow Alertmanager
+    - from:
+        - podSelector:
+            matchLabels:
+              app: alertmanager
+      ports:
+        - protocol: TCP
+          port: 9090
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow scraping production namespace
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              name: production
+      ports:
+        - protocol: TCP
+          port: 3000
+        - protocol: TCP
+          port: 8080
+    # Allow Alertmanager
+    - to:
+        - podSelector:
+            matchLabels:
+              app: alertmanager
+      ports:
+        - protocol: TCP
+          port: 9093
+
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: grafana-network-policy
+  namespace: monitoring
+spec:
+  podSelector:
+    matchLabels:
+      app: grafana
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow ingress controller
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 3000
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow Prometheus
+    - to:
+        - podSelector:
+            matchLabels:
+              app: prometheus
+      ports:
+        - protocol: TCP
+          port: 9090
+    # Allow HTTPS for plugins
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+
+---
+# Pod Security Policy (if PSP is enabled)
+apiVersion: policy/v1beta1
+kind: PodSecurityPolicy
+metadata:
+  name: xase-restricted
+  annotations:
+    seccomp.security.alpha.kubernetes.io/allowedProfileNames: 'runtime/default'
+    apparmor.security.beta.kubernetes.io/allowedProfileNames: 'runtime/default'
+spec:
+  privileged: false
+  allowPrivilegeEscalation: false
+  requiredDropCapabilities:
+    - ALL
+  volumes:
+    - 'configMap'
+    - 'emptyDir'
+    - 'projected'
+    - 'secret'
+    - 'downwardAPI'
+    - 'persistentVolumeClaim'
+  hostNetwork: false
+  hostIPC: false
+  hostPID: false
+  runAsUser:
+    rule: 'MustRunAsNonRoot'
+  seLinux:
+    rule: 'RunAsAny'
+  supplementalGroups:
+    rule: 'RunAsAny'
+  fsGroup:
+    rule: 'RunAsAny'
+  readOnlyRootFilesystem: false

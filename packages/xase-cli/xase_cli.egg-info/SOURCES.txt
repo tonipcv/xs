@@ -1,0 +1,9 @@
+README.md
+setup.py
+xase_cli.py
+xase_cli.egg-info/PKG-INFO
+xase_cli.egg-info/SOURCES.txt
+xase_cli.egg-info/dependency_links.txt
+xase_cli.egg-info/entry_points.txt
+xase_cli.egg-info/requires.txt
+xase_cli.egg-info/top_level.txt

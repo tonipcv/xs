@@ -1,0 +1,15 @@
+apiVersion: v2
+name: xase-sidecar
+description: Xase Sidecar for AI Training Data Governance
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - xase
+  - ai
+  - training
+  - governance
+  - sidecar
+maintainers:
+  - name: Xase Team
+    email: team@xase.ai

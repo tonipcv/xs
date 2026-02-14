@@ -1,0 +1,16 @@
+{
+  "version": "1.0",
+  "createdAt": "2026-01-05T20:07:13.557Z",
+  "tenantEmail": "demo-insurance-advanced+run3@xase.local",
+  "source": "audit-advanced-2026-01-05T19-54-51-401Z.json",
+  "files": {
+    "audit": {
+      "name": "audit.json",
+      "sha256": "7e7f9ee42074e86f46a8bf16803c026afe93eaff34b559d4478a6a9e7ecda83a"
+    },
+    "verify": {
+      "name": "verify.js",
+      "sha256": "7ddb4dcfa148ec6b604e1998945178f2d22b76632e9425feae58bb4ceefaf556"
+    }
+  }
+}

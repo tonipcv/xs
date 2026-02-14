@@ -1,0 +1,241 @@
+{
+  "dashboard": {
+    "title": "Xase Sidecar Metrics",
+    "tags": ["xase", "sidecar", "ai-training"],
+    "timezone": "browser",
+    "schemaVersion": 16,
+    "version": 0,
+    "refresh": "30s",
+    "panels": [
+      {
+        "id": 1,
+        "title": "Active Sidecar Sessions",
+        "type": "stat",
+        "gridPos": { "x": 0, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sidecar_sessions_active",
+            "legendFormat": "Active Sessions",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area",
+          "justifyMode": "auto",
+          "orientation": "auto",
+          "reduceOptions": {
+            "values": false,
+            "calcs": ["lastNotNull"]
+          }
+        }
+      },
+      {
+        "id": 2,
+        "title": "Total Sessions (24h)",
+        "type": "stat",
+        "gridPos": { "x": 6, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sidecar_sessions_total",
+            "legendFormat": "Total Sessions",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "colorMode": "value",
+          "graphMode": "area"
+        }
+      },
+      {
+        "id": 3,
+        "title": "Cache Hit Rate",
+        "type": "gauge",
+        "gridPos": { "x": 12, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sidecar_cache_hit_rate",
+            "legendFormat": "Hit Rate",
+            "refId": "A"
+          }
+        ],
+        "options": {
+          "showThresholdLabels": false,
+          "showThresholdMarkers": true
+        },
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 1,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "red" },
+                { "value": 0.7, "color": "yellow" },
+                { "value": 0.9, "color": "green" }
+              ]
+            },
+            "unit": "percentunit"
+          }
+        }
+      },
+      {
+        "id": 4,
+        "title": "Average Latency",
+        "type": "gauge",
+        "gridPos": { "x": 18, "y": 0, "w": 6, "h": 4 },
+        "targets": [
+          {
+            "expr": "sidecar_avg_latency_ms",
+            "legendFormat": "Latency (ms)",
+            "refId": "A"
+          }
+        ],
+        "fieldConfig": {
+          "defaults": {
+            "min": 0,
+            "max": 100,
+            "thresholds": {
+              "mode": "absolute",
+              "steps": [
+                { "value": 0, "color": "green" },
+                { "value": 50, "color": "yellow" },
+                { "value": 80, "color": "red" }
+              ]
+            },
+            "unit": "ms"
+          }
+        }
+      },
+      {
+        "id": 5,
+        "title": "Throughput (Bytes Served)",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "rate(sidecar_bytes_served_total[5m])",
+            "legendFormat": "Bytes/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "Bps",
+            "label": "Bytes per second"
+          },
+          {
+            "format": "short"
+          }
+        ],
+        "xaxis": {
+          "mode": "time"
+        }
+      },
+      {
+        "id": 6,
+        "title": "Segments Served Rate",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 4, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "rate(sidecar_segments_served_total[5m])",
+            "legendFormat": "Segments/sec",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "short",
+            "label": "Segments per second"
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "title": "Cache Hit Rate Over Time",
+        "type": "graph",
+        "gridPos": { "x": 0, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "sidecar_cache_hit_rate",
+            "legendFormat": "Hit Rate",
+            "refId": "A"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "percentunit",
+            "label": "Cache Hit Rate",
+            "min": 0,
+            "max": 1
+          }
+        ],
+        "alert": {
+          "conditions": [
+            {
+              "evaluator": {
+                "params": [0.7],
+                "type": "lt"
+              },
+              "operator": {
+                "type": "and"
+              },
+              "query": {
+                "params": ["A", "5m", "now"]
+              },
+              "reducer": {
+                "params": [],
+                "type": "avg"
+              },
+              "type": "query"
+            }
+          ],
+          "executionErrorState": "alerting",
+          "frequency": "1m",
+          "handler": 1,
+          "name": "Low Cache Hit Rate",
+          "noDataState": "no_data",
+          "notifications": []
+        }
+      },
+      {
+        "id": 8,
+        "title": "Latency P95 & P99",
+        "type": "graph",
+        "gridPos": { "x": 12, "y": 12, "w": 12, "h": 8 },
+        "targets": [
+          {
+            "expr": "histogram_quantile(0.95, rate(sidecar_latency_bucket[5m]))",
+            "legendFormat": "P95",
+            "refId": "A"
+          },
+          {
+            "expr": "histogram_quantile(0.99, rate(sidecar_latency_bucket[5m]))",
+            "legendFormat": "P99",
+            "refId": "B"
+          }
+        ],
+        "yaxes": [
+          {
+            "format": "ms",
+            "label": "Latency"
+          }
+        ]
+      }
+    ],
+    "templating": {
+      "list": []
+    },
+    "annotations": {
+      "list": []
+    },
+    "time": {
+      "from": "now-6h",
+      "to": "now"
+    },
+    "timepicker": {
+      "refresh_intervals": ["5s", "10s", "30s", "1m", "5m", "15m", "30m", "1h", "2h", "1d"]
+    }
+  }
+}

@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Values.contract.id }}-sidecar
+  labels:
+    app: xase-sidecar
+    contract: {{ .Values.contract.id }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: xase-sidecar
+      contract: {{ .Values.contract.id }}
+  template:
+    metadata:
+      labels:
+        app: xase-sidecar
+        contract: {{ .Values.contract.id }}
+    spec:
+      serviceAccountName: {{ .Values.serviceAccount.name }}
+      volumes:
+        - name: sidecar-socket
+          emptyDir: {}
+      containers:
+        - name: sidecar
+          image: "{{ .Values.sidecar.image.repository }}:{{ .Values.sidecar.image.tag }}"
+          env:
+            - name: CONTRACT_ID
+              value: {{ .Values.contract.id | quote }}
+            - name: XASE_API_KEY
+              value: {{ .Values.contract.apiKey | quote }}
+            - name: LEASE_ID
+              value: {{ .Values.contract.leaseId | quote }}
+            - name: XASE_BASE_URL
+              value: {{ .Values.xase.baseUrl | quote }}
+            - name: BUCKET_NAME
+              value: {{ .Values.sidecar.storage.bucketName | quote }}
+            - name: CACHE_SIZE_GB
+              value: {{ .Values.sidecar.cache.sizeGb | quote }}
+          volumeMounts:
+            - name: sidecar-socket
+              mountPath: /var/run/xase
+          resources:
+            {{- toYaml .Values.sidecar.resources | nindent 12 }}
+        - name: training
+          image: "{{ .Values.training.image.repository }}:{{ .Values.training.image.tag }}"
+          command: {{ .Values.training.command }}
+          volumeMounts:
+            - name: sidecar-socket
+              mountPath: /var/run/xase
+          resources:
+            {{- toYaml .Values.training.resources | nindent 12 }}

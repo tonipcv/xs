@@ -1,0 +1,46 @@
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ .Values.contract.id }}-sidecar
+  labels:
+    app: xase-sidecar
+    contract: {{ .Values.contract.id }}
+spec:
+  podSelector:
+    matchLabels:
+      app: xase-sidecar
+      contract: {{ .Values.contract.id }}
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow metrics scraping from Prometheus
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - protocol: TCP
+          port: 9090
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+    # Allow HTTPS to Xase Brain
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443
+    # Allow S3 access
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: TCP
+          port: 443

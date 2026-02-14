@@ -1,0 +1,2 @@
+[console_scripts]
+xase-cli = xase_cli:main

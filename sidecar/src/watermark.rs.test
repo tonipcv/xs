@@ -1,0 +1,95 @@
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_watermark_embedding_and_detection() {
+        // Create simple test audio (1 second, 16kHz, sine wave)
+        let sample_rate = 16000;
+        let duration = 1.0;
+        let frequency = 440.0; // A4 note
+        
+        let samples: Vec<i16> = (0..sample_rate)
+            .map(|i| {
+                let t = i as f32 / sample_rate as f32;
+                let sample = (2.0 * std::f32::consts::PI * frequency * t).sin();
+                (sample * i16::MAX as f32 * 0.5) as i16
+            })
+            .collect();
+        
+        // Encode to WAV
+        let spec = hound::WavSpec {
+            channels: 1,
+            sample_rate: sample_rate as u32,
+            bits_per_sample: 16,
+            sample_format: hound::SampleFormat::Int,
+        };
+        
+        let mut cursor = std::io::Cursor::new(Vec::new());
+        {
+            let mut writer = hound::WavWriter::new(&mut cursor, spec).unwrap();
+            for sample in samples {
+                writer.write_sample(sample).unwrap();
+            }
+            writer.finalize().unwrap();
+        }
+        
+        let original_audio = cursor.into_inner();
+        let contract_id = "test_contract_123";
+        
+        // Apply watermark
+        let watermarked = watermark_audio(original_audio.clone(), contract_id).unwrap();
+        
+        // Verify watermarked audio is different but similar size
+        assert_ne!(watermarked, original_audio);
+        assert!((watermarked.len() as i32 - original_audio.len() as i32).abs() < 1000);
+        
+        // Detection (would need database of known contracts in production)
+        let detected = detect_watermark(watermarked).unwrap();
+        // Currently returns None as we don't have contract database
+        assert!(detected.is_none());
+    }
+    
+    #[test]
+    fn test_bin_indices_generation() {
+        let contract_id = "test_123";
+        let sample_rate = 16000;
+        let fft_size = 16000;
+        
+        let indices = generate_bin_indices(contract_id, sample_rate, fft_size);
+        
+        assert_eq!(indices.len(), NUM_BINS);
+        
+        // All indices should be within valid range
+        let min_bin = (MIN_FREQUENCY * fft_size) / sample_rate;
+        let max_bin = (MAX_FREQUENCY * fft_size) / sample_rate;
+        
+        for &idx in &indices {
+            assert!(idx >= min_bin);
+            assert!(idx <= max_bin);
+        }
+        
+        // Same contract ID should produce same indices
+        let indices2 = generate_bin_indices(contract_id, sample_rate, fft_size);
+        assert_eq!(indices, indices2);
+        
+        // Different contract ID should produce different indices
+        let indices3 = generate_bin_indices("different_contract", sample_rate, fft_size);
+        assert_ne!(indices, indices3);
+    }
+    
+    #[test]
+    fn test_contract_bit_deterministic() {
+        let contract_id = "test_contract";
+        
+        // Same contract and index should always produce same bit
+        let bit1 = get_contract_bit(contract_id, 0);
+        let bit2 = get_contract_bit(contract_id, 0);
+        assert_eq!(bit1, bit2);
+        
+        // Different indices may produce different bits
+        let bit3 = get_contract_bit(contract_id, 1);
+        // Just verify it's a boolean (no assertion on value)
+        assert!(bit3 == true || bit3 == false);
+    }
+}

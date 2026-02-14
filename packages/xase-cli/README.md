@@ -1,0 +1,415 @@
+# Xase CLI
+
+> Command-line interface for AI Lab data access and governance
+
+Complete CLI tool for discovering, executing, and consuming governed voice datasets through Xase.
+
+## Installation
+
+```bash
+# Install dependencies
+pip install requests
+
+# Make executable
+chmod +x xase_cli.py
+
+# Optional: Add to PATH
+ln -s $(pwd)/xase_cli.py /usr/local/bin/xase-cli
+```
+
+## Configuration
+
+Set environment variables:
+
+```bash
+export XASE_BASE_URL="http://localhost:3000"  # or your production URL
+export XASE_API_KEY="xase_pk_..."             # Get from dashboard
+```
+
+## Quick Start
+
+### 1. List available datasets
+
+```bash
+python xase_cli.py list-offers --risk MEDIUM --language en-US
+```
+
+### 2. Execute an offer (creates Policy + Lease)
+
+```bash
+python xase_cli.py execute off_abc123 \
+  --hours 1.0 \
+  --purpose "AI model training" \
+  --environment production
+```
+
+This returns:
+- `policyId` - For validation
+- `leaseId` - For tracking
+- `expiresAt` - Lease expiration
+
+### 3. Validate access before consuming
+
+```bash
+python xase_cli.py validate pol_xyz789 --requested-hours 0.5
+```
+
+### 4. Stream dataset
+
+```bash
+python xase_cli.py stream ds_def456 --output training_data.json
+```
+
+## Commands
+
+### `list-offers`
+
+List available access offers with filters.
+
+```bash
+python xase_cli.py list-offers [OPTIONS]
+
+Options:
+  --risk {LOW,MEDIUM,HIGH,CRITICAL}  Filter by risk class
+  --language LANG                     Filter by language (e.g., en-US)
+  --max-price PRICE                   Maximum price per hour
+  --limit N                           Max results (default: 20)
+```
+
+**Example:**
+```bash
+python xase_cli.py list-offers --risk MEDIUM --language en-US --max-price 50
+```
+
+---
+
+### `execute`
+
+Execute an offer to create policy and lease.
+
+```bash
+python xase_cli.py execute OFFER_ID [OPTIONS]
+
+Arguments:
+  OFFER_ID                            Offer ID (e.g., off_abc123)
+
+Options:
+  --hours HOURS                       Requested hours
+  --purpose PURPOSE                   Usage purpose
+  --environment {development,staging,production}
+```
+
+**Example:**
+```bash
+python xase_cli.py execute off_abc123 \
+  --hours 2.0 \
+  --purpose "Speech recognition training" \
+  --environment production
+```
+
+**Output:**
+```json
+{
+  "execution": {...},
+  "policy": {
+    "policyId": "pol_xyz789",
+    "maxHours": 2.0,
+    "expiresAt": "2026-02-13T16:00:00Z"
+  },
+  "lease": {
+    "leaseId": "lease_def456",
+    "expiresAt": "2026-02-12T17:00:00Z"
+  }
+}
+```
+
+---
+
+### `validate`
+
+Validate policy access before consuming data.
+
+```bash
+python xase_cli.py validate POLICY_ID [OPTIONS]
+
+Arguments:
+  POLICY_ID                           Policy ID (e.g., pol_xyz789)
+
+Options:
+  --requested-hours HOURS             Hours to validate (default: 0.5)
+```
+
+**Example:**
+```bash
+python xase_cli.py validate pol_xyz789 --requested-hours 0.5
+```
+
+**Output:**
+```
+✓ Access allowed: Policy active and within limits
+
+📊 Usage:
+  Hours remaining: 1.5
+  Downloads remaining: 100
+  Utilization: 25.0%
+```
+
+---
+
+### `stream`
+
+Stream dataset data to file.
+
+```bash
+python xase_cli.py stream DATASET_ID [OPTIONS]
+
+Arguments:
+  DATASET_ID                          Dataset ID (e.g., ds_def456)
+
+Options:
+  --output FILE                       Output file (default: batch_<timestamp>.json)
+```
+
+**Example:**
+```bash
+python xase_cli.py stream ds_def456 --output training_batch_001.json
+```
+
+---
+
+### `list-leases`
+
+List active leases.
+
+```bash
+python xase_cli.py list-leases [OPTIONS]
+
+Options:
+  --limit N                           Max results (default: 10)
+```
+
+**Example:**
+```bash
+python xase_cli.py list-leases --limit 20
+```
+
+---
+
+### `lease-details`
+
+Get detailed information about a lease.
+
+```bash
+python xase_cli.py lease-details LEASE_ID
+
+Arguments:
+  LEASE_ID                            Lease ID
+```
+
+**Example:**
+```bash
+python xase_cli.py lease-details lease_def456
+```
+
+---
+
+### `usage`
+
+Show usage statistics.
+
+```bash
+python xase_cli.py usage
+```
+
+---
+
+## Production Workflow
+
+### Complete flow from discovery to consumption:
+
+```bash
+# 1. Discover datasets
+python xase_cli.py list-offers --risk MEDIUM --language en-US
+
+# 2. Execute offer (note the policyId and leaseId)
+python xase_cli.py execute off_abc123 \
+  --hours 10.0 \
+  --purpose "Production model training" \
+  --environment production
+
+# 3. Validate before each consumption cycle
+python xase_cli.py validate pol_xyz789 --requested-hours 1.0
+
+# 4. Stream data in batches
+python xase_cli.py stream ds_def456 --output batch_001.json
+python xase_cli.py stream ds_def456 --output batch_002.json
+
+# 5. Monitor active leases
+python xase_cli.py list-leases
+
+# 6. Check usage
+python xase_cli.py usage
+```
+
+---
+
+## Error Handling
+
+The CLI exits with standard codes:
+
+- `0` - Success
+- `1` - General error (API error, validation failed)
+- `2` - Configuration error (missing API key)
+- `130` - Interrupted by user (Ctrl+C)
+
+**Example error:**
+```bash
+$ python xase_cli.py validate pol_invalid
+✗ HTTP 404: Policy not found
+```
+
+---
+
+## Best Practices
+
+### 1. Always validate before consuming
+
+```bash
+# ✅ Good
+python xase_cli.py validate pol_xyz789 --requested-hours 0.5
+python xase_cli.py stream ds_def456 --output data.json
+
+# ❌ Bad (no validation)
+python xase_cli.py stream ds_def456 --output data.json
+```
+
+### 2. Use small batches for long-running jobs
+
+```bash
+# ✅ Good - consume in 0.5h increments
+for i in {1..10}; do
+  python xase_cli.py validate pol_xyz789 --requested-hours 0.5
+  python xase_cli.py stream ds_def456 --output batch_$(printf %03d $i).json
+  sleep 60
+done
+
+# ❌ Bad - single large request
+python xase_cli.py stream ds_def456 --output all_data.json  # May timeout
+```
+
+### 3. Monitor lease expiration
+
+```bash
+# Check lease status regularly
+python xase_cli.py list-leases | grep "Expires"
+```
+
+### 4. Secure your API key
+
+```bash
+# ✅ Good - use environment variable
+export XASE_API_KEY="xase_pk_..."
+
+# ❌ Bad - hardcode in script
+XASE_API_KEY="xase_pk_..." python xase_cli.py list-offers
+```
+
+---
+
+## Automation Example
+
+### Bash script for continuous consumption:
+
+```bash
+#!/bin/bash
+set -e
+
+POLICY_ID="pol_xyz789"
+DATASET_ID="ds_def456"
+BATCH_SIZE=0.5
+OUTPUT_DIR="./training_data"
+
+mkdir -p "$OUTPUT_DIR"
+
+for i in {1..20}; do
+  echo "Processing batch $i..."
+  
+  # Validate access
+  python xase_cli.py validate "$POLICY_ID" --requested-hours "$BATCH_SIZE"
+  
+  # Stream data
+  OUTPUT_FILE="$OUTPUT_DIR/batch_$(printf %03d $i).json"
+  python xase_cli.py stream "$DATASET_ID" --output "$OUTPUT_FILE"
+  
+  echo "✓ Batch $i saved to $OUTPUT_FILE"
+  
+  # Wait before next batch
+  sleep 30
+done
+
+echo "✓ All batches completed"
+```
+
+---
+
+## Troubleshooting
+
+### "XASE_API_KEY environment variable not set"
+
+**Fix:**
+```bash
+export XASE_API_KEY="xase_pk_..."
+```
+
+### "HTTP 401: Unauthorized"
+
+**Causes:**
+- Invalid API key
+- Expired API key
+- Wrong tenant
+
+**Fix:**
+- Verify API key in dashboard
+- Regenerate if expired
+
+### "HTTP 403: Access denied"
+
+**Causes:**
+- Policy expired
+- Usage limit exceeded
+- Lease revoked
+
+**Fix:**
+```bash
+# Check policy status
+python xase_cli.py validate pol_xyz789
+
+# Request new lease if needed
+python xase_cli.py execute off_abc123 --hours 1.0
+```
+
+### "HTTP 429: Rate limit exceeded"
+
+**Fix:**
+- Add delays between requests
+- Reduce batch frequency
+- Contact support to increase rate limit
+
+---
+
+## Support
+
+- **Documentation:** [docs.xase.ai](https://docs.xase.ai)
+- **API Reference:** [api.xase.ai/docs](https://api.xase.ai/docs)
+- **Issues:** [github.com/xase/xase-cli/issues](https://github.com/xase/xase-cli/issues)
+- **Email:** support@xase.ai
+
+---
+
+## License
+
+MIT © Xase
+
+---
+
+**Built for AI Labs by the Xase team**
