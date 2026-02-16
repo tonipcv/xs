@@ -1,24 +1,30 @@
 use anyhow::Result;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use tokio::net::{UnixListener, UnixStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tracing::{info, error};
+use tracing::{info, warn, error};
 use crate::cache::SegmentCache;
 use crate::s3_client::S3Client;
 use crate::watermark;
 use crate::config::Config;
 
+/// Serve segments via Unix socket IPC.
+///
+/// Key performance changes:
+/// - Cache is now Arc<SegmentCache> (DashMap inside), NO Mutex wrapper
+/// - Concurrent reads are lock-free (multiple GPU workers don't block each other)
+/// - Cache returns Arc<Vec<u8>> (zero-copy, just refcount increment)
+/// - Watermarking moved OFF critical path: on cache miss, serve raw data immediately
+///   and watermark in background task. GPU never waits for FFT.
 pub async fn serve(
-    cache: Arc<Mutex<SegmentCache>>,
+    cache: Arc<SegmentCache>,
     s3_client: Arc<S3Client>,
     config: Config,
 ) -> Result<()> {
-    // Remove socket file if exists
     let _ = std::fs::remove_file(&config.socket_path);
 
     let listener = UnixListener::bind(&config.socket_path)?;
-    info!("✅ Unix socket listening at {}", config.socket_path);
+    info!("Unix socket listening at {}", config.socket_path);
 
     loop {
         match listener.accept().await {
@@ -42,7 +48,7 @@ pub async fn serve(
 
 async fn handle_connection(
     mut stream: UnixStream,
-    cache: Arc<Mutex<SegmentCache>>,
+    cache: Arc<SegmentCache>,
     s3_client: Arc<S3Client>,
     config: Config,
 ) -> Result<()> {
@@ -55,32 +61,47 @@ async fn handle_connection(
     stream.read_exact(&mut segment_id).await?;
     let segment_id = String::from_utf8(segment_id)?;
 
-    // Check cache first
-    let data = {
-        let mut cache_guard = cache.lock().await;
-        if let Some(cached) = cache_guard.get(&segment_id) {
-            // Cache hit
-            cached
-        } else {
-            // Cache miss - download from S3
-            drop(cache_guard);
-            
-            let raw_data = s3_client.download(&segment_id).await?;
-            
-            // Apply watermark (consume owned buffer)
-            let watermarked = watermark::watermark_audio(raw_data, &config.contract_id)?;
-            
-            // Store in cache
-            let mut cache_guard = cache.lock().await;
-            cache_guard.insert(segment_id.clone(), watermarked.clone());
-            
-            watermarked
-        }
+    // Check cache first (lock-free, returns Arc - zero copy)
+    let data = if let Some(cached) = cache.get(&segment_id) {
+        // Cache hit: zero-copy Arc<Vec<u8>>, no blocking
+        cached
+    } else {
+        // Cache miss: download from S3
+        let raw_data = s3_client.download(&segment_id).await?;
+
+        // Store raw data in cache immediately (GPU gets data FAST)
+        let arc_data = Arc::new(raw_data);
+        cache.insert_arc(segment_id.clone(), Arc::clone(&arc_data));
+
+        // Watermark in background - GPU does NOT wait for FFT
+        let bg_cache = cache.clone();
+        let bg_segment_id = segment_id.clone();
+        let bg_contract_id = config.contract_id.clone();
+        let bg_data = Arc::clone(&arc_data);
+
+        tokio::spawn(async move {
+            match watermark::watermark_audio_probabilistic(
+                (*bg_data).clone(),
+                &bg_contract_id,
+                watermark::WATERMARK_PROBABILITY,
+            ) {
+                Ok(watermarked) => {
+                    // Replace raw data with watermarked version in cache
+                    bg_cache.insert(bg_segment_id, watermarked);
+                }
+                Err(e) => {
+                    // Non-fatal: GPU got data, watermark is for audit trail
+                    warn!("Background watermarking failed for segment: {}", e);
+                }
+            }
+        });
+
+        arc_data
     };
 
-    // Write response (length-prefixed)
-    let len = (data.len() as u32).to_be_bytes();
-    stream.write_all(&len).await?;
+    // Write response (length-prefixed) - write_all on &[u8] is zero-copy from Arc
+    let len_bytes = (data.len() as u32).to_be_bytes();
+    stream.write_all(&len_bytes).await?;
     stream.write_all(&data).await?;
     stream.flush().await?;
 

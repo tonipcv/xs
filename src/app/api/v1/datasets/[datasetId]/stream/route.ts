@@ -17,7 +17,10 @@ const QuerySchema = z.object({
   env: z.string().min(1).optional(),
 })
 
-export async function GET(req: NextRequest, context: any) {
+export async function GET(
+  req: NextRequest, 
+  context: { params: Promise<{ datasetId: string }> }
+) {
   try {
     const t0 = Date.now()
     // Prefer Bearer (CLI), fallback to API key with rate limiting
@@ -39,7 +42,7 @@ export async function GET(req: NextRequest, context: any) {
       }
     }
 
-    const { datasetId } = await params
+    const { datasetId } = await context.params
     const parsed = QuerySchema.safeParse(Object.fromEntries(new URL(req.url).searchParams.entries()))
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid query', details: parsed.error.flatten() }, { status: 400 })

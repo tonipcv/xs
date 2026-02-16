@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { validateApiKey } from '@/lib/xase/auth'
 import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
+import { detectWatermark } from '@/lib/xase/watermark-detector'
 
 const BodySchema = z.object({
   audioHash: z.string().min(1),
@@ -40,12 +41,13 @@ export async function POST(req: NextRequest) {
     }
     const audioBuffer = Buffer.from(await audioRes.arrayBuffer())
 
-    // Call Sidecar watermark detection (if available) or use PN-based detection
-    // For production: integrate with Rust detector via FFI or microservice
-    // For now: basic implementation that checks against known policies
-    const detected = false // Would call Rust watermark detector here
-    const contractId = null
-    const confidence = 0.0
+    // Call real watermark detection
+    const candidateIds = policies.map(p => p.id);
+    const detectionResult = await detectWatermark(audioBuffer, candidateIds);
+    
+    const detected = detectionResult.detected;
+    const contractId = detectionResult.contractId;
+    const confidence = detectionResult.confidence;
 
     // Log detection attempt
     await prisma.auditLog.create({

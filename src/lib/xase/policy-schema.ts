@@ -14,42 +14,191 @@
 export const XASE_POLICY_SCHEMA_V0 = {
   $id: "https://xase.dev/schemas/policy/v0.json",
   type: "object",
-  required: ["version", "policy_id", "dataset", "principals", "purposes", "rules"],
+  required: ["apiVersion", "kind", "metadata", "spec"],
   properties: {
-    version: { type: "string", enum: ["0.1"] },
-    policy_id: { type: "string", minLength: 3 },
-    name: { type: "string" },
-    description: { type: "string" },
-
-    dataset: {
+    apiVersion: { type: "string", enum: ["xase.ai/v1"] },
+    kind: { type: "string", enum: ["DataAccessPolicy"] },
+    metadata: {
       type: "object",
-      required: ["id"],
+      required: ["name"],
       properties: {
-        id: { type: "string", minLength: 1 },
+        name: { type: "string", minLength: 1 },
+        description: { type: "string" }
+      }
+    },
+    spec: {
+      type: "object",
+      required: ["dataset", "purpose"],
+      additionalProperties: true,
+      properties: {
+        dataset: { 
+          oneOf: [
+            { type: "string", minLength: 1 },
+            {
+              type: "object",
+              required: ["id"],
+              properties: {
+                id: { type: "string", minLength: 1 },
+                columns: {
+                  type: "array",
+                  items: { type: "string", minLength: 1 }
+                }
+              }
+            }
+          ]
+        },
+        purpose: { 
+          oneOf: [
+            { 
+              type: "string",
+              enum: ["TRAINING", "ANALYTICS", "RESEARCH", "TESTING", "PRODUCTION", "DEVELOPMENT", "INFERENCE", "MARKETING", "OPERATIONS"]
+            },
+            { 
+              type: "array",
+              minItems: 1,
+              items: { 
+                type: "string",
+                enum: ["TRAINING", "ANALYTICS", "RESEARCH", "TESTING", "PRODUCTION", "DEVELOPMENT", "INFERENCE", "MARKETING", "OPERATIONS"]
+              }
+            }
+          ]
+        },
+        principals: {
+          type: "object",
+          properties: {
+            allow: { type: "array", items: { type: "string" } },
+            deny: { type: "array", items: { type: "string" } }
+          }
+        },
         columns: {
-          type: "array",
-          items: { type: "string", minLength: 1 },
-          description: "Catálogo de colunas conhecidas (opcional, para validação)"
+          type: "object",
+          not: {
+            required: ["allow", "deny"]
+          },
+          properties: {
+            allow: { type: "array", items: { type: "string" } },
+            deny: { type: "array", items: { type: "string" } },
+            masking: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["column", "method"],
+                properties: {
+                  column: { type: "string" },
+                  method: { 
+                    oneOf: [
+                      { type: "string", enum: ["redact", "hash", "null", "regex"] },
+                      { type: "null" }
+                    ]
+                  },
+                  regex: { type: "string" },
+                  pattern: { type: "string" },
+                  replace: { type: "string" },
+                  replacement: { type: "string" }
+                },
+                allOf: [
+                  {
+                    if: {
+                      properties: { method: { const: "regex" } }
+                    },
+                    then: {
+                      required: ["pattern", "replacement"]
+                    }
+                  }
+                ]
+              }
+            },
+            mask: {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["column", "method"],
+                properties: {
+                  column: { type: "string" },
+                  method: { 
+                    oneOf: [
+                      { type: "string", enum: ["redact", "hash", "null", "regex"] },
+                      { type: "null" }
+                    ]
+                  },
+                  regex: { type: "string" },
+                  pattern: { type: "string" },
+                  replace: { type: "string" },
+                  replacement: { type: "string" }
+                },
+                allOf: [
+                  {
+                    if: {
+                      properties: { method: { const: "regex" } }
+                    },
+                    then: {
+                      required: ["pattern", "replacement"]
+                    }
+                  }
+                ]
+              }
+            }
+          }
+        },
+        rows: {
+          oneOf: [
+            {
+              type: "array",
+              items: {
+                type: "object",
+                required: ["column", "operator", "value"],
+                properties: {
+                  column: { type: "string" },
+                  operator: { 
+                    type: "string",
+                    enum: ["equals", "not_equals", "greater_than", "less_than", "in", "not_in", "contains", "starts_with", "ends_with"]
+                  },
+                  value: {}
+                }
+              }
+            },
+            {
+              type: "object",
+              properties: {
+                allow: { type: "array" },
+                deny: { type: "array" }
+              }
+            }
+          ]
+        },
+        consent: {
+          type: "object",
+          properties: {
+            required: { type: "boolean" },
+            status: { type: "string" },
+            min_version: { type: "string" },
+            proof_required: { type: "boolean" },
+            purposes: { 
+              type: "array",
+              items: { type: "string" }
+            }
+          }
+        },
+        validity: {
+          type: "object",
+          properties: {
+            not_before: { type: "string", format: "date-time" },
+            not_after: { type: "string", format: "date-time" },
+            environments: {
+              type: "array",
+              items: { type: "string", enum: ["production", "staging", "development"] }
+            }
+          }
         }
-      },
-      additionalProperties: false
+      }
     },
-
-    principals: {
-      type: "object",
-      description: "Grupos de atores/autorizados (tenants, roles, api-keys)",
-      properties: {
-        allow: { type: "array", items: { type: "string" } },
-        deny: { type: "array", items: { type: "string" } }
-      },
-      additionalProperties: false
-    },
-
-    purposes: {
-      type: "array",
-      minItems: 1,
-      items: { type: "string", minLength: 1 }
-    },
+    
+    // Legacy format support
+    version: { type: "string" },
+    policy_id: { type: "string" },
+    dataset: { type: "object" },
+    principals: { type: "object" },
+    purposes: { type: "array" },
 
     validity: {
       type: "object",

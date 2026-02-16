@@ -1,14 +1,20 @@
 /**
  * Cross-Tenant Isolation Tests
  * Ensures complete data isolation between tenants
+ * 
+ * NOTE: These tests require a running PostgreSQL database.
+ * Run with: npm run test:integration
  */
 
-import { describe, it, expect, beforeAll, afterAll } from '@jest/globals'
+import { describe, it, expect, beforeAll, afterAll, vi } from 'vitest'
 import { prisma } from '@/lib/prisma'
 import { RBACService } from '@/lib/security/rbac-service'
 import { ApiKeyManager } from '@/lib/security/api-key-manager'
 
-describe('Cross-Tenant Isolation', () => {
+// Skip these tests in unit test mode (no DB available)
+const isIntegrationTest = process.env.TEST_MODE === 'integration'
+
+describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
   let tenant1Id: string
   let tenant2Id: string
   let user1Id: string

@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
   try {
     // Support two auth modes: API key OR user session
     const auth = await validateApiKey(req)
-    let tenantId: string | null = auth.valid ? auth.tenantId : null
+    let tenantId: string | null = auth.valid ? (auth.tenantId || null) : null
 
     if (!tenantId) {
       const session = await getServerSession(authOptions)
@@ -296,7 +296,7 @@ function estimateFileDuration(sizeBytes: number): number {
 export async function GET(req: NextRequest) {
   try {
     const auth = await validateApiKey(req)
-    let tenantId: string | null = auth.valid ? auth.tenantId : null
+    let tenantId: string | null = auth.valid ? (auth.tenantId || null) : null
 
     // Fallback to session auth when no valid API key
     if (!tenantId) {

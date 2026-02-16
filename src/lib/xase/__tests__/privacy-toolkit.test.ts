@@ -94,7 +94,7 @@ describe('DifferentialPrivacy', () => {
 
     const remaining = DifferentialPrivacy.calculateRemainingBudget(totalBudget, queries)
 
-    expect(remaining).toBe(0.4)
+    expect(remaining).toBeCloseTo(0.4, 10)
   })
 
   test('should recommend epsilon based on dataset size', () => {

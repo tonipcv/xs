@@ -1,6 +1,5 @@
 use anyhow::Result;
 use std::sync::Arc;
-use tokio::sync::Mutex;
 use tracing::info;
 
 mod cache;
@@ -20,64 +19,54 @@ use config::Config;
 
 #[tokio::main]
 async fn main() -> Result<()> {
-    // Initialize tracing
     tracing_subscriber::fmt::init();
 
-    info!("🚀 Xase Sidecar starting...");
+    info!("Xase Sidecar starting...");
 
-    // Load configuration
     let config = Config::from_env()?;
-    info!("✅ Configuration loaded");
-    info!("   Contract ID: {}", config.contract_id);
-    info!("   API Key: {}...", &config.api_key[..10]);
-    info!("   Cache size: {} GB", config.cache_size_gb);
+    info!("Configuration loaded");
+    info!("  Contract ID: {}", config.contract_id);
+    info!("  API Key: {}...", &config.api_key[..std::cmp::min(10, config.api_key.len())]);
+    info!("  Cache size: {} GB", config.cache_size_gb);
 
-    // Initialize S3 client
     let s3_client = Arc::new(S3Client::new(&config).await?);
-    info!("✅ S3 client initialized");
+    info!("S3 client initialized");
 
-    // Initialize cache (100 GB RAM)
-    let cache = Arc::new(Mutex::new(SegmentCache::new(
-        config.cache_size_gb * 1024 * 1024 * 1024
-    )));
-    info!("✅ Cache initialized ({} GB)", config.cache_size_gb);
+    // Initialize cache - NO Mutex wrapper, DashMap handles concurrency internally
+    let cache = Arc::new(SegmentCache::new(
+        config.cache_size_gb * 1024 * 1024 * 1024,
+    ));
+    info!("Cache initialized ({} GB, lock-free DashMap)", config.cache_size_gb);
 
-    // Authenticate with Xase Brain (get STS token + session ID)
     let auth = telemetry::authenticate(&config).await?;
-    info!("✅ Authenticated with Xase Brain");
-    info!("   Session ID: {}", auth.session_id);
+    info!("Authenticated with Xase Brain (session: {})", auth.session_id);
 
-    // Start telemetry sender (background task)
     let telemetry_handle = tokio::spawn(telemetry::telemetry_loop(
         config.clone(),
         auth.session_id.clone(),
     ));
-    info!("✅ Telemetry sender started");
 
-    // Start kill switch poller (background task)
     let kill_switch_handle = tokio::spawn(telemetry::kill_switch_loop(
         config.clone(),
         auth.session_id.clone(),
     ));
-    info!("✅ Kill switch poller started");
 
-    // Start prefetch loop (background task)
+    // Prefetch loop now pre-watermarks segments in background
     let prefetch_handle = tokio::spawn(prefetch::prefetch_loop(
         cache.clone(),
         s3_client.clone(),
         config.clone(),
     ));
-    info!("✅ Prefetch engine started");
+    info!("Prefetch engine started (adaptive window + pre-watermarking)");
 
-    // Start Unix socket server (main task)
-    info!("🎧 Starting Unix socket server at {}", config.socket_path);
+    // Socket server: no Mutex, lock-free cache reads, watermark off critical path
+    info!("Starting Unix socket server at {}", config.socket_path);
     socket_server::serve(
         cache.clone(),
         s3_client.clone(),
         config.clone(),
     ).await?;
 
-    // Wait for background tasks
     telemetry_handle.await??;
     kill_switch_handle.await??;
     prefetch_handle.await??;

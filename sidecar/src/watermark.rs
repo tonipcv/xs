@@ -10,7 +10,7 @@ const MAX_FREQUENCY: usize = 8000; // Hz
 const NUM_BINS: usize = 128; // Number of frequency bins to modify
 
 // Probabilistic watermarking config
-const WATERMARK_PROBABILITY: f32 = 0.20; // 20% dos arquivos (80% CPU saved)
+pub const WATERMARK_PROBABILITY: f32 = 0.20; // 20% dos arquivos (80% CPU saved)
 
 /// Decide se deve aplicar watermark baseado em hash determinístico
 /// 

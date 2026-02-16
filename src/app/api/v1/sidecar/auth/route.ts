@@ -3,9 +3,12 @@ import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
 import { z } from 'zod'
 import crypto from 'crypto'
+import jwt from 'jsonwebtoken'
 
 const BodySchema = z.object({
   leaseId: z.string().min(1),
+  attestationReport: z.string().optional(),
+  binaryHash: z.string().optional(),
 })
 
 function generateStsToken(params: {
@@ -13,19 +16,22 @@ function generateStsToken(params: {
   tenantId: string
   ttl: number
   permissions: string[]
+  sessionId: string
 }): string {
-  // Generate ephemeral STS token (JWT-like structure)
+  // Generate properly signed JWT token
   const payload = {
     leaseId: params.leaseId,
     tenantId: params.tenantId,
+    sessionId: params.sessionId,
     permissions: params.permissions,
     iat: Math.floor(Date.now() / 1000),
     exp: Math.floor(Date.now() / 1000) + params.ttl,
   }
   
-  // Simple token (in production, use proper JWT signing)
-  const token = Buffer.from(JSON.stringify(payload)).toString('base64url')
-  return `sts_${token}`
+  // Use JWT with HMAC-SHA256 signing
+  const secret = process.env.JWT_SECRET || process.env.NEXTAUTH_SECRET || 'fallback-secret-change-in-production'
+  const token = jwt.sign(payload, secret, { algorithm: 'HS256' })
+  return token
 }
 
 export async function POST(req: NextRequest) {
@@ -40,12 +46,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
     }
 
-    const parsed = BodySchema.safeParse(await req.json().catch(() => ({})))
+    // Read body once and parse
+    const body = await req.json().catch(() => ({}))
+    const parsed = BodySchema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid body', details: parsed.error.flatten() }, { status: 400 })
     }
 
-    const { leaseId } = parsed.data
+    const { leaseId, attestationReport, binaryHash } = parsed.data
 
     // Validate lease
     const now = new Date()
@@ -76,24 +84,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Streaming not allowed by policy' }, { status: 403 })
     }
 
-    // Generate ephemeral STS token (1 hour)
-    const stsToken = generateStsToken({
-      leaseId,
-      tenantId: auth.tenantId as string,
-      ttl: 3600,
-      permissions: ['s3:GetObject'],
-    })
-
-    // Parse optional attestation from request
-    const body = await req.json().catch(() => ({}))
-    const attestationReport = body.attestationReport
-    const binaryHash = body.binaryHash
-    
     // Determine trust level
     const trustLevel = attestationReport ? 'ATTESTED' : 'SELF_REPORTED'
     const attested = !!attestationReport
 
-    // Create SidecarSession
+    // Create SidecarSession first to get sessionId
     const sessionId = `sidecar_${crypto.randomBytes(16).toString('hex')}`
     const session = await prisma.sidecarSession.create({
       data: {
@@ -102,11 +97,20 @@ export async function POST(req: NextRequest) {
         clientTenantId: auth.tenantId as string,
         datasetId: lease.datasetId,
         status: 'active',
-        attestationReport,
-        binaryHash,
+        attestationReport: attestationReport || undefined,
+        binaryHash: binaryHash || undefined,
         trustLevel,
         attested,
       },
+    })
+
+    // Generate ephemeral STS token (1 hour) with proper JWT signing
+    const stsToken = generateStsToken({
+      leaseId,
+      tenantId: auth.tenantId as string,
+      sessionId: session.id,
+      ttl: 3600,
+      permissions: ['s3:GetObject'],
     })
 
     // Audit log

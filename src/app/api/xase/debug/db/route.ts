@@ -1,11 +1,23 @@
 // @ts-nocheck
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { validateApiKey } from '@/lib/xase/auth'
 
 export const dynamic = 'force-dynamic'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   try {
+    // Require authentication - only allow admin API keys or internal access
+    const auth = await validateApiKey(req)
+    if (!auth.valid || !auth.tenantId) {
+      return NextResponse.json({ error: 'Unauthorized - API key required' }, { status: 401 })
+    }
+
+    // Additional security: only allow in development or with specific env flag
+    if (process.env.NODE_ENV === 'production' && process.env.ALLOW_DEBUG_ENDPOINTS !== 'true') {
+      return NextResponse.json({ error: 'Debug endpoints disabled in production' }, { status: 403 })
+    }
+
     const url = process.env.DATABASE_URL || ''
     const masked = url ? url.replace(/:\/\/([^:@]+):?([^@]*)@/, '://***:***@') : '(not set)'
 

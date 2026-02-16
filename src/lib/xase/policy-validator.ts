@@ -41,32 +41,57 @@ export function parsePolicyYAML(yamlContent: string): PolicyValidationResult {
   return { valid: true, policy, plan }
 }
 
-export function buildRewritePlan(policy: XasePolicy): PolicyRewritePlan {
-  const allowedColumns = policy.rules.columns.allow || []
-  const deniedColumns = policy.rules.columns.deny || []
-  const masks: ColumnMask[] = (policy.rules.columns.masking || []).map(m => ({
+export function buildRewritePlan(policy: any): PolicyRewritePlan {
+  // Support both Kubernetes-style (spec.columns) and legacy format (rules.columns)
+  const spec = policy.spec || policy
+  const rules = spec.rules || spec
+  const columns = spec.columns || rules?.columns || {}
+  const rows = spec.rows || rules?.rows || {}
+  
+  const allowedColumns = columns.allow || []
+  const deniedColumns = columns.deny || []
+  const masks: ColumnMask[] = (columns.masking || []).map((m: any) => ({
     column: m.column,
     method: m.method,
     regex: m.regex,
     replace: m.replace,
   }))
 
-  const allowRowFilters = (policy.rules.rows.allow || []) as RowPredicate[]
-  const denyRowFilters = (policy.rules.rows.deny || []) as RowPredicate[]
+  // Handle rows as array (direct filters) or object (allow/deny)
+  let allowRowFilters: RowPredicate[] = []
+  let denyRowFilters: RowPredicate[] = []
+  
+  if (Array.isArray(rows)) {
+    // Direct array format - treat as allow filters
+    allowRowFilters = rows as RowPredicate[]
+  } else {
+    allowRowFilters = (rows.allow || []) as RowPredicate[]
+    denyRowFilters = (rows.deny || []) as RowPredicate[]
+  }
+
+  // Extract dataset ID from various formats
+  let datasetId = ''
+  if (typeof spec.dataset === 'string') {
+    datasetId = spec.dataset
+  } else if (spec.dataset?.id) {
+    datasetId = spec.dataset.id
+  } else if (policy.dataset?.id) {
+    datasetId = policy.dataset.id
+  }
 
   return {
-    datasetId: policy.dataset.id,
+    datasetId,
     allowedColumns,
     deniedColumns,
     masks,
     allowRowFilters,
     denyRowFilters,
-    requiresConsent: policy.consent?.required ?? true,
-    requiredConsentStatus: policy.consent?.status,
-    minConsentVersion: policy.consent?.min_version,
-    environments: policy.validity?.environments,
-    notBefore: policy.validity?.not_before,
-    notAfter: policy.validity?.not_after,
+    requiresConsent: spec.consent?.required ?? policy.consent?.required ?? true,
+    requiredConsentStatus: spec.consent?.status || policy.consent?.status,
+    minConsentVersion: spec.consent?.min_version || policy.consent?.min_version,
+    environments: spec.validity?.environments || policy.validity?.environments,
+    notBefore: spec.validity?.not_before || policy.validity?.not_before,
+    notAfter: spec.validity?.not_after || policy.validity?.not_after,
   }
 }
 

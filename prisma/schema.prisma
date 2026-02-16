@@ -537,6 +537,18 @@ model VoiceAccessLease {
   revokedAt      DateTime?   @map("revoked_at")
   revokedReason  String?     @db.Text @map("revoked_reason")
   
+  // Auto-renew support (for long H100/H200 training jobs)
+  ttlSeconds     Int         @default(28800) @map("ttl_seconds") // 8h default, max 259200 (72h)
+  autoRenew      Boolean     @default(false) @map("auto_renew")
+  maxRenewals    Int         @default(0) @map("max_renewals")
+  renewalsCount  Int         @default(0) @map("renewals_count")
+  budgetLimit    Decimal?    @db.Decimal(10, 2) @map("budget_limit")
+  lastRenewedAt  DateTime?   @map("last_renewed_at")
+  
+  // Alert tracking
+  alert30minSent Boolean     @default(false) @map("alert_30min_sent")
+  alert5minSent  Boolean     @default(false) @map("alert_5min_sent")
+  
   // Soft delete
   deletedAt      DateTime?   @map("deleted_at")
 

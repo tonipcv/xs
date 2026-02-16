@@ -65,7 +65,13 @@ export class PolicyEnforcementPoint {
   static filterColumns(data: any, plan: PolicyRewritePlan): any {
     if (!data || typeof data !== 'object') return data
 
-    const filtered: any = Array.isArray(data) ? [] : {}
+    // Se for array, processar cada objeto do array
+    if (Array.isArray(data)) {
+      return data.map(item => this.filterColumns(item, plan))
+    }
+
+    // Se for objeto, filtrar colunas
+    const filtered: any = {}
     const allowedSet = new Set(plan.allowedColumns)
     const deniedSet = new Set(plan.deniedColumns)
 
@@ -78,11 +84,7 @@ export class PolicyEnforcementPoint {
       // Se há deny list, colunas negadas são removidas
       if (deniedSet.has(key)) continue
 
-      if (Array.isArray(data)) {
-        filtered.push(value)
-      } else {
-        filtered[key] = value
-      }
+      filtered[key] = value
     }
 
     return filtered

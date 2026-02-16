@@ -10,60 +10,125 @@ import os
 import time
 import threading
 import requests
+import logging
 from datetime import datetime
+
+logger = logging.getLogger(__name__)
 
 
 class SidecarClient:
-    """Client for communicating with Xase Sidecar via Unix socket."""
+    """Client for communicating with Xase Sidecar via Unix socket with auto-recovery."""
     
-    def __init__(self, socket_path: str = "/var/run/xase/sidecar.sock"):
+    def __init__(
+        self, 
+        socket_path: str = "/var/run/xase/sidecar.sock",
+        max_retries: int = 3,
+        backoff_base: float = 2.0,
+        timeout: float = 30.0
+    ):
         """
-        Initialize Sidecar client.
+        Initialize Sidecar client with auto-recovery.
         
         Args:
             socket_path: Path to Unix socket (default: /var/run/xase/sidecar.sock)
+            max_retries: Maximum number of retry attempts (default: 3)
+            backoff_base: Base for exponential backoff in seconds (default: 2.0)
+            timeout: Socket timeout in seconds (default: 30.0)
         """
         self.socket_path = socket_path
+        self.max_retries = max_retries
+        self.backoff_base = backoff_base
+        self.timeout = timeout
         self.sock: Optional[socket.socket] = None
+        self._connection_attempts = 0
     
     def connect(self) -> None:
-        """Connect to Sidecar Unix socket."""
+        """Connect to Sidecar Unix socket with retry logic."""
         if self.sock is not None:
             return
         
-        if not os.path.exists(self.socket_path):
-            raise FileNotFoundError(
-                f"Sidecar socket not found at {self.socket_path}. "
-                "Is the Sidecar running?"
-            )
-        
-        self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        self.sock.connect(self.socket_path)
+        for attempt in range(self.max_retries):
+            try:
+                if not os.path.exists(self.socket_path):
+                    raise FileNotFoundError(
+                        f"Sidecar socket not found at {self.socket_path}. "
+                        "Is the Sidecar running?"
+                    )
+                
+                self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+                self.sock.settimeout(self.timeout)
+                self.sock.connect(self.socket_path)
+                self._connection_attempts = 0
+                logger.info(f"Connected to Sidecar at {self.socket_path}")
+                return
+                
+            except (ConnectionError, FileNotFoundError, socket.error) as e:
+                self._connection_attempts += 1
+                if self.sock:
+                    self.sock.close()
+                    self.sock = None
+                
+                if attempt < self.max_retries - 1:
+                    wait_time = self.backoff_base ** attempt
+                    logger.warning(
+                        f"Connection attempt {attempt + 1}/{self.max_retries} failed: {e}. "
+                        f"Retrying in {wait_time:.1f}s..."
+                    )
+                    time.sleep(wait_time)
+                else:
+                    logger.error(f"Failed to connect after {self.max_retries} attempts")
+                    raise
     
     def get_segment(self, segment_id: str) -> bytes:
         """
-        Get audio segment from Sidecar.
+        Get audio segment from Sidecar with auto-recovery.
         
         Args:
             segment_id: Segment identifier (e.g., "seg_00123")
         
         Returns:
             Audio data (watermarked)
+        
+        Raises:
+            ConnectionError: If unable to fetch segment after retries
         """
-        if self.sock is None:
-            self.connect()
-        
-        # Send request (length-prefixed)
-        segment_bytes = segment_id.encode('utf-8')
-        length = struct.pack('>I', len(segment_bytes))
-        self.sock.sendall(length + segment_bytes)
-        
-        # Receive response (length-prefixed)
-        length_bytes = self._recv_exact(4)
-        data_length = struct.unpack('>I', length_bytes)[0]
-        data = self._recv_exact(data_length)
-        
-        return data
+        for attempt in range(self.max_retries):
+            try:
+                if self.sock is None:
+                    self.connect()
+                
+                # Send request (length-prefixed)
+                segment_bytes = segment_id.encode('utf-8')
+                length = struct.pack('>I', len(segment_bytes))
+                self.sock.sendall(length + segment_bytes)
+                
+                # Receive response (length-prefixed)
+                length_bytes = self._recv_exact(4)
+                data_length = struct.unpack('>I', length_bytes)[0]
+                data = self._recv_exact(data_length)
+                
+                return data
+                
+            except (ConnectionError, socket.error, BrokenPipeError, TimeoutError) as e:
+                logger.warning(
+                    f"Failed to get segment {segment_id} (attempt {attempt + 1}/{self.max_retries}): {e}"
+                )
+                
+                # Close and reset connection
+                if self.sock:
+                    self.sock.close()
+                    self.sock = None
+                
+                if attempt < self.max_retries - 1:
+                    wait_time = self.backoff_base ** attempt
+                    logger.info(f"Reconnecting in {wait_time:.1f}s...")
+                    time.sleep(wait_time)
+                    self.connect()
+                else:
+                    logger.error(f"Failed to get segment {segment_id} after {self.max_retries} attempts")
+                    raise ConnectionError(
+                        f"Unable to fetch segment {segment_id} after {self.max_retries} retries"
+                    )
     
     def _recv_exact(self, n: int) -> bytes:
         """Receive exactly n bytes from socket."""
@@ -219,7 +284,7 @@ class WatermarkDetector:
 
 class SidecarDataset:
     """
-    PyTorch-compatible dataset that streams data from Sidecar.
+    PyTorch-compatible dataset that streams data from Sidecar with multi-worker support.
     
     Example:
         >>> from xase.sidecar import SidecarDataset
@@ -227,10 +292,12 @@ class SidecarDataset:
         >>> 
         >>> dataset = SidecarDataset(
         ...     segment_ids=["seg_00001", "seg_00002", ...],
-        ...     socket_path="/var/run/xase/sidecar.sock"
+        ...     socket_path="/var/run/xase/sidecar.sock",
+        ...     num_connections=4  # Enable multi-worker
         ... )
         >>> 
-        >>> loader = DataLoader(dataset, batch_size=None, num_workers=0)
+        >>> # Now supports num_workers > 0!
+        >>> loader = DataLoader(dataset, batch_size=None, num_workers=4)
         >>> for audio_data in loader:
         ...     # Process audio_data (watermarked)
         ...     pass
@@ -240,31 +307,67 @@ class SidecarDataset:
         self,
         segment_ids: list[str],
         socket_path: str = "/var/run/xase/sidecar.sock",
+        num_connections: int = 1,
+        max_retries: int = 3,
+        backoff_base: float = 2.0,
     ):
         """
-        Initialize Sidecar dataset.
+        Initialize Sidecar dataset with multi-worker support.
         
         Args:
             segment_ids: List of segment IDs to fetch
             socket_path: Path to Unix socket
+            num_connections: Number of socket connections in pool (default: 1)
+            max_retries: Maximum retry attempts per request (default: 3)
+            backoff_base: Exponential backoff base in seconds (default: 2.0)
         """
         self.segment_ids = segment_ids
         self.socket_path = socket_path
-        self.client = SidecarClient(socket_path)
+        self.num_connections = num_connections
+        self.max_retries = max_retries
+        self.backoff_base = backoff_base
+        self._pool: List[SidecarClient] = []
+        self._pool_lock = threading.Lock()
+    
+    def _get_client(self) -> SidecarClient:
+        """Get or create a client from the pool (thread-safe)."""
+        with self._pool_lock:
+            if len(self._pool) < self.num_connections:
+                client = SidecarClient(
+                    socket_path=self.socket_path,
+                    max_retries=self.max_retries,
+                    backoff_base=self.backoff_base
+                )
+                self._pool.append(client)
+                return client
+            
+            # Round-robin selection
+            import random
+            return random.choice(self._pool)
     
     def __len__(self) -> int:
         return len(self.segment_ids)
     
     def __getitem__(self, idx: int) -> bytes:
-        """Get segment by index."""
+        """Get segment by index (thread-safe for DataLoader multi-worker)."""
         segment_id = self.segment_ids[idx]
-        return self.client.get_segment(segment_id)
+        client = self._get_client()
+        return client.get_segment(segment_id)
     
     def __iter__(self) -> Iterator[bytes]:
-        """Iterate over segments."""
-        self.client.connect()
+        """Iterate over segments with auto-recovery."""
+        client = self._get_client()
+        client.connect()
         try:
             for segment_id in self.segment_ids:
-                yield self.client.get_segment(segment_id)
+                yield client.get_segment(segment_id)
         finally:
-            self.client.close()
+            # Don't close - keep in pool for reuse
+            pass
+    
+    def close_all(self) -> None:
+        """Close all connections in pool."""
+        with self._pool_lock:
+            for client in self._pool:
+                client.close()
+            self._pool.clear()

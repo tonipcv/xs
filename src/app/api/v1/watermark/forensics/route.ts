@@ -13,6 +13,7 @@ import { validateApiKey } from '@/lib/xase/auth';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
 import { createHash } from 'crypto';
+import { detectWatermark, generateForensicReport } from '@/lib/xase/watermark-detector';
 
 /**
  * POST /api/v1/watermark/forensics
@@ -71,23 +72,23 @@ export async function POST(req: NextRequest) {
     }
 
     // 6. Brute-force detection (paralelo)
-    // TODO: Integrar com Rust watermark detector real
-    // Por enquanto, mock detection
-    const results = await Promise.all(
-      contracts.map(async (c) => {
-        // Simular detecção (em produção, chamar Rust via FFI ou microservice)
-        const detected = false; // await detectWatermark(audioBuffer, c.executionId);
-        const confidence = detected ? 0.997 : 0;
-        
-        return {
-          contractId: c.executionId,
-          buyer: c.buyerTenantId,
-          detected,
-          confidence,
-          timestamp: c.startedAt,
-        };
-      })
-    );
+    // Use real Rust watermark detector
+    const candidateIds = contracts.map(c => c.executionId);
+    
+    // Detect watermark using Rust detector
+    const detectionResult = await detectWatermark(audioBuffer, candidateIds);
+    
+    // Map detection result to contract details
+    const results = contracts.map((c) => {
+      const isMatch = detectionResult.detected && detectionResult.contractId === c.executionId;
+      return {
+        contractId: c.executionId,
+        buyer: c.buyerTenantId,
+        detected: isMatch,
+        confidence: isMatch ? detectionResult.confidence : 0,
+        timestamp: c.startedAt,
+      };
+    });
 
     // 7. Filtrar matches (confidence > 95%)
     const matches = results.filter(r => r.confidence > 0.95);
@@ -149,17 +150,3 @@ export async function POST(req: NextRequest) {
   }
 }
 
-/**
- * Gera forensic report (PDF)
- */
-async function generateForensicReport(data: {
-  audioHash: string;
-  matches: any[];
-  tenantId: string;
-  timestamp: Date;
-}): Promise<string> {
-  // TODO: Gerar PDF real com pdf-lib
-  // Por enquanto, retornar URL mock
-  const reportId = `forensic_${Math.random().toString(36).substring(2, 18)}`;
-  return `https://xase.ai/reports/${reportId}.pdf`;
-}
