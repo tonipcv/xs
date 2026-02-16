@@ -27,6 +27,7 @@ from .formatters.ui import (
 )
 from .utils.logger import setup_logging, get_logger
 from .utils.validators import StreamConfig, LeaseConfig, LoginConfig
+from .onboarding import check_first_run, run_onboarding, show_setup_wizard
 
 logger = get_logger(__name__)
 
@@ -50,6 +51,19 @@ def cli(ctx, verbose, config):
 
 
 @cli.command()
+def setup():
+    """Interactive setup wizard"""
+    try:
+        show_setup_wizard()
+    except KeyboardInterrupt:
+        print_warning("\nSetup cancelled")
+        sys.exit(130)
+    except Exception as e:
+        print_error(f"Setup error: {e}")
+        sys.exit(1)
+
+
+@cli.command()
 @click.option('--email', prompt=True, help='Your email address')
 @click.pass_context
 def login(ctx, email):
@@ -61,12 +75,14 @@ def login(ctx, email):
         client = XaseAPIClient()
         
         # Request OTP
+        console.print()
         print_info(f"Requesting login code for {config.email}...")
         client.login(config.email)
         print_success("A login code was sent to your email. It expires in 10 minutes.")
+        console.print()
         
         # Prompt for code
-        code = click.prompt('Enter the code', type=str)
+        code = click.prompt('Enter the 6-digit code', type=str)
         
         # Verify OTP
         result = client.verify_otp(config.email, code)
@@ -75,14 +91,19 @@ def login(ctx, email):
         token_manager = TokenManager()
         token_manager.save_tokens(result)
         
-        print_success("Logged in. Tokens saved to ~/.xase/config.json")
+        console.print()
+        print_success("Logged in successfully!")
+        print_info("Tokens saved to ~/.xase/config.json")
         
         # Fetch and display usage stats
-        print_info("Fetching usage statistics...")
+        console.print()
+        print_info("Fetching your usage statistics...")
         # Recreate client so it picks up freshly saved tokens
         client = XaseAPIClient()
         usage = client.get_usage()
+        console.print()
         print_usage_stats(usage)
+        console.print()
         
     except ValidationError as e:
         print_error(f"Invalid input: {e.message}")
@@ -102,9 +123,11 @@ def logout():
         token_manager = TokenManager()
         token_manager.clear_tokens()
         
+        console.print()
         print_success("Logged out successfully")
         print_info("Your tokens have been removed from ~/.xase/config.json")
         print_info("Run 'xase-cli login' to authenticate again")
+        console.print()
         
     except Exception as e:
         print_error(f"Error during logout: {e}")
@@ -299,17 +322,25 @@ def version():
 def main():
     """Main entry point"""
     try:
-        # Print banner on first run
+        # Check if this is first run
+        is_first_run = check_first_run()
+        
+        # Print banner on first run or when no command given
         if len(sys.argv) == 1:
             print_banner()
-            print_welcome()
+            if is_first_run:
+                run_onboarding()
+            else:
+                print_welcome()
         
         cli(obj={})
     except KeyboardInterrupt:
-        print_warning("\nOperation cancelled by user")
+        console.print()
+        print_warning("Operation cancelled by user")
         sys.exit(130)
     except Exception as e:
         logger.exception("Unexpected error")
+        console.print()
         print_error(f"Unexpected error: {e}")
         sys.exit(1)
 

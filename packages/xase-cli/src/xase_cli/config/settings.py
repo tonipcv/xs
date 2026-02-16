@@ -4,12 +4,20 @@ from pathlib import Path
 from typing import Optional
 
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class XaseSettings(BaseSettings):
     """Global CLI settings"""
     
+    # Pydantic v2 settings configuration
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        case_sensitive=False,
+        extra="ignore",
+    )
+
     # API Configuration
     api_url: str = Field(
         default="http://localhost:3000",
@@ -64,19 +72,14 @@ class XaseSettings(BaseSettings):
         env="XASE_LOG_LEVEL",
         description="Logging level"
     )
-    
+
     # UI
     no_color: bool = Field(
         default=False,
         env="NO_COLOR",
         description="Disable colored output"
     )
-    
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = False
-    
+
     def get_cache_dir(self) -> Path:
         """Get cache directory, creating if needed"""
         cache_dir = self.cache_dir or Path.home() / ".xase" / "cache"

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -11,8 +10,8 @@ function genCode() {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions as any)
-    const email = (session as any)?.user?.email as string | undefined
+    const session = await getServerSession(authOptions)
+    const email = session?.user?.email
     if (!email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -31,8 +30,8 @@ export async function POST(req: NextRequest) {
     console.log(`[OTP] API Key code for ${email}: ${code}`)
 
     return NextResponse.json({ ok: true, sent: process.env.NODE_ENV !== 'production' ? 'logged' : 'queued' })
-  } catch (err: any) {
-    const msg = err?.message || String(err)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

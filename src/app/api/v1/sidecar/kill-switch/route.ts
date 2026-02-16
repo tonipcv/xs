@@ -10,10 +10,7 @@ const BodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const devBypass = process.env.NODE_ENV !== 'production' && process.env.SIDECAR_AUTH_BYPASS === '1'
-    const auth = devBypass
-      ? ({ valid: true, tenantId: process.env.DEV_TENANT_ID || 'dev_tenant' } as any)
-      : await validateApiKey(req)
+    const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId) {
       return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
     }
@@ -38,7 +35,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Verify tenant owns this session
-    if (!devBypass && session.clientTenantId !== auth.tenantId) {
+    if (session.clientTenantId !== auth.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 403 })
     }
 
@@ -97,11 +94,6 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url)
     const sessionIdParam = url.searchParams.get('sessionId')
     const leaseIdParam = url.searchParams.get('leaseId')
-
-    // Dev bypass: always return not-killed
-    if (process.env.NODE_ENV !== 'production' && process.env.SIDECAR_AUTH_BYPASS === '1') {
-      return NextResponse.json({ killed: false, status: 'active', note: 'dev-bypass' })
-    }
 
     if (!sessionIdParam && !leaseIdParam) {
       return NextResponse.json({ error: 'sessionId or leaseId required' }, { status: 400 })

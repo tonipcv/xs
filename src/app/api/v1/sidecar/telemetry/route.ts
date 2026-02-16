@@ -25,15 +25,6 @@ export async function POST(req: NextRequest) {
 
     const { sessionId, logs } = parsed.data
 
-    // Development-only bypass: accept telemetry without persisted session
-    if (process.env.NODE_ENV !== 'production' && process.env.SIDECAR_AUTH_BYPASS === '1') {
-      return NextResponse.json({ 
-        success: true, 
-        logsReceived: logs.length,
-        note: 'dev-bypass: telemetry accepted without session validation'
-      })
-    }
-
     // Validate session exists and is active
     const session = await prisma.sidecarSession.findUnique({
       where: { id: sessionId },

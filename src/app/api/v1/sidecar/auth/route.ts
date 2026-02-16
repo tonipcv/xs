@@ -30,29 +30,6 @@ function generateStsToken(params: {
 
 export async function POST(req: NextRequest) {
   try {
-    // Development-only bypass: skip API Key and DB checks
-    if (process.env.NODE_ENV !== 'production' && process.env.SIDECAR_AUTH_BYPASS === '1') {
-      const parsed = BodySchema.safeParse(await req.json().catch(() => ({})))
-      const leaseId = parsed.success ? parsed.data.leaseId : `lease_dev_${Date.now()}`
-
-      const tenantId = process.env.DEV_TENANT_ID || 'DEV_TENANT'
-      const stsToken = generateStsToken({
-        leaseId,
-        tenantId,
-        ttl: 3600,
-        permissions: ['s3:GetObject'],
-      })
-
-      const sessionId = `sidecar_${crypto.randomBytes(16).toString('hex')}`
-      const expiresAt = new Date(Date.now() + 3600 * 1000)
-
-      return NextResponse.json({
-        stsToken,
-        sessionId,
-        expiresAt: expiresAt.toISOString(),
-      })
-    }
-
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId || !auth.apiKeyId) {
       return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })

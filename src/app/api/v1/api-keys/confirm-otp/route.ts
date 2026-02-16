@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -13,8 +12,8 @@ function genApiKey() {
 
 export async function POST(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions as any)
-    const email = (session as any)?.user?.email as string | undefined
+    const session = await getServerSession(authOptions)
+    const email = session?.user?.email
     if (!email) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
     const body = await req.json().catch(() => ({}))
@@ -42,6 +41,7 @@ export async function POST(req: NextRequest) {
         tenantId: user.tenantId,
         name: 'UI OTP Key',
         keyHash,
+        keyPrefix: apiKeyPlain.substring(0, 12),
         isActive: true,
         permissions: 'verify',
       },
@@ -49,8 +49,8 @@ export async function POST(req: NextRequest) {
     })
 
     return NextResponse.json({ ok: true, apiKey: apiKeyPlain })
-  } catch (err: any) {
-    const msg = err?.message || String(err)
+  } catch (err) {
+    const msg = err instanceof Error ? err.message : String(err)
     return NextResponse.json({ error: msg }, { status: 500 })
   }
 }

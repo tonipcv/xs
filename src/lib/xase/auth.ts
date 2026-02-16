@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * XASE CORE - API Key Authentication
  * 
@@ -43,8 +42,9 @@ export async function checkApiRateLimit(
       resetAt: Date.now() + Math.max(0, ttl) * 1000,
     };
   } catch (e) {
-    // Fail-open em caso de erro de infra
-    return { allowed: true, remaining: limit, resetAt: Date.now() + windowSeconds * 1000 };
+    // Fail-closed: deny requests when Redis is unavailable for security
+    console.error('[XASE][Auth] Rate limit check failed - denying request:', (e as any)?.message || e);
+    return { allowed: false, remaining: 0, resetAt: Date.now() + windowSeconds * 1000 };
   }
 }
 
@@ -52,16 +52,6 @@ export async function checkApiRateLimit(
  * Valida API Key do header X-API-Key ou Authorization Bearer
  */
 export async function validateApiKey(request: Request | NextRequest): Promise<AuthResult> {
-  // Development-only bypass (no API key). Do NOT enable in production.
-  if (process.env.NODE_ENV !== 'production' && process.env.SIDECAR_AUTH_BYPASS === '1') {
-    return {
-      valid: true,
-      tenantId: process.env.DEV_TENANT_ID || 'DEV_TENANT',
-      apiKeyId: 'dev-bypass',
-      permissions: ['ingest', 'verify'],
-    };
-  }
-
   // Aceitar X-API-Key ou Authorization: Bearer
   let apiKey = request.headers.get('X-API-Key') || request.headers.get('x-api-key');
   
@@ -174,7 +164,7 @@ export async function checkRateLimit(
 ): Promise<{ allowed: boolean; remaining: number }> {
   try {
     // Try Redis first (production)
-    const redis = getRedisClient();
+    const redis = await getRedisClient();
     const window = 3600; // 1 hour in seconds
     const key = `ratelimit:${apiKeyId}:${Math.floor(Date.now() / 1000 / window)}`;
     
@@ -190,21 +180,11 @@ export async function checkRateLimit(
       remaining,
     };
   } catch (redisError) {
-    // Fallback to DB if Redis unavailable
-    console.warn('[AUTH] Redis unavailable, falling back to DB rate limit:', redisError);
-    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
-    const count = await prisma.voiceAccessLog.count({
-      where: {
-        apiKeyId: apiKeyId || undefined,
-        timestamp: { gte: oneHourAgo },
-      },
-    });
-    
-    const remaining = Math.max(0, limit - count);
-    
+    // Fail-closed: deny requests when Redis is unavailable for security
+    console.error('[AUTH] Redis unavailable - denying request:', redisError);
     return {
-      allowed: count < limit,
-      remaining,
+      allowed: false,
+      remaining: 0,
     };
   }
 }

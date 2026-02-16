@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, FormEvent, Suspense } from 'react';
+import { useState, useEffect, FormEvent, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useSearchParams } from 'next/navigation';
@@ -12,39 +12,66 @@ import BrandLogo from '@/components/BrandLogo';
 function LoginContent() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [step, setStep] = useState<'email' | 'password' | 'totp'>('email');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [totp, setTotp] = useState('');
-  const [confirmed, setConfirmed] = useState(false);
   const router = useRouter();
   const searchParams = useSearchParams();
+  // Initialize from query on first render (decode percent-encoding like %40)
+  const qEmailInitialRaw = searchParams?.get('email') ?? '';
+  const qEmailInitial = qEmailInitialRaw ? decodeURIComponent(qEmailInitialRaw) : '';
+  const [email, setEmail] = useState(qEmailInitial);
+  const [step, setStep] = useState<'email' | 'password' | 'totp'>('email');
+  const [password, setPassword] = useState('');
+  const [totp, setTotp] = useState('');
+  const [requireTotp, setRequireTotp] = useState(false);
+  const [confirmed, setConfirmed] = useState(false);
   const callbackUrl = searchParams?.get('callbackUrl') ?? null;
   const registerHref = callbackUrl !== null
     ? `/register?callbackUrl=${encodeURIComponent(callbackUrl)}`
     : '/register';
+  // Prefill from query (?email=) but do not auto-advance step
+  useEffect(() => {
+    const qRaw = searchParams?.get('email') ?? '';
+    const qEmail = qRaw ? decodeURIComponent(qRaw) : '';
+    if (qEmail) {
+      setEmail(qEmail);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchParams]);
+
+  // Fallback: read from window.location.search on mount if needed
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const qRaw = params.get('email') ?? '';
+      const qEmail = qRaw ? decodeURIComponent(qRaw) : '';
+      if (qEmail) {
+        setEmail(qEmail);
+      }
+    }
+    // run once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setIsSubmitting(true);
     setError(null);
 
-    // Step 1: only confirm email UI and go to password step
-    if (step === 'email') {
-      if (!email || !email.includes('@')) {
-        setError('Please enter a valid email.');
+    try {
+      // If we are still at email step, just advance
+      if (step === 'email') {
+        if (!email || !email.includes('@')) {
+          setError('Please enter a valid email.');
+          setIsSubmitting(false);
+          return;
+        }
+        setStep('password');
         setIsSubmitting(false);
         return;
       }
-      setStep('password');
-      setIsSubmitting(false);
-      return;
-    }
 
-    try {
       // Build credentials payload according to step
       const payload: Record<string, any> = { email, password };
-      if (step === 'totp') {
+      if (step === 'totp' && totp) {
         payload.totp = totp;
       }
 
@@ -53,50 +80,36 @@ function LoginContent() {
         redirect: false,
       });
 
+      if (!result) {
+        console.warn('signIn returned no result');
+        setError('Unable to sign in. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
       if (result?.error) {
-        // Some NextAuth setups return only 'CredentialsSignin' on 401, without our custom marker.
-        // If we're at the password step and got a 401, assume 2FA is required and move to TOTP step.
-        if (step === 'password') {
+        // Ask for TOTP only when backend requires it
+        if (result.error === '__2FA_REQUIRED__') {
+          setRequireTotp(true);
           setStep('totp');
           setError(null);
           setIsSubmitting(false);
           return;
         }
-        // If we're already asking for TOTP and still failing, show the error.
-        setError(result.error === 'CredentialsSignin' ? 'Invalid code or credentials' : result.error);
+        // Show the actual error message
+        setError(result.error === 'CredentialsSignin' ? 'Invalid credentials' : result.error);
+        setIsSubmitting(false);
         return;
       }
 
       if (result?.ok) {
         setConfirmed(true);
-        
-        // Fetch organization type to determine redirect
-        try {
-          const orgRes = await fetch('/api/user/organization-type');
-          if (orgRes.ok) {
-            const { organizationType } = await orgRes.json();
-            const dest = callbackUrl || 
-              (organizationType === 'CLIENT' ? '/xase/voice/client' : '/xase/voice');
-            setTimeout(() => {
-              router.push(dest);
-              router.refresh();
-            }, 900);
-          } else {
-            // Default to supplier dashboard if can't determine
-            const dest = callbackUrl || '/xase/voice';
-            setTimeout(() => {
-              router.push(dest);
-              router.refresh();
-            }, 900);
-          }
-        } catch (fetchErr) {
-          console.error('Error fetching org type:', fetchErr);
-          const dest = callbackUrl || '/xase/voice';
-          setTimeout(() => {
-            router.push(dest);
-            router.refresh();
-          }, 900);
-        }
+        // Redirect to callback URL or default dashboard
+        const dest = callbackUrl || '/xase/ai-holder';
+        setTimeout(() => {
+          router.push(dest);
+          router.refresh();
+        }, 500);
       }
     } catch (err) {
       console.error('Login error:', err);
@@ -125,7 +138,7 @@ function LoginContent() {
             </div>
           )}
           
-          {/* Form */}
+          {/* Form - multi-step */}
           <form onSubmit={handleSubmit} className="space-y-5" autoComplete="off">
             {step === 'email' && (
               <>
@@ -193,7 +206,7 @@ function LoginContent() {
             {step === 'password' && (
               <>
                 <div>
-                  <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1.5">Password</label>
+                  <label htmlFor="password" className="block text sm font-medium text-gray-700 mb-1.5">Password</label>
                   <input
                     type="password"
                     id="password"

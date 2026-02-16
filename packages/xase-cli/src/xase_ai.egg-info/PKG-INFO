@@ -1,0 +1,520 @@
+Metadata-Version: 2.4
+Name: xase-ai
+Version: 2.0.2
+Summary: Enterprise-grade CLI for the Xase AI Lab (governed AI training datasets)
+Home-page: https://github.com/xaseai/xase-sheets
+Author: Xase AI Labs
+License: MIT
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3 :: Only
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Environment :: Console
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: Software Development :: Build Tools
+Classifier: Topic :: Utilities
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.31.0
+Requires-Dist: rich>=13.7.0
+Requires-Dist: click>=8.1.7
+Requires-Dist: pydantic>=2.5.0
+Requires-Dist: pydantic-settings>=2.2.0
+Requires-Dist: tenacity>=8.2.3
+Requires-Dist: InquirerPy>=0.3.4
+Requires-Dist: pyyaml>=6.0.1
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: black>=23.0.0; extra == "dev"
+Requires-Dist: flake8>=6.0.0; extra == "dev"
+Requires-Dist: mypy>=1.5.0; extra == "dev"
+Requires-Dist: build>=1.2.1; extra == "dev"
+Requires-Dist: twine>=5.0.0; extra == "dev"
+Dynamic: author
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: license
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# 🎨 Xase AI Lab CLI
+
+> Enterprise-grade command-line interface for governed AI training datasets
+
+[![Version](https://img.shields.io/badge/version-2.0.0-orange.svg)](https://github.com/xase/xase-cli)
+[![Python](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/downloads/)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+
+Beautiful, interactive CLI for discovering, managing, and consuming governed AI training datasets with enterprise compliance built-in.
+
+## ✨ Features
+
+- 🎨 **Beautiful UI** - Claude-inspired orange theme with rich terminal formatting
+- 🚀 **Interactive Onboarding** - Guided setup wizard for first-time users
+- 🔐 **Secure Authentication** - Email OTP with token management
+- 📊 **Rich Tables** - Formatted displays for offers, leases, and usage stats
+- ⚡ **Fast & Reliable** - Built with async support and retry logic
+- 🛡️ **Compliance-First** - GDPR & AI Act compliant data access
+
+## 📦 Installation
+
+```bash
+# Clone or navigate to the CLI directory
+cd packages/xase-cli
+
+# Create virtual environment
+python3 -m venv .venv
+source .venv/bin/activate
+
+# Install in editable mode
+pip install -e .
+
+# Verify installation
+xase-cli --help
+```
+
+## 🚀 Quick Start
+
+### First Run - Interactive Onboarding
+
+On first run, Xase CLI will guide you through setup:
+
+```bash
+xase-cli
+```
+
+You'll see:
+1. **Beautiful ASCII art banner** with orange theme
+2. **Interactive setup wizard** to configure API URL
+3. **Guided next steps** for authentication and usage
+
+### Manual Setup
+
+Run the setup wizard anytime:
+
+```bash
+xase-cli setup
+```
+
+Choose from:
+- 🌐 API Connection Settings
+- 🔐 Authentication & Login
+- ⚙️  Advanced Settings
+- 👁️  View Current Configuration
+
+### Authentication
+
+```bash
+# Login with email OTP
+xase-cli login
+# Enter your email
+# Check email for 6-digit code
+# Enter code to complete authentication
+
+# View usage statistics
+xase-cli usage
+
+# Logout
+xase-cli logout
+```
+
+### Working with Datasets
+
+```bash
+# List available offers
+xase-cli list-offers --limit 20 --risk LOW
+
+# Create a lease for a dataset
+xase-cli mint-lease DATASET_ID --ttl-seconds 3600
+
+# View active leases
+xase-cli list-leases
+
+# Get lease details
+xase-cli lease-details LEASE_ID
+
+# Stream dataset for training
+xase-cli stream DATASET_ID --lease-id LEASE_ID --output batch.json
+```
+
+## 📚 Commands Reference
+
+### Core Commands
+
+#### `setup`
+Interactive setup wizard
+
+```bash
+xase-cli setup
+```
+
+#### `login`
+Authenticate via email OTP
+
+```bash
+xase-cli login
+```
+
+#### `logout`
+Remove saved tokens
+
+```bash
+xase-cli logout
+```
+
+#### `version`
+Show CLI version
+
+```bash
+xase-cli version
+```
+
+### Dataset Discovery
+
+#### `list-offers`
+List available access offers with filters
+
+```bash
+xase-cli list-offers [OPTIONS]
+
+Options:
+  --limit N          Maximum number of offers (default: 20)
+  --risk LEVEL       Filter by risk level (LOW, MEDIUM, HIGH)
+  --language LANG    Filter by language
+```
+
+**Example:**
+```bash
+xase-cli list-offers --risk MEDIUM --language en --limit 50
+```
+
+---
+
+### Lease Management
+
+#### `mint-lease`
+Create a new lease for a dataset
+
+```bash
+xase-cli mint-lease DATASET_ID [OPTIONS]
+
+Arguments:
+  DATASET_ID         Dataset ID to lease
+
+Options:
+  --ttl-seconds N    Lease time-to-live in seconds (default: 1800)
+```
+
+**Example:**
+```bash
+xase-cli mint-lease ds_abc123 --ttl-seconds 3600
+```
+
+**Output:**
+```
+✓ Lease minted
+ℹ Lease ID: lease_xyz789
+ℹ Expires: 2026-02-15T19:30:00Z
+```
+
+---
+
+#### `list-leases`
+List active leases
+
+```bash
+xase-cli list-leases [OPTIONS]
+
+Options:
+  --limit N          Maximum number of leases (default: 20)
+```
+
+**Example:**
+```bash
+xase-cli list-leases --limit 10
+```
+
+**Output:**
+```
+                Active Leases                
+╭──────────────┬────────────┬────────┬─────────╮
+│ Lease ID     │ Dataset    │ Status │ Expires │
+├──────────────┼────────────┼────────┼─────────┤
+│ lease_xyz123 │ ds_med_001 │ ACTIVE │ 18:30   │
+╰──────────────┴────────────┴────────┴─────────╯
+```
+
+---
+
+#### `lease-details`
+Show detailed information about a lease
+
+```bash
+xase-cli lease-details LEASE_ID
+
+Arguments:
+  LEASE_ID           Lease ID to inspect
+```
+
+**Example:**
+```bash
+xase-cli lease-details lease_xyz789
+```
+
+### Data Streaming
+
+#### `stream`
+Stream dataset batch for training
+
+```bash
+xase-cli stream DATASET_ID [OPTIONS]
+
+Arguments:
+  DATASET_ID         Dataset to stream
+
+Options:
+  --lease-id ID      Lease ID to use (required)
+  --env ENV          Environment (development, staging, production)
+  --estimated-hours  Estimated hours of usage (default: 0.5)
+  --output FILE      Output file path
+```
+
+**Example:**
+```bash
+xase-cli stream ds_def456 \
+  --lease-id lease_xyz789 \
+  --env production \
+  --output training_batch.json
+```
+
+---
+
+### Monitoring
+
+#### `usage`
+Show usage statistics
+
+```bash
+xase-cli usage
+```
+
+**Output:**
+```
+       Usage Statistics        
+╭───────────────┬───────────╮
+│ Tenant ID     │ tenant_01 │
+│ Active Offers │        15 │
+│ Active Leases │         3 │
+│ Auth Mode     │   api_key │
+╰───────────────┴───────────╯
+```
+
+---
+
+## 🔄 Production Workflow
+
+### Complete flow from discovery to consumption:
+
+```bash
+# 1. First-time setup
+xase-cli setup
+xase-cli login
+
+# 2. Discover datasets
+xase-cli list-offers --risk MEDIUM --language en
+
+# 3. Create lease for dataset
+xase-cli mint-lease ds_abc123 --ttl-seconds 7200
+# Note the lease ID from output
+
+# 4. Stream data in batches
+xase-cli stream ds_abc123 \
+  --lease-id lease_xyz789 \
+  --env production \
+  --output batch_001.json
+
+xase-cli stream ds_abc123 \
+  --lease-id lease_xyz789 \
+  --env production \
+  --output batch_002.json
+
+# 5. Monitor active leases
+xase-cli list-leases
+
+# 6. Check usage statistics
+xase-cli usage
+
+# 7. View lease details
+xase-cli lease-details lease_xyz789
+```
+
+---
+
+## Error Handling
+
+The CLI exits with standard codes:
+
+- `0` - Success
+- `1` - General error (API error, validation failed)
+- `2` - Configuration error (missing API key)
+- `130` - Interrupted by user (Ctrl+C)
+
+**Example error:**
+```bash
+$ python xase_cli.py validate pol_invalid
+✗ HTTP 404: Policy not found
+```
+
+---
+
+## Best Practices
+
+### 1. Always validate before consuming
+
+```bash
+# ✅ Good
+python xase_cli.py validate pol_xyz789 --requested-hours 0.5
+python xase_cli.py stream ds_def456 --output data.json
+
+# ❌ Bad (no validation)
+python xase_cli.py stream ds_def456 --output data.json
+```
+
+### 2. Use small batches for long-running jobs
+
+```bash
+# ✅ Good - consume in 0.5h increments
+for i in {1..10}; do
+  python xase_cli.py validate pol_xyz789 --requested-hours 0.5
+  python xase_cli.py stream ds_def456 --output batch_$(printf %03d $i).json
+  sleep 60
+done
+
+# ❌ Bad - single large request
+python xase_cli.py stream ds_def456 --output all_data.json  # May timeout
+```
+
+### 3. Monitor lease expiration
+
+```bash
+# Check lease status regularly
+python xase_cli.py list-leases | grep "Expires"
+```
+
+### 4. Secure your API key
+
+```bash
+# ✅ Good - use environment variable
+export XASE_API_KEY="xase_pk_..."
+
+# ❌ Bad - hardcode in script
+XASE_API_KEY="xase_pk_..." python xase_cli.py list-offers
+```
+
+---
+
+## Automation Example
+
+### Bash script for continuous consumption:
+
+```bash
+#!/bin/bash
+set -e
+
+POLICY_ID="pol_xyz789"
+DATASET_ID="ds_def456"
+BATCH_SIZE=0.5
+OUTPUT_DIR="./training_data"
+
+mkdir -p "$OUTPUT_DIR"
+
+for i in {1..20}; do
+  echo "Processing batch $i..."
+  
+  # Validate access
+  python xase_cli.py validate "$POLICY_ID" --requested-hours "$BATCH_SIZE"
+  
+  # Stream data
+  OUTPUT_FILE="$OUTPUT_DIR/batch_$(printf %03d $i).json"
+  python xase_cli.py stream "$DATASET_ID" --output "$OUTPUT_FILE"
+  
+  echo "✓ Batch $i saved to $OUTPUT_FILE"
+  
+  # Wait before next batch
+  sleep 30
+done
+
+echo "✓ All batches completed"
+```
+
+---
+
+## Troubleshooting
+
+### "XASE_API_KEY environment variable not set"
+
+**Fix:**
+```bash
+export XASE_API_KEY="xase_pk_..."
+```
+
+### "HTTP 401: Unauthorized"
+
+**Causes:**
+- Invalid API key
+- Expired API key
+- Wrong tenant
+
+**Fix:**
+- Verify API key in dashboard
+- Regenerate if expired
+
+### "HTTP 403: Access denied"
+
+**Causes:**
+- Policy expired
+- Usage limit exceeded
+- Lease revoked
+
+**Fix:**
+```bash
+# Check policy status
+python xase_cli.py validate pol_xyz789
+
+# Request new lease if needed
+python xase_cli.py execute off_abc123 --hours 1.0
+```
+
+### "HTTP 429: Rate limit exceeded"
+
+**Fix:**
+- Add delays between requests
+- Reduce batch frequency
+- Contact support to increase rate limit
+
+---
+
+## Support
+
+- **Documentation:** [docs.xase.ai](https://docs.xase.ai)
+- **API Reference:** [api.xase.ai/docs](https://api.xase.ai/docs)
+- **Issues:** [github.com/xase/xase-cli/issues](https://github.com/xase/xase-cli/issues)
+- **Email:** support@xase.ai
+
+---
+
+## License
+
+MIT © Xase
+
+---
+
+**Built for AI Labs by the Xase team**

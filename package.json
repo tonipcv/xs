@@ -42,7 +42,7 @@
     "backfill:aggregates": "node scripts/backfill_dataset_aggregates.js"
   },
   "dependencies": {
-    "@auth/core": "^0.34.2",
+    "@auth/core": "^0.41.1",
     "@auth/prisma-adapter": "^2.7.4",
     "@aws-sdk/client-kms": "^3.958.0",
     "@aws-sdk/client-s3": "^3.953.0",
@@ -105,11 +105,11 @@
     "jsonwebtoken": "^9.0.2",
     "jszip": "^3.10.1",
     "lucide-react": "^0.453.0",
-    "next": "15.1.11",
-    "next-auth": "^4.24.11",
+    "next": "^15.5.12",
+    "next-auth": "^4.24.7",
     "next-themes": "^0.3.0",
     "node-fetch": "^2.7.0",
-    "nodemailer": "^6.10.0",
+    "nodemailer": "^8.0.1",
     "openai": "^4.103.0",
     "otplib": "^12.0.1",
     "pdf-lib": "^1.17.1",

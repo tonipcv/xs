@@ -1,12 +1,17 @@
 // @ts-nocheck
 import { NextAuthOptions } from "next-auth"
 import { prisma } from "@/lib/prisma"
+import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import { compare } from "bcryptjs"
 import { verifyTotp } from "@/lib/otp"
 
 export const authOptions: NextAuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID as string,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    }),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -29,6 +34,8 @@ export const authOptions: NextAuthOptions = {
             email: true,
             password: true,
             image: true,
+            tenantId: true,
+            xaseRole: true,
             twoFactorEnabled: true,
             totpSecret: true,
           }
@@ -48,13 +55,13 @@ export const authOptions: NextAuthOptions = {
         }
 
         // If 2FA is enabled, require TOTP code
-        if (user.twoFactorEnabled) {
+        if (user.twoFactorEnabled && user.totpSecret) {
           const totp = (credentials as any)?.totp as string | undefined
           if (!totp) {
             // Special marker to tell the client to ask for TOTP
             throw new Error('__2FA_REQUIRED__')
           }
-          if (!user.totpSecret || !verifyTotp(totp, user.totpSecret)) {
+          if (!verifyTotp(totp, user.totpSecret)) {
             throw new Error('Código 2FA inválido')
           }
         }
@@ -64,6 +71,8 @@ export const authOptions: NextAuthOptions = {
           name: user.name || "",
           email: user.email,
           image: user.image,
+          tenantId: user.tenantId,
+          xaseRole: user.xaseRole,
         } as any
       }
     })
@@ -80,17 +89,30 @@ export const authOptions: NextAuthOptions = {
     maxAge: 2 * 60 * 60, // 2 hours
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       if (user) {
         token.id = user.id;
+        token.tenantId = (user as any).tenantId;
+        token.xaseRole = (user as any).xaseRole;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        (session.user as any).tenantId = token.tenantId;
+        (session.user as any).xaseRole = token.xaseRole;
       }
       return session;
+    },
+    async redirect({ url, baseUrl }) {
+      // If redirecting after login, check organization type
+      if (url === baseUrl || url === `${baseUrl}/` || url.startsWith(`${baseUrl}/login`)) {
+        return `${baseUrl}/xase/ai-holder`;
+      }
+      // Allow callback URLs
+      if (url.startsWith(baseUrl)) return url;
+      return baseUrl;
     }
   },
   secret: process.env.NEXTAUTH_SECRET,

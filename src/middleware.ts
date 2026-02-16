@@ -26,15 +26,38 @@ function generateCsrfToken(): string {
 }
 
 function applySecurityHeaders(res: NextResponse) {
+  // Generate nonce for inline scripts (if needed in the future)
+  const nonce = crypto.randomUUID();
+  
+  // Strict CSP for production, slightly relaxed for development
+  const isDev = process.env.NODE_ENV === 'development';
+  
   const csp = [
     "default-src 'self'",
-    "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob:",
-    "style-src 'self' 'unsafe-inline'",
-    "img-src 'self' data: blob: https:",
-    "connect-src 'self' https: http://localhost:* ws: wss:",
+    // In development, allow unsafe-eval for Next.js HMR and allow Stripe & Facebook Pixel script hosts
+    isDev
+      ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://connect.facebook.net"
+      : "script-src 'self' blob:",
+    isDev
+      ? "style-src 'self' 'unsafe-inline'" // Allow inline styles only in dev
+      : "style-src 'self'",
+    // Allow images from https plus Facebook tracking beacons
+    isDev
+      ? "img-src 'self' data: blob: https: https://www.facebook.com https://connect.facebook.net"
+      : "img-src 'self' data: blob: https:",
+    // Allow Stripe & Facebook connections in dev
+    isDev
+      ? "connect-src 'self' https: http://localhost:* ws: wss: https://js.stripe.com https://*.stripe.com https://connect.facebook.net https://www.facebook.com"
+      : "connect-src 'self' https:",
     "font-src 'self' data:",
+    // Allow Stripe (and optionally Facebook) iframes in dev if used
+    isDev
+      ? "frame-src 'self' https://js.stripe.com https://*.stripe.com https://www.facebook.com"
+      : "frame-src 'self'",
     "frame-ancestors 'self'",
     "base-uri 'self'",
+    "form-action 'self'",
+    "object-src 'none'",
   ].join('; ');
 
   res.headers.set('Content-Security-Policy', csp);
@@ -42,6 +65,7 @@ function applySecurityHeaders(res: NextResponse) {
   res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
   res.headers.set('X-Frame-Options', 'SAMEORIGIN');
   res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('X-XSS-Protection', '1; mode=block');
   if (process.env.NODE_ENV === 'production') {
     res.headers.set('Strict-Transport-Security', 'max-age=63072000; includeSubDomains; preload');
   }
@@ -54,17 +78,6 @@ export async function middleware(request: NextRequest) {
   
   // Normalize pathname to lowercase for consistent matching
   const normalizedPath = pathname.toLowerCase();
-
-  // SECURITY: Block SIDECAR_AUTH_BYPASS in production
-  if (process.env.NODE_ENV === 'production' && process.env.SIDECAR_AUTH_BYPASS === '1') {
-    console.error('[SECURITY] SIDECAR_AUTH_BYPASS is enabled in production - blocking request');
-    const res = NextResponse.json(
-      { error: 'Security violation: dev bypass enabled in production' },
-      { status: 503 }
-    );
-    res.headers.set('X-Security-Block', 'dev_bypass_in_prod');
-    return res;
-  }
 
   const reqId = request.headers.get('x-vercel-id') || request.headers.get('x-request-id') || String(Date.now()) + ':' + Math.random().toString(36).slice(2);
   const env = process.env.NODE_ENV || 'unknown';

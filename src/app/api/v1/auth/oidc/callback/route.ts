@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * OIDC CALLBACK ENDPOINT
  * 
@@ -81,7 +80,6 @@ export async function GET(req: NextRequest) {
           email: user.email,
           name: user.name,
           tenantId: user.tenant_id || 'default',
-          oidcSub: user.sub,
           emailVerified: user.email_verified ? new Date() : null,
         },
       })
@@ -94,7 +92,7 @@ export async function GET(req: NextRequest) {
 
     const session = await SessionManager.createSession(
       dbUser.id,
-      dbUser.tenantId,
+      dbUser.tenantId || 'default',
       deviceId,
       'Web Browser',
       ipAddress,
@@ -117,10 +115,10 @@ export async function GET(req: NextRequest) {
         expiresIn: tokens.expires_in,
       },
     })
-  } catch (error: any) {
+  } catch (error) {
     console.error('[OIDC Callback] Error:', error)
     return NextResponse.json(
-      { error: 'Authentication failed', details: error.message },
+      { error: 'Authentication failed', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     )
   }

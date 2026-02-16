@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
@@ -61,7 +60,7 @@ export async function POST(req: NextRequest) {
     let numRecordings = 0
     let totalDurationHours = 0
     let totalSizeBytes = 0
-    let audioFiles: any[] = []
+    let audioFiles: Array<{ name: string; fullPath: string; size: number }> = []
 
     if (integrationId && storageLocation) {
       try {
@@ -99,6 +98,7 @@ export async function POST(req: NextRequest) {
         datasetId,
         name,
         description: description || null,
+        language,
         primaryLanguage: language,
         totalDurationHours,
         numRecordings,
@@ -127,6 +127,7 @@ export async function POST(req: NextRequest) {
     if (audioFiles.length > 0) {
       const segments = audioFiles.map((file, i) => ({
         datasetId: dataset.id,
+        dataSourceId: integrationId || 'manual',
         segmentId: `${datasetId}-seg-${String(i + 1).padStart(6, '0')}`,
         fileKey: file.fullPath,
         durationSec: estimateFileDuration(file.size),
@@ -149,14 +150,14 @@ export async function POST(req: NextRequest) {
     }
 
     return NextResponse.json(dataset, { status: 201 })
-  } catch (err: any) {
-    console.error('[API] POST /api/v1/datasets error:', err?.message || err)
+  } catch (err) {
+    console.error('[API] POST /api/v1/datasets error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }
 
 // Helper functions
-async function getAllAudioFiles(integration: any, storageLocation: string): Promise<any[]> {
+async function getAllAudioFiles(integration: { provider: string; encryptedAccessToken?: string | null; region?: string | null; accountName?: string | null }, storageLocation: string): Promise<Array<{ name: string; fullPath: string; size: number }>> {
   const { decryptToken } = await import('@/lib/services/encryption')
   
   // Parse storage location
@@ -192,7 +193,7 @@ function parseStorageLocation(location: string): { bucket: string; prefix: strin
   throw new Error('Invalid storage location')
 }
 
-async function scanGCSFiles(integration: any, bucket: string, prefix: string, decryptToken: any): Promise<any[]> {
+async function scanGCSFiles(integration: { encryptedAccessToken?: string | null }, bucket: string, prefix: string, decryptToken: (token: string) => string): Promise<Array<{ name: string; fullPath: string; size: number }>> {
   let accessToken = integration.encryptedAccessToken ? decryptToken(integration.encryptedAccessToken) : null
   
   if (!accessToken) return []
@@ -219,11 +220,12 @@ async function scanGCSFiles(integration: any, bucket: string, prefix: string, de
     }))
 }
 
-async function scanS3Files(integration: any, bucket: string, prefix: string, decryptToken: any): Promise<any[]> {
+async function scanS3Files(integration: { encryptedAccessToken?: string | null; region?: string | null }, bucket: string, prefix: string, decryptToken: (token: string) => string): Promise<Array<{ name: string; fullPath: string; size: number }>> {
   const { S3Client, ListObjectsV2Command } = await import('@aws-sdk/client-s3')
   
-  let credentials: any
+  let credentials: { accessKeyId: string; secretAccessKey: string }
   try {
+    if (!integration.encryptedAccessToken) return []
     const creds = JSON.parse(decryptToken(integration.encryptedAccessToken))
     credentials = {
       accessKeyId: creds.accessKeyId || creds.access_key_id,
@@ -256,17 +258,18 @@ async function scanS3Files(integration: any, bucket: string, prefix: string, dec
     }))
 }
 
-async function scanAzureFiles(integration: any, container: string, prefix: string, decryptToken: any): Promise<any[]> {
+async function scanAzureFiles(integration: { accountName?: string | null; encryptedAccessToken?: string | null }, container: string, prefix: string, decryptToken: (token: string) => string): Promise<Array<{ name: string; fullPath: string; size: number }>> {
   const { BlobServiceClient } = await import('@azure/storage-blob')
   
   const accountName = integration.accountName
+  if (!integration.encryptedAccessToken || !accountName) return []
   const accountKey = decryptToken(integration.encryptedAccessToken)
   
   const connectionString = `DefaultEndpointsProtocol=https;AccountName=${accountName};AccountKey=${accountKey};EndpointSuffix=core.windows.net`
   const blobServiceClient = BlobServiceClient.fromConnectionString(connectionString)
   const containerClient = blobServiceClient.getContainerClient(container)
 
-  const files: any[] = []
+  const files: Array<{ name: string; fullPath: string; size: number }> = []
   
   for await (const blob of containerClient.listBlobsFlat({
     prefix: prefix ? `${prefix}/` : ''
@@ -350,8 +353,8 @@ export async function GET(req: NextRequest) {
     })
 
     return NextResponse.json({ datasets })
-  } catch (err: any) {
-    console.error('[API] GET /api/v1/datasets error:', err?.message || err)
+  } catch (err) {
+    console.error('[API] GET /api/v1/datasets error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

@@ -1,9 +1,8 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
 
-export async function GET(req: NextRequest, context: any) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId) {
@@ -62,8 +61,8 @@ export async function GET(req: NextRequest, context: any) {
 
     if (!ds) return NextResponse.json({ error: 'Dataset not found' }, { status: 404 })
     return NextResponse.json(ds)
-  } catch (err: any) {
-    console.error('[API] GET /api/v1/datasets/:datasetId error:', err?.message || err)
+  } catch (err) {
+    console.error('[API] GET /api/v1/datasets/:datasetId error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })
   }
 }

@@ -105,14 +105,15 @@ export const defaultSecurityConfig: SecurityConfig = {
   csp: {
     directives: {
       'default-src': ["'self'"],
-      'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
-      'style-src': ["'self'", "'unsafe-inline'"],
+      'script-src': ["'self'"],
+      'style-src': ["'self'"],
       'img-src': ["'self'", 'data:', 'https:'],
       'font-src': ["'self'", 'data:'],
       'connect-src': ["'self'", 'https://api.xase.ai'],
       'frame-ancestors': ["'none'"],
       'base-uri': ["'self'"],
       'form-action': ["'self'"],
+      'object-src': ["'none'"],
     },
   },
   hsts: {
