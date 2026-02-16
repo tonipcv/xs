@@ -55,11 +55,11 @@ export async function sendLeaseExpiryAlert(
       where: { id: lease.clientTenantId },
       select: {
         name: true,
-        contactEmail: true
+        email: true
       }
     })
 
-    if (!clientTenant?.contactEmail) {
+    if (!clientTenant?.email) {
       console.warn(`No contact email for tenant ${lease.clientTenantId}`)
       return
     }
@@ -69,7 +69,7 @@ export async function sendLeaseExpiryAlert(
 
     // Send via multiple channels
     await Promise.allSettled([
-      sendEmailAlert(clientTenant.contactEmail, message),
+      sendEmailAlert(clientTenant.email, message),
       sendPushNotification(lease.clientTenantId, message),
       sendWebhook(lease.clientTenantId, leaseId, alertType, context)
     ])
@@ -204,39 +204,10 @@ async function sendWebhook(
   alertType: AlertType,
   context?: AlertContext
 ): Promise<void> {
-  // Get tenant's webhook URL if configured
-  const tenant = await prisma.tenant.findUnique({
-    where: { id: tenantId },
-    select: {
-      webhookUrl: true,
-      webhookSecret: true
-    }
-  })
-
-  if (!tenant?.webhookUrl) {
-    return // No webhook configured
-  }
-
-  try {
-    await fetch(tenant.webhookUrl, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-Xase-Signature': tenant.webhookSecret || ''
-      },
-      body: JSON.stringify({
-        event: 'lease.alert',
-        leaseId,
-        alertType,
-        timestamp: new Date().toISOString(),
-        context
-      })
-    })
-
-    console.log(`🔗 Webhook sent to ${tenant.webhookUrl}`)
-  } catch (error) {
-    console.error(`Failed to send webhook:`, error)
-  }
+  // Webhook functionality disabled - Tenant model doesn't have webhookUrl/webhookSecret fields
+  // TODO: Add webhook configuration to Tenant schema if needed
+  console.log(`Webhook notification skipped for tenant ${tenantId} - not configured`)
+  return
 }
 
 /**
