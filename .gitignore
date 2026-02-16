@@ -88,3 +88,4 @@ fix-routes.sh
 !database/migrations/
 !migrations/sql/
 !**/*.sql
+.next
