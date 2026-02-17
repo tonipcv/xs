@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     await redis.setex(`cli:device:${device_code}`, 600, JSON.stringify(record))
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || (new URL(req.url)).origin
-    const verification_url = `${baseUrl}/xase/cli/verify?device=${encodeURIComponent(device_code)}`
+    const verification_url = `${baseUrl}/app/cli/verify?device=${encodeURIComponent(device_code)}`
 
     return NextResponse.json({
       device_code,

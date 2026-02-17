@@ -31,7 +31,7 @@ export function DatasetCard({ ds }: { ds: Dataset }) {
     if (!confirm(`Delete dataset "${ds.name}"? This action cannot be undone.`)) return;
     try {
       setDeleting(true);
-      const resp = await fetch(`/api/xase/voice/datasets/${ds.datasetId}`, {
+      const resp = await fetch(`/api/v1/datasets/${ds.datasetId}`, {
         method: "DELETE",
       });
       if (!resp.ok) {
@@ -48,7 +48,7 @@ export function DatasetCard({ ds }: { ds: Dataset }) {
   }
 
   function handleCardClick() {
-    router.push(`/xase/voice/datasets/${ds.datasetId}`);
+    router.push(`/app/datasets/${ds.datasetId}`);
   }
 
   return (
@@ -74,7 +74,7 @@ export function DatasetCard({ ds }: { ds: Dataset }) {
         <div className="flex items-center justify-between pt-2">
           <div className="flex items-center gap-2">
             <Link
-              href={`/xase/voice/policies`}
+              href={`/app/policies`}
               onClick={(e) => e.stopPropagation()}
               className="px-2 py-1 border border-gray-200 rounded-full text-[11px] text-gray-700 hover:bg-gray-50"
             >

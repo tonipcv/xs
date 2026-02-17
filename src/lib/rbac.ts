@@ -60,7 +60,7 @@ export async function requireAuth(): Promise<TenantContext> {
   const context = await getTenantContext()
   if (!context) {
     // Avoid login/public route loop; send to setup which is public
-    redirect('/xase/voice/setup')
+    redirect('/app/dashboard')
   }
   return context
 }
@@ -74,12 +74,12 @@ export async function requireSupplier(): Promise<TenantContext> {
   
   if (!context.tenantId) {
     // User has no tenant - send to setup page to avoid redirect loops
-    redirect('/xase/voice/setup')
+    redirect('/app/dashboard')
   }
 
   if (context.organizationType !== 'SUPPLIER') {
     // Unknown or different org type -> setup to avoid ping-pong
-    redirect('/xase/voice/setup')
+    redirect('/app/dashboard')
   }
 
   return context
@@ -94,12 +94,12 @@ export async function requireClient(): Promise<TenantContext> {
   
   if (!context.tenantId) {
     // User has no tenant - send to setup page to avoid redirect loops
-    redirect('/xase/voice/setup')
+    redirect('/app/dashboard')
   }
 
   if (context.organizationType !== 'CLIENT') {
     // Unknown or different org type -> setup to avoid ping-pong
-    redirect('/xase/voice/setup')
+    redirect('/app/dashboard')
   }
 
   return context

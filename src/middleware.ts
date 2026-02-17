@@ -100,39 +100,13 @@ export async function middleware(request: NextRequest) {
     return res;
   }
 
-  // CSRF enforcement for state-changing XASE API routes
-  const isBundlesMutation = normalizedPath.startsWith('/api/xase/bundles') && request.method === 'POST';
-  if (isBundlesMutation) {
-    const headerCsrf = request.headers.get('x-csrf-token');
-    const origin = request.headers.get('origin');
-    const referer = request.headers.get('referer');
-    const reqUrl = request.nextUrl.origin;
-
-    const originOk = (origin && sameHost(origin, reqUrl)) || (referer && sameHost(referer, reqUrl));
-    const csrfOk = headerCsrf && headerCsrf === csrfCookie;
-    if (!originOk || !csrfOk) {
-      const res = NextResponse.json({ error: 'CSRF validation failed' }, { status: 403 });
-      res.headers.set('X-CSRF-Reason', `${originOk ? 'cookie_mismatch' : 'invalid_origin'}`);
-      res.headers.set('X-Req-Id', reqId);
-      return applySecurityHeaders(res);
-    }
-  }
-
   // Rotas públicas que não precisam de autenticação
   const publicRoutes = ['/login', '/register', '/forgot-password'];
   if (publicRoutes.includes(normalizedPath)) {
     // Se estiver logado, redireciona para a home
     if (token) {
       // Redirect logged users to their appropriate dashboard
-      // Default to AI Holder dashboard (most users will be suppliers)
-      const url = new URL('/xase/ai-holder', request.url);
-      const res = NextResponse.redirect(url);
-      res.headers.set('X-Redirect-Reason', 'logged_in_public_route');
-      res.headers.set('X-Req-Id', reqId);
-      res.headers.set('X-Env', env);
-      res.headers.set('X-Path', pathname);
-      console.log(JSON.stringify({ tag: 'mw_redirect', reqId, reason: 'logged_in_public_route', from: pathname, to: '/xase/ai-holder' }));
-      return applySecurityHeaders(res);
+      return applySecurityHeaders(NextResponse.redirect(new URL('/app/dashboard', request.url)));
     }
 
   // Verifica acesso às rotas administrativas
@@ -198,27 +172,27 @@ export async function middleware(request: NextRequest) {
     return applySecurityHeaders(NextResponse.next()); // Allow access to /planos for non-premium users
   }
 
-  // Redirect root (/) to AI Holder Dashboard (default)
+  // Redirect root (/) to dashboard (default)
   if (normalizedPath === '/') {
-    const url = new URL('/xase/ai-holder', request.url);
+    const url = new URL('/app/dashboard', request.url);
     const res = NextResponse.redirect(url);
     res.headers.set('X-Redirect-Reason', 'root_redirect');
     res.headers.set('X-Req-Id', reqId);
     res.headers.set('X-Env', env);
     res.headers.set('X-Path', pathname);
-    console.log(JSON.stringify({ tag: 'mw_redirect', reqId, reason: 'root_redirect', from: pathname, to: '/xase/ai-holder' }));
+    console.log(JSON.stringify({ tag: 'mw_redirect', reqId, reason: 'root_redirect', from: pathname, to: '/app/dashboard' }));
     return applySecurityHeaders(res);
   }
 
-  // Redirect /xase (legacy) to AI Holder Dashboard
+  // Redirect /xase (legacy) to dashboard
   if (normalizedPath === '/xase') {
-    const url = new URL('/xase/ai-holder', request.url);
+    const url = new URL('/app/dashboard', request.url);
     const res = NextResponse.redirect(url);
     res.headers.set('X-Redirect-Reason', 'legacy_xase_redirect');
     res.headers.set('X-Req-Id', reqId);
     res.headers.set('X-Env', env);
     res.headers.set('X-Path', pathname);
-    console.log(JSON.stringify({ tag: 'mw_redirect', reqId, reason: 'legacy_xase_redirect', from: pathname, to: '/xase/ai-holder' }));
+    console.log(JSON.stringify({ tag: 'mw_redirect', reqId, reason: 'legacy_xase_redirect', from: pathname, to: '/app/dashboard' }));
     return applySecurityHeaders(res);
   }
 
@@ -232,7 +206,7 @@ export const config = {
     '/planos',
     '/series-restrito/:path*',
     '/xase/:path*',
-    '/api/xase/:path*',
+    '/api/v1/:path*',
     '/admin/:path*',
     '/profile',
     '/',

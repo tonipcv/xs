@@ -133,7 +133,7 @@ export default function ProfilePage() {
   return (
     <AppLayout>
       <div className="min-h-screen bg-gray-50">
-        <div className="max-w-[1100px] mx-auto px-8 py-8 space-y-8">
+        <div className="max-w-[1400px] mx-auto px-8 py-8 space-y-8">
           <div className="flex items-start justify-between gap-4">
             <div className="space-y-2">
               <h1 className={`${heading.className} text-2xl font-semibold text-gray-900 tracking-tight`}>Profile</h1>

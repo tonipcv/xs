@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
 
     await oauthStateService.deleteState(state);
 
-    const redirectPath = st.redirectPath || '/xase/data-holder/connectors';
+    const redirectPath = st.redirectPath || '/app/datasets/browse';
     const redirectUrl = `${process.env.NEXTAUTH_URL}${redirectPath}?success=true&provider=${st.provider}`;
 
     return NextResponse.json({ ok: true, redirectUrl });

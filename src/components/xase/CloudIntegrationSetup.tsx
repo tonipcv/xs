@@ -203,7 +203,7 @@ export function CloudIntegrationSetup({ tenantId }: { tenantId: string }) {
       const friendlyName = (opts?.name || '').trim();
       if (!friendlyName) throw new Error('A name is required');
 
-      let url = `/api/oauth/${provider.toLowerCase()}/authorize?tenantId=${tenantId}&redirect=/xase/data-holder/connectors&name=${encodeURIComponent(friendlyName)}`;
+      let url = `/api/oauth/${provider.toLowerCase()}/authorize?tenantId=${tenantId}&redirect=/app/datasets/browse&name=${encodeURIComponent(friendlyName)}`;
       // For Google providers using OAuth, ask for projectId and pass it along
       if (provider === 'GCS' || provider === 'BIGQUERY') {
         const projectId = (opts?.projectId || '').trim();
@@ -397,7 +397,7 @@ export function CloudIntegrationSetup({ tenantId }: { tenantId: string }) {
                           className="w-full text-left px-3 py-2 text-[13px] text-gray-900 hover:bg-gray-50"
                           onClick={() => {
                             setMenuOpenId(null)
-                            window.location.href = `/xase/voice/datasets/browse?integrationId=${encodeURIComponent(integration.id)}`
+                            window.location.href = `/app/datasets/browse?integrationId=${encodeURIComponent(integration.id)}`
                           }}
                         >
                           Browse datasets

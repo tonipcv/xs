@@ -198,7 +198,7 @@ export function RecordDetails({ record, bundles, checkpoint, snapshots = [] }: R
           <div className="space-y-2">
             <div className="flex items-center gap-3">
               <a
-                href="/xase/records"
+                href="/app/audit"
                 className={`text-white/50 hover:text-white transition-colors text-sm`}
               >
                 {regulatorView ? 'Decision Records' : 'Decision Risk Inbox'}

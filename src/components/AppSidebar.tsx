@@ -27,73 +27,33 @@ import { Separator } from '@/components/ui/separator';
 
 const supplierMenuItems = [
   {
-    title: 'AI HOLDER',
+    title: 'MAIN',
     items: [
-      { title: 'Dashboard', url: '/xase/ai-holder', icon: Mic },
-      { title: 'Datasets', url: '/xase/ai-holder/datasets', icon: Database },
-      { title: 'Policies', url: '/xase/ai-holder/policies', icon: Shield },
-      { title: 'Leases', url: '/xase/ai-holder/leases', icon: Key },
-      { title: 'Audit Logs', url: '/xase/audit', icon: Activity },
-      { title: 'Marketplace', url: '/xase/governed-access', icon: Database },
-    ],
-  },
-  {
-    title: 'PRIVACY & COMPLIANCE',
-    items: [
-      { title: 'Consent', url: '/xase/consent', icon: Lock },
-      { title: 'Epsilon Budget', url: '/xase/privacy/epsilon', icon: Zap },
-      { title: 'Compliance', url: '/xase/compliance', icon: FileCheck },
-    ],
-  },
-  {
-    title: 'OBSERVABILITY',
-    items: [
-      { title: 'Health', url: '/xase/health', icon: Heart },
-      { title: 'Metrics', url: '/xase/metrics', icon: TrendingUp },
-      { title: 'Dashboard', url: '/xase/observability', icon: Eye },
-    ],
-  },
-  {
-    title: 'ADMIN',
-    items: [
-      { title: 'API Keys', url: '/xase/admin/api-keys', icon: Key },
-      { title: 'Settings', url: '/xase/settings', icon: Settings },
+      { title: 'Dashboard', url: '/app/dashboard', icon: Mic },
+      { title: 'Datasets', url: '/app/datasets', icon: Database },
+      { title: 'Policies', url: '/app/policies', icon: Shield },
+      { title: 'Marketplace', url: '/app/marketplace', icon: BarChart3 },
+      { title: 'Leases', url: '/app/leases', icon: Key },
+      { title: 'Billing', url: '/app/billing', icon: Coins },
+      { title: 'Audit', url: '/app/audit', icon: Activity },
+      { title: 'Compliance', url: '/app/compliance', icon: FileCheck },
+      { title: 'Settings', url: '/app/settings', icon: Settings },
     ],
   },
 ];
 
 const clientMenuItems = [
   {
-    title: 'AI LAB',
+    title: 'MAIN',
     items: [
-      { title: 'Dashboard', url: '/xase/ai-lab', icon: Cpu },
-      { title: 'Marketplace', url: '/xase/governed-access', icon: Database },
-      { title: 'Training', url: '/xase/ai-lab/training', icon: Cpu },
-      { title: 'Billing', url: '/xase/ai-lab/billing', icon: Coins },
-      { title: 'Audit Logs', url: '/xase/audit', icon: Activity },
-    ],
-  },
-  {
-    title: 'PRIVACY & COMPLIANCE',
-    items: [
-      { title: 'Consent', url: '/xase/consent', icon: Lock },
-      { title: 'Epsilon Budget', url: '/xase/privacy/epsilon', icon: Zap },
-      { title: 'Compliance', url: '/xase/compliance', icon: FileCheck },
-    ],
-  },
-  {
-    title: 'OBSERVABILITY',
-    items: [
-      { title: 'Health', url: '/xase/health', icon: Heart },
-      { title: 'Metrics', url: '/xase/metrics', icon: TrendingUp },
-      { title: 'Dashboard', url: '/xase/observability', icon: Eye },
-    ],
-  },
-  {
-    title: 'ADMIN',
-    items: [
-      { title: 'API Keys', url: '/xase/admin/api-keys', icon: Key },
-      { title: 'Settings', url: '/xase/settings', icon: Settings },
+      { title: 'Dashboard', url: '/app/dashboard', icon: Cpu },
+      { title: 'Marketplace', url: '/app/marketplace', icon: BarChart3 },
+      { title: 'Training', url: '/app/training', icon: Cpu },
+      { title: 'Leases', url: '/app/leases', icon: Key },
+      { title: 'Billing', url: '/app/billing', icon: Coins },
+      { title: 'Audit', url: '/app/audit', icon: Activity },
+      { title: 'Compliance', url: '/app/compliance', icon: FileCheck },
+      { title: 'Settings', url: '/app/settings', icon: Settings },
     ],
   },
 ];
@@ -102,27 +62,38 @@ export function AppSidebar() {
   const pathname = usePathname();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
   const [organizationType, setOrganizationType] = useState<string | null>(null);
+  const [orgLoading, setOrgLoading] = useState<boolean>(true);
   const { data: session } = useSession();
   const { setOpen } = useSidebar();
 
   useEffect(() => {
+    let cancelled = false;
     async function fetchOrganizationType() {
-      if (session?.user?.email) {
-        try {
-          const res = await fetch('/api/user/organization-type');
-          if (res.ok) {
-            const data = await res.json();
-            setOrganizationType(data.organizationType);
-          }
-        } catch (error) {
-          console.error('Failed to fetch organization type:', error);
+      if (!session?.user?.email) {
+        setOrgLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch('/api/user/organization-type', { cache: 'no-store' });
+        if (!cancelled && res.ok) {
+          const data = await res.json();
+          setOrganizationType(data.organizationType);
         }
+      } catch (_) {
+        // suppress logs to avoid noisy console during startup
+      } finally {
+        if (!cancelled) setOrgLoading(false);
       }
     }
     fetchOrganizationType();
-  }, [session]);
+    return () => {
+      cancelled = true;
+    };
+  }, [session?.user?.email]);
 
-  const menuItems = organizationType === 'CLIENT' ? clientMenuItems : supplierMenuItems;
+  const menuItems = organizationType === 'CLIENT' ? clientMenuItems
+                   : organizationType === 'SUPPLIER' ? supplierMenuItems
+                   : null; // defer until known to avoid flicker
 
   // Expand sidebar by default so text labels are always visible
   useEffect(() => {
@@ -157,7 +128,10 @@ export function AppSidebar() {
       </SidebarHeader>
 
       <SidebarContent className="bg-transparent py-2">
-        {menuItems.map((group) => (
+        {!menuItems || orgLoading ? (
+          <div className="px-3 py-2 text-[12px] text-gray-500">Loading menu…</div>
+        ) : (
+        menuItems.map((group) => (
           <SidebarGroup key={group.title} className="px-2 py-1">
             <SidebarGroupLabel className="text-[11px] font-semibold text-gray-500 px-2 py-1">{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -185,7 +159,8 @@ export function AppSidebar() {
               </SidebarMenu>
             </SidebarGroupContent>
           </SidebarGroup>
-        ))}
+        ))
+        )}
       </SidebarContent>
  
       <SidebarFooter className="border-t border-gray-200 bg-white p-2">

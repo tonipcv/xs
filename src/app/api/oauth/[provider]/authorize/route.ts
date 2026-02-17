@@ -53,7 +53,7 @@ export async function GET(
     }
 
     const searchParams = request.nextUrl.searchParams;
-    const redirectPath = searchParams.get('redirect') || '/xase/data-holder/connectors';
+    const redirectPath = searchParams.get('redirect') || '/app/datasets/browse';
     const tenantId = searchParams.get('tenantId');
     const projectId = searchParams.get('projectId') || undefined;
     const name = searchParams.get('name') || undefined;

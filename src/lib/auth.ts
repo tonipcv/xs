@@ -86,20 +86,17 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // If redirecting after login, check organization type
+      const appBase = process.env.NEXT_PUBLIC_APP_URL || baseUrl;
+      // Post-login default
       if (url === baseUrl || url === `${baseUrl}/` || url.startsWith(`${baseUrl}/login`)) {
-        try {
-          // This is a post-login redirect, determine the right dashboard
-          // We'll use a default and let the client-side handle the actual redirect
-          return `${baseUrl}/xase/voice`;
-        } catch (error) {
-          console.error('Redirect error:', error);
-          return `${baseUrl}/xase/voice`;
-        }
+        return `${appBase}/app/dashboard`;
       }
-      // Allow callback URLs
-      if (url.startsWith(baseUrl)) return url;
-      return baseUrl;
+      // If url is absolute within our base, allow
+      if (url.startsWith(appBase)) return url;
+      // If url is relative, resolve against appBase
+      if (url.startsWith('/')) return `${appBase}${url}`;
+      // Fallback
+      return appBase;
     }
   },
   secret: process.env.NEXTAUTH_SECRET,

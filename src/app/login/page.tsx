@@ -105,9 +105,8 @@ function LoginContent() {
       if (result?.ok) {
         setConfirmed(true);
         // Redirect to callback URL or default dashboard
-        const dest = callbackUrl || '/xase/ai-holder';
         setTimeout(() => {
-          router.push(dest);
+          router.push('/app/dashboard');
           router.refresh();
         }, 500);
       }

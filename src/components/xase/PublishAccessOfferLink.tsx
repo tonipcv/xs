@@ -19,7 +19,7 @@ export function PublishAccessOfferLink({
     lang: datasetLanguage,
     jur: datasetJurisdiction,
   })
-  const href = `/xase/voice/offers/new?${q.toString()}`
+  const href = `/app/marketplace/publish?${q.toString()}`
   return (
     <Link
       href={href}

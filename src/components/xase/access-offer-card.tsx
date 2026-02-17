@@ -111,7 +111,7 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
       </CardContent>
 
       <CardFooter>
-        <Link href={`/xase/governed-access/${offer.offerId}`} className="w-full">
+        <Link href={`/app/marketplace/${offer.offerId}`} className="w-full">
           <Button variant="outline" className="w-full border border-gray-300 text-gray-900 bg-white hover:bg-gray-50">View Contract Details</Button>
         </Link>
       </CardFooter>

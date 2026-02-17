@@ -114,7 +114,7 @@ export function PublishAccessOfferButton({
         const offer = await res.json()
         toast.success('Access offer created successfully!')
         setOpen(false)
-        router.push(`/xase/governed-access/${offer.offerId}`)
+        router.push(`/app/marketplace/${offer.offerId}`)
       } else {
         const error = await res.json()
         toast.error(error.error || 'Failed to create access offer')

@@ -14,9 +14,9 @@ export const ORG_TYPE_DESCRIPTIONS = {
 } as const;
 
 export const ORG_TYPE_ROUTES = {
-  SUPPLIER: '/xase/ai-holder',
-  CLIENT: '/xase/ai-lab',
-  PLATFORM_ADMIN: '/xase/admin'
+  SUPPLIER: '/app/dashboard',
+  CLIENT: '/app/dashboard',
+  PLATFORM_ADMIN: '/admin',
 } as const;
 
 // Helper function to get label from organization type
@@ -33,6 +33,6 @@ export function getOrgTypeDescription(orgType: string | null | undefined): strin
 
 // Helper function to get route from organization type
 export function getOrgTypeRoute(orgType: string | null | undefined): string {
-  if (!orgType) return '/xase/voice/setup';
-  return ORG_TYPE_ROUTES[orgType as keyof typeof ORG_TYPE_ROUTES] || '/xase/voice/setup';
+  if (!orgType) return '/app/dashboard';
+  return ORG_TYPE_ROUTES[orgType as keyof typeof ORG_TYPE_ROUTES] || '/app/dashboard';
 }

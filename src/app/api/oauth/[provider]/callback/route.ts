@@ -87,7 +87,7 @@ export async function GET(
 
     if (error) {
       return NextResponse.redirect(
-        `${process.env.NEXTAUTH_URL}/xase/data-holder/connectors?error=${encodeURIComponent(error)}`
+        `${process.env.NEXTAUTH_URL}/app/datasets/browse?error=${encodeURIComponent(error)}`
       );
     }
 
@@ -126,7 +126,7 @@ export async function GET(
         const pickerState = await oauthStateService.createState({
           tenantId: stateValidation.tenantId!,
           provider,
-          redirectPath: stateValidation.redirectPath || '/xase/data-holder/connectors',
+          redirectPath: stateValidation.redirectPath || '/app/datasets/browse',
           metadata: {
             oauth: {
               accessToken: tokens.accessToken,
@@ -155,14 +155,14 @@ export async function GET(
       metadata: projectIdFromState ? { projectId: projectIdFromState } : undefined,
     });
 
-    const redirectPath = stateValidation.redirectPath || '/xase/data-holder/connectors';
+    const redirectPath = stateValidation.redirectPath || '/app/datasets/browse';
     return NextResponse.redirect(
       `${process.env.NEXTAUTH_URL}${redirectPath}?success=true&provider=${provider}`
     );
   } catch (error: any) {
     console.error('OAuth callback error:', error);
     return NextResponse.redirect(
-      `${process.env.NEXTAUTH_URL}/xase/data-holder/connectors?error=${encodeURIComponent(error.message)}`
+      `${process.env.NEXTAUTH_URL}/app/datasets/browse?error=${encodeURIComponent(error.message)}`
     );
   }
 }

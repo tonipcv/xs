@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { authOptions } from '@/app/api/auth/auth.config';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
         id: true, 
         tenantId: true,
         email: true,
-        role: true,
+        xaseRole: true,
       },
     });
 
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (user.role !== 'ADMIN') {
+    if (user.xaseRole !== 'ADMIN') {
       return NextResponse.json(
         { error: 'Forbidden - Admin role required' },
         { status: 403 }
@@ -58,12 +58,12 @@ export async function POST(request: NextRequest) {
         action: 'BREAK_GLASS_ACTIVATED',
         resourceType: 'EMERGENCY_ACCESS',
         resourceId: `bg-${Date.now()}`,
-        metadata: {
+        metadata: JSON.stringify({
           reason,
           duration: duration || 1,
           expiresAt: expiresAt.toISOString(),
           userEmail: user.email,
-        },
+        }),
       },
     });
 

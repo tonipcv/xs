@@ -30,28 +30,28 @@ const ONBOARDING_STEPS = [
     title: 'Connect Your Data Source',
     description: 'Set up OAuth integration with your cloud storage',
     action: 'Connect Integration',
-    link: '/xase/data-holder/connectors',
+    link: '/app/datasets/browse',
   },
   {
     id: 'firstDatasetAdded',
     title: 'Add Your First Dataset',
     description: 'Upload or connect your first voice dataset',
     action: 'Add Dataset',
-    link: '/xase/voice/datasets',
+    link: '/app/datasets',
   },
   {
     id: 'firstPolicyCreated',
     title: 'Create Access Policy',
     description: 'Define who can access your data and under what terms',
     action: 'Create Policy',
-    link: '/xase/voice/policies',
+    link: '/app/policies',
   },
   {
     id: 'firstLeaseIssued',
     title: 'Issue First Lease',
     description: 'Grant time-limited access to your data',
     action: 'Issue Lease',
-    link: '/xase/voice/leases',
+    link: '/app/leases',
   },
 ];
 

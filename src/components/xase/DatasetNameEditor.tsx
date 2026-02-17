@@ -12,7 +12,7 @@ export function DatasetNameEditor({ datasetId, initialName }: { datasetId: strin
     try {
       setSaving(true);
       setError(null);
-      const res = await fetch(`/api/xase/voice/datasets/${encodeURIComponent(datasetId)}`, {
+      const res = await fetch(`/api/v1/datasets/${encodeURIComponent(datasetId)}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name }),

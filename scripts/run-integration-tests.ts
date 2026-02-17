@@ -71,7 +71,7 @@ async function testFlow1() {
     const tenant = await prisma.tenant.create({
       data: {
         name: 'Test Tenant',
-        organizationType: 'AI_LAB',
+        organizationType: 'CLIENT',
       },
     });
     ctx.tenantId = tenant.id;
