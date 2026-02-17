@@ -22,7 +22,11 @@ COPY . .
 RUN npx prisma generate
 
 # Build Next.js app
-ENV NEXT_TELEMETRY_DISABLED=1
+# Build-time envs (safe dummies) to avoid module-load checks crashing build
+ENV NEXT_TELEMETRY_DISABLED=1 \
+    STRIPE_SECRET_KEY=sk_test_dummy \
+    STRIPE_WEBHOOK_SECRET=whsec_dummy \
+    NEXTAUTH_SECRET=build_dummy
 RUN npm run build
 
 # Stage 3: Runner
