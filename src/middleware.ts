@@ -37,10 +37,10 @@ function applySecurityHeaders(res: NextResponse) {
     // In development, allow unsafe-eval for Next.js HMR and allow Stripe & Facebook Pixel script hosts
     isDev
       ? "script-src 'self' 'unsafe-inline' 'unsafe-eval' blob: https://js.stripe.com https://connect.facebook.net"
-      : "script-src 'self' blob:",
+      : "script-src 'self' 'unsafe-inline' blob: https://js.stripe.com https://*.stripe.com",
     isDev
       ? "style-src 'self' 'unsafe-inline'" // Allow inline styles only in dev
-      : "style-src 'self'",
+      : "style-src 'self' 'unsafe-inline'",
     // Allow images from https plus Facebook tracking beacons
     isDev
       ? "img-src 'self' data: blob: https: https://www.facebook.com https://connect.facebook.net"
@@ -48,12 +48,12 @@ function applySecurityHeaders(res: NextResponse) {
     // Allow Stripe & Facebook connections in dev
     isDev
       ? "connect-src 'self' https: http://localhost:* ws: wss: https://js.stripe.com https://*.stripe.com https://connect.facebook.net https://www.facebook.com"
-      : "connect-src 'self' https:",
+      : "connect-src 'self' https: https://js.stripe.com https://*.stripe.com",
     "font-src 'self' data:",
     // Allow Stripe (and optionally Facebook) iframes in dev if used
     isDev
       ? "frame-src 'self' https://js.stripe.com https://*.stripe.com https://www.facebook.com"
-      : "frame-src 'self'",
+      : "frame-src 'self' https://js.stripe.com https://*.stripe.com",
     "frame-ancestors 'self'",
     "base-uri 'self'",
     "form-action 'self'",
