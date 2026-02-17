@@ -8,7 +8,7 @@
  * - Per-tenant and per-user limits
  */
 
-import { redis } from '@/lib/redis'
+import { getRedisClient } from '@/lib/redis'
 
 export interface RateLimitConfig {
   strategy: 'fixed' | 'sliding' | 'token-bucket'
@@ -56,7 +56,7 @@ export class RateLimiter {
     key: string,
     config: RateLimitConfig
   ): Promise<RateLimitResult> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const now = Date.now()
     const window = Math.floor(now / (config.window * 1000))
     const redisKey = `${this.REDIS_PREFIX}fixed:${key}:${window}`
@@ -88,7 +88,7 @@ export class RateLimiter {
     key: string,
     config: RateLimitConfig
   ): Promise<RateLimitResult> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const now = Date.now()
     const windowMs = config.window * 1000
     const redisKey = `${this.REDIS_PREFIX}sliding:${key}`
@@ -125,7 +125,7 @@ export class RateLimiter {
     key: string,
     config: RateLimitConfig
   ): Promise<RateLimitResult> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const now = Date.now()
     const redisKey = `${this.REDIS_PREFIX}bucket:${key}`
     const burst = config.burst || config.limit
@@ -174,7 +174,7 @@ export class RateLimiter {
    * Reset rate limit for key
    */
   static async resetLimit(key: string): Promise<void> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const patterns = [
       `${this.REDIS_PREFIX}fixed:${key}:*`,
       `${this.REDIS_PREFIX}sliding:${key}`,
@@ -196,7 +196,7 @@ export class RateLimiter {
     key: string,
     config: RateLimitConfig
   ): Promise<RateLimitResult> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const now = Date.now()
 
     switch (config.strategy) {

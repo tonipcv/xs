@@ -105,20 +105,55 @@ export async function enforceAccess(request: AccessRequest): Promise<AccessResul
   // 4. SE NEGADO: LOG E RETORNO
   if (!decision.allowed) {
     await logAccess(context, 'DENIED', dataset.id, 0, 0, decision.reason)
+    const usageSafe = decision.usage
+      ? {
+          hoursRemaining: Number(decision.usage.hoursRemaining ?? 0),
+          downloadsRemaining: Number(decision.usage.downloadsRemaining ?? 0),
+          utilizationPercent: Number(decision.usage.utilizationPercent ?? 0),
+        }
+      : undefined
     return {
       granted: false,
-      reason: decision.reason,
-      code: decision.code,
-      usage: decision.usage
+      reason: decision.reason || 'Access denied',
+      code: decision.code || 'DENIED',
+      usage: usageSafe,
     }
   }
 
   // 5. SE PERMITIDO: EXECUTAR EFEITOS COLATERAIS ATOMICAMENTE
-  const policy = decision.policy!
+  const policy = decision.policy
   const hoursToConsume = request.requestedHours
-  const cost = policy.pricePerHour ? hoursToConsume * policy.pricePerHour : 0
+
+  // Se não houver snapshot de policy no decision, registrar acesso e retornar sucesso básico
+  if (!policy) {
+    await logAccess(context, 'GRANTED', dataset.id, 0, hoursToConsume)
+    return {
+      granted: true,
+      reason: 'Access granted',
+      code: 'ALLOWED',
+      hoursConsumed: hoursToConsume,
+    }
+  }
+
+  const pricePerHour = typeof policy.pricePerHour === 'number' ? policy.pricePerHour : 0
+  const currency = policy.currency || 'USD'
+  const cost = pricePerHour > 0 ? hoursToConsume * pricePerHour : 0
 
   try {
+    // Se não possuir ID interno da policy, não é possível criar logs vinculados; retornar sucesso básico
+    if (!policy.id) {
+      await logAccess(context, 'GRANTED', dataset.id, 0, hoursToConsume)
+      return {
+        granted: true,
+        reason: 'Access granted',
+        code: 'ALLOWED',
+        hoursConsumed: hoursToConsume,
+        cost,
+        currency,
+      }
+    }
+    const policyIdInternal: string = policy.id as string
+
     await prisma.$transaction(async (tx) => {
       // A. Atualizar consumo da policy
       await tx.voiceAccessPolicy.update({
@@ -147,7 +182,7 @@ export async function enforceAccess(request: AccessRequest): Promise<AccessResul
             amount: -cost,
             balanceAfter: newBalance,
             eventType: 'USAGE_DEBIT',
-            description: `Dataset ${request.datasetId} access: ${hoursToConsume}h @ ${policy.pricePerHour}/${policy.currency}`,
+            description: `Dataset ${request.datasetId} access: ${hoursToConsume}h @ ${pricePerHour}/${currency}`,
             metadata: {
               datasetId: request.datasetId,
               policyId: request.policyId,
@@ -162,7 +197,7 @@ export async function enforceAccess(request: AccessRequest): Promise<AccessResul
       await tx.voiceAccessLog.create({
         data: {
           datasetId: dataset.id,
-          policyId: policy.id,
+          policyId: policyIdInternal,
           clientTenantId: request.clientTenantId,
           userId: request.userId || null,
           apiKeyId: request.apiKeyId || null,
@@ -177,14 +212,21 @@ export async function enforceAccess(request: AccessRequest): Promise<AccessResul
     })
 
     // 6. RETORNO DE SUCESSO
+    const usageSafe = decision.usage
+      ? {
+          hoursRemaining: Number(decision.usage.hoursRemaining ?? 0),
+          downloadsRemaining: Number(decision.usage.downloadsRemaining ?? 0),
+          utilizationPercent: Number(decision.usage.utilizationPercent ?? 0),
+        }
+      : undefined
     return {
       granted: true,
       reason: 'Access granted',
       code: 'ALLOWED',
       hoursConsumed: hoursToConsume,
       cost,
-      currency: policy.currency,
-      usage: decision.usage
+      currency,
+      usage: usageSafe,
     }
   } catch (error: any) {
     console.error('[AccessEnforcement] Transaction failed:', error)

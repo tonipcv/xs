@@ -49,7 +49,7 @@ async function syncAuditLogs(): Promise<number> {
       try {
         await insertAuditEvent({
           event_id: log.id,
-          tenant_id: log.tenantId,
+          tenant_id: log.tenantId || 'unknown',
           event_type: 'AUDIT',
           resource_type: log.resourceType,
           resource_id: log.resourceId || 'unknown',

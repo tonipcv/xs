@@ -19,6 +19,10 @@ export function validatePolicy(yamlContent: string): PolicyValidationResult {
   return parsePolicyYAML(yamlContent);
 }
 
+export function parseAndValidatePolicy(yamlContent: string): PolicyValidationResult {
+  return parsePolicyYAML(yamlContent);
+}
+
 export function parsePolicyYAML(yamlContent: string): PolicyValidationResult {
   let doc: any
   try {

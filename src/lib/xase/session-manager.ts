@@ -49,7 +49,7 @@ export class SessionManager {
     userAgent: string,
     options: SessionOptions = {}
   ): Promise<Session> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const maxAge = options.maxAge || this.DEFAULT_MAX_AGE
     const sessionId = `sess_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
     const now = new Date()
@@ -81,14 +81,14 @@ export class SessionManager {
     }
 
     // Store session in Redis
-    await redis.setex(
+    await (await redis).setex(
       `${this.REDIS_PREFIX}${sessionId}`,
       maxAge,
       JSON.stringify(session)
     )
 
     // Add to user's session list
-    await redis.sadd(`${this.USER_SESSIONS_PREFIX}${userId}`, sessionId)
+    await (await redis).sadd(`${this.USER_SESSIONS_PREFIX}${userId}`, sessionId)
 
     // Log session creation
     await prisma.auditLog.create({
@@ -113,8 +113,8 @@ export class SessionManager {
    * Get session by ID
    */
   static async getSession(sessionId: string): Promise<Session | null> {
-    const redis = getRedisClient()
-    const data = await redis.get(`${this.REDIS_PREFIX}${sessionId}`)
+    const redis = await getRedisClient()
+    const data = await (await redis).get(`${this.REDIS_PREFIX}${sessionId}`)
 
     if (!data) {
       return null
@@ -135,7 +135,7 @@ export class SessionManager {
    * Update session activity (sliding expiration)
    */
   static async updateActivity(sessionId: string): Promise<void> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const session = await this.getSession(sessionId)
 
     if (!session) {
@@ -145,10 +145,10 @@ export class SessionManager {
     session.lastActivityAt = new Date()
 
     // Get current TTL
-    const ttl = await redis.ttl(`${this.REDIS_PREFIX}${sessionId}`)
+    const ttl = await (await redis).ttl(`${this.REDIS_PREFIX}${sessionId}`)
 
     // Update session
-    await redis.setex(
+    await (await redis).setex(
       `${this.REDIS_PREFIX}${sessionId}`,
       ttl,
       JSON.stringify(session)
@@ -159,7 +159,7 @@ export class SessionManager {
    * Destroy session
    */
   static async destroySession(sessionId: string): Promise<void> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const session = await this.getSession(sessionId)
 
     if (!session) {
@@ -167,10 +167,10 @@ export class SessionManager {
     }
 
     // Remove from Redis
-    await redis.del(`${this.REDIS_PREFIX}${sessionId}`)
+    await (await redis).del(`${this.REDIS_PREFIX}${sessionId}`)
 
     // Remove from user's session list
-    await redis.srem(`${this.USER_SESSIONS_PREFIX}${session.userId}`, sessionId)
+    await (await redis).srem(`${this.USER_SESSIONS_PREFIX}${session.userId}`, sessionId)
 
     // Log session destruction
     await prisma.auditLog.create({
@@ -190,8 +190,8 @@ export class SessionManager {
    * Get all sessions for user
    */
   static async getUserSessions(userId: string): Promise<Session[]> {
-    const redis = getRedisClient()
-    const sessionIds = await redis.smembers(`${this.USER_SESSIONS_PREFIX}${userId}`)
+    const redis = await getRedisClient()
+    const sessionIds = await (await redis).smembers(`${this.USER_SESSIONS_PREFIX}${userId}`)
     const sessions: Session[] = []
 
     for (const sessionId of sessionIds) {
@@ -247,13 +247,13 @@ export class SessionManager {
    * Cleanup expired sessions (background job)
    */
   static async cleanupExpiredSessions(): Promise<number> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const pattern = `${this.REDIS_PREFIX}*`
-    const keys = await redis.keys(pattern)
+    const keys = await (await redis).keys(pattern)
     let cleaned = 0
 
     for (const key of keys) {
-      const ttl = await redis.ttl(key)
+      const ttl = await (await redis).ttl(key)
       if (ttl <= 0) {
         const sessionId = key.replace(this.REDIS_PREFIX, '')
         await this.destroySession(sessionId)
