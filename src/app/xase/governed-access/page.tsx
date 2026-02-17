@@ -61,20 +61,20 @@ export default function GovernedAccessCatalogPage() {
     <div>
       <div className="mb-8">
         <h1 className={`${heading.className} text-3xl font-semibold text-gray-900 tracking-tight mb-2`}>Governed Access Catalog</h1>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-gray-900">
           Discover executable access contracts with built-in governance, evidence generation, and legal guarantees.
         </p>
       </div>
 
       {/* Filters (simplified) */}
-      <div className="bg-white border border-gray-200 rounded-md p-2 mb-2">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
+      <div className="bg-white border border-gray-200 rounded-md p-2 mb-3">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
           <div>
             <label className="text-xs font-medium mb-0.5 block text-gray-900">Risk Class</label>
             <select
               value={filters.riskClass || 'ALL'}
               onChange={(e) => handleFilterChange('riskClass', e.target.value === 'ALL' ? '' : e.target.value)}
-              className="h-7 text-xs border border-gray-300 rounded-md px-2 bg-white focus:outline-none focus:ring-0 focus:border-gray-400"
+              className="h-8 text-xs border border-gray-300 rounded-md px-2 bg-white text-gray-900 focus:outline-none focus:ring-0 focus:border-gray-400"
             >
               <option value="ALL">All</option>
               <option value="LOW">Low</option>
@@ -91,12 +91,16 @@ export default function GovernedAccessCatalogPage() {
               placeholder="e.g., 50"
               value={filters.maxPrice}
               onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-              className="h-7 text-xs focus:outline-none focus:ring-0"
+              className="h-8 text-xs border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-0"
             />
           </div>
 
           <div className="flex items-end justify-end">
-            <Button onClick={applyFilters} className="w-full md:w-auto h-7 px-2 text-xs bg-gray-900 hover:bg-gray-800 text-white rounded-md">
+            <Button
+              onClick={applyFilters}
+              variant="outline"
+              className="w-full md:w-auto h-8 px-3 text-xs border border-gray-300 text-gray-900 bg-white hover:bg-gray-50"
+            >
               Apply Filters
             </Button>
           </div>

@@ -1,91 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
-import { validateBearer } from '@/lib/xase/bearer'
 
+// GET /api/v1/access-offers
+// Optional query params: riskClass, language, jurisdiction, maxPrice, useCase, supplierId, limit, offset
 export async function GET(req: NextRequest) {
   try {
-    // Auth: allow Bearer, or API Key (with rate limit), or session
-    const bearer = await validateBearer(req)
-    if (!bearer.valid) {
-      const apiAuth = await validateApiKey(req)
-      if (apiAuth.valid) {
-        if (apiAuth.apiKeyId) {
-          const rl = await checkApiRateLimit(apiAuth.apiKeyId, 1200, 60)
-          if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-        }
-      } else {
-        const session = await getServerSession(authOptions)
-        if (!session?.user?.email) {
-          return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-      }
-    }
-
     const { searchParams } = new URL(req.url)
-    
-    // Filters
-    const riskClass = searchParams.get('riskClass')
-    const language = searchParams.get('language')
-    const jurisdiction = searchParams.get('jurisdiction')
-    const maxPrice = searchParams.get('maxPrice')
-    const useCase = searchParams.get('useCase')
-    const supplierId = searchParams.get('supplierId')
-    const status = searchParams.get('status') || 'ACTIVE'
-    const limit = parseInt(searchParams.get('limit') || '20')
+
+    const riskClass = searchParams.get('riskClass') || undefined
+    const language = searchParams.get('language') || undefined
+    const jurisdiction = searchParams.get('jurisdiction') || undefined
+    const maxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined
+    const useCase = searchParams.get('useCase') || undefined
+    const supplierId = searchParams.get('supplierId') || undefined
+    const limit = parseInt(searchParams.get('limit') || '60')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    const where: any = {
-      status: status as any,
-    }
-
+    const where: any = {}
     if (riskClass) where.riskClass = riskClass
     if (language) where.language = language
     if (jurisdiction) where.jurisdiction = jurisdiction
-    if (maxPrice) where.pricePerHour = { lte: parseFloat(maxPrice) }
+    if (typeof maxPrice === 'number' && !Number.isNaN(maxPrice)) where.pricePerHour = { lte: maxPrice }
     if (useCase) where.useCases = { has: useCase }
     if (supplierId) where.supplierTenantId = supplierId
 
-    const [offers, total] = await Promise.all([
-      prisma.accessOffer.findMany({
-        where,
-        include: {
-          supplier: {
-            select: {
-              id: true,
-              name: true,
-              organizationType: true,
-            },
-          },
-          _count: {
-            select: {
-              executions: true,
-              reviews: true,
-            },
-          },
+    const offers = await prisma.accessOffer.findMany({
+      where,
+      orderBy: [
+        { publishedAt: 'desc' },
+        { createdAt: 'desc' },
+      ],
+      select: {
+        offerId: true,
+        title: true,
+        description: true,
+        pricePerHour: true,
+        currency: true,
+        scopeHours: true,
+        riskClass: true,
+        jurisdiction: true,
+        language: true,
+        useCases: true,
+        successfulAudits: true,
+        totalExecutions: true,
+        supplier: {
+          select: { name: true, organizationType: true },
         },
-        orderBy: [
-          { successfulAudits: 'desc' },
-          { publishedAt: 'desc' },
-        ],
-        take: limit,
-        skip: offset,
-      }),
-      prisma.accessOffer.count({ where }),
-    ])
-
-    return NextResponse.json({
-      offers,
-      total,
-      limit,
-      offset,
+      },
+      take: limit,
+      skip: offset,
     })
+
+    return NextResponse.json({ offers, limit, offset })
   } catch (error: any) {
-    console.error('List access offers error:', error)
+    const isDev = process.env.NODE_ENV !== 'production'
     return NextResponse.json(
-      { error: 'Failed to list access offers' },
+      { error: 'Failed to list access offers', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

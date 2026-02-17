@@ -159,8 +159,36 @@ BEGIN
     RAISE NOTICE 'Tabela de usuários não encontrada ("User" ou users). Pulando criação de índice.';
   END IF;
 END $$;
-CREATE INDEX IF NOT EXISTS "xase_api_keys_tenantId_idx" ON "xase_api_keys"("tenantId");
-CREATE INDEX IF NOT EXISTS "xase_api_keys_keyHash_idx" ON "xase_api_keys"("keyHash");
+-- Handle possible column naming (camelCase vs snake_case) for xase_api_keys indices
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'xase_api_keys' AND column_name = 'tenantId'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS "xase_api_keys_tenantId_idx" ON "xase_api_keys"("tenantId")';
+  ELSIF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'xase_api_keys' AND column_name = 'tenant_id'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS xase_api_keys_tenant_id_idx ON xase_api_keys(tenant_id)';
+  END IF;
+END $$;
+
+DO $$
+BEGIN
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'xase_api_keys' AND column_name = 'keyHash'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS "xase_api_keys_keyHash_idx" ON "xase_api_keys"("keyHash")';
+  ELSIF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema = 'public' AND table_name = 'xase_api_keys' AND column_name = 'key_hash'
+  ) THEN
+    EXECUTE 'CREATE INDEX IF NOT EXISTS xase_api_keys_key_hash_idx ON xase_api_keys(key_hash)';
+  END IF;
+END $$;
 CREATE INDEX IF NOT EXISTS "xase_decision_records_tenantId_idx" ON "xase_decision_records"("tenantId");
 CREATE INDEX IF NOT EXISTS "xase_decision_records_transactionId_idx" ON "xase_decision_records"("transactionId");
 CREATE INDEX IF NOT EXISTS "xase_decision_records_timestamp_idx" ON "xase_decision_records"("timestamp" DESC);

@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { X, Plus } from 'lucide-react'
 import { toast } from 'sonner'
+import { AppLayout } from '@/components/AppSidebar'
 
 function NewOfferContent() {
   const router = useRouter()
@@ -120,13 +121,13 @@ function NewOfferContent() {
 
   return (
     <div className="min-h-[calc(100vh-64px)] bg-gray-50">
-      <div className="mx-auto max-w-3xl p-6">
+      <div className="mx-auto max-w-screen-xl w-full px-4 md:px-8 py-6">
         <div className="mb-6">
           <h1 className="text-2xl font-semibold text-gray-900">Publish Governed Access Offer</h1>
           <p className="text-gray-600 mt-1">Create an executable access contract with built-in governance, pricing, and evidence generation.</p>
         </div>
 
-        <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-8">
+        <div className="bg-white border border-gray-200 rounded-xl shadow-sm p-6 space-y-8">
           {/* Dataset context */}
           <div className="grid grid-cols-2 gap-4">
             <div>
@@ -281,7 +282,7 @@ function NewOfferContent() {
           <div className="flex justify-end gap-2">
             <Button
               variant="outline"
-              className="border-gray-300 text-gray-900 hover:bg-gray-100"
+              className="border-gray-300 text-gray-900 hover:bg-gray-100 bg-gray-100"
               onClick={() => router.back()}
             >
               Cancel
@@ -302,8 +303,10 @@ function NewOfferContent() {
 
 export default function NewOfferPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-gray-600">Loading...</div></div>}>
-      <NewOfferContent />
-    </Suspense>
+    <AppLayout>
+      <Suspense fallback={<div className="min-h-screen flex items-center justify-center"><div className="text-gray-600">Loading...</div></div>}>
+        <NewOfferContent />
+      </Suspense>
+    </AppLayout>
   )
 }

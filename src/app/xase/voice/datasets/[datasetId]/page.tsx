@@ -159,12 +159,14 @@ export default async function DatasetDetailPage({ params }: { params: Promise<{ 
             <div className="flex gap-2">
               {isOwner && (
                 <>
-                  <PublishAccessOfferLink
-                    datasetId={dataset.datasetId}
-                    datasetName={dataset.name}
-                    datasetLanguage={dataset.primaryLanguage || 'en-US'}
-                    datasetJurisdiction="US"
-                  />
+                  {sources.length > 0 && (
+                    <PublishAccessOfferLink
+                      datasetId={dataset.datasetId}
+                      datasetName={dataset.name}
+                      datasetLanguage={dataset.primaryLanguage || 'en-US'}
+                      datasetJurisdiction="US"
+                    />
+                  )}
                   {dataset.status === 'DRAFT' && dataset.processingStatus === 'COMPLETED' && (
                     <button className="px-4 py-2 bg-gray-900 hover:bg-gray-800 text-white rounded-lg text-sm transition-colors">
                       Publish Dataset

@@ -115,8 +115,8 @@ export default function NewPolicyPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-white">
-        <div className="max-w-[800px] mx-auto px-8 py-8 space-y-8">
+      <div className="min-h-screen bg-gray-50">
+        <div className="max-w-screen-xl w-full mx-auto px-4 md:px-8 py-8 space-y-8">
           {/* Header */}
           <div className="space-y-1.5">
             <h1 className={`${heading.className} text-2xl font-semibold text-gray-900 tracking-tight`}>
@@ -129,7 +129,7 @@ export default function NewPolicyPage() {
 
           {/* Form */}
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="bg-white border border-gray-200 rounded-lg p-6 space-y-5">
+            <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 space-y-5">
               {/* Dataset */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-900">

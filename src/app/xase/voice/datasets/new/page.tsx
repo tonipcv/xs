@@ -64,8 +64,8 @@ export default function NewDatasetPage() {
 
   return (
     <AppLayout>
-      <div className="min-h-screen bg-white p-6">
-        <div className="max-w-2xl mx-auto">
+      <div className="min-h-screen bg-gray-50 p-6 md:p-8">
+        <div className="max-w-screen-xl w-full mx-auto px-2 md:px-4">
           {/* Header */}
           <div className="mb-8">
             <Link href="/xase/voice/datasets" className="inline-flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800 mb-4">
@@ -81,7 +81,7 @@ export default function NewDatasetPage() {
           </div>
 
           {/* Form Card */}
-          <div className="bg-white rounded-lg border border-gray-200 p-6">
+          <div className="bg-white rounded-lg border border-gray-200 shadow-sm p-6 w-full">
             <form onSubmit={onSubmit} className="space-y-6">
               {/* Error Alert */}
               {error && (
@@ -180,10 +180,9 @@ export default function NewDatasetPage() {
                 </Button>
                 <Button
                   type="button"
-                  variant="outline"
-                  onClick={() => router.push('/xase/voice/datasets')}
+                  onClick={() => router.back()}
                   disabled={loading}
-                  className="rounded-md"
+                  className="rounded-md !bg-gray-200 hover:!bg-gray-300 !text-gray-900 !border !border-gray-300"
                 >
                   Cancel
                 </Button>

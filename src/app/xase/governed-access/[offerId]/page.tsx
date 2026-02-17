@@ -29,10 +29,40 @@ export default function AccessOfferDetailPage() {
     requestedHours: '',
     environment: '',
   })
+  const [tenantId, setTenantId] = useState<string | null>(null)
+  const [isSupplier, setIsSupplier] = useState<boolean>(false)
+  const hasSidebar = Boolean(tenantId && !isSupplier)
 
   useEffect(() => {
     fetchOffer()
   }, [offerId])
+
+  useEffect(() => {
+    // Fetch current session to get tenantId
+    async function fetchSession() {
+      try {
+        const res = await fetch('/api/get-session')
+        if (res.ok) {
+          const data = await res.json()
+          const tid = data?.user?.tenantId || data?.tenantId || null
+          setTenantId(tid)
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    fetchSession()
+  }, [])
+
+  useEffect(() => {
+    // Determine if current tenant is the supplier (data holder)
+    if (!offer || !tenantId) {
+      setIsSupplier(false)
+      return
+    }
+    const supplierId = offer?.supplier?.id || offer?.supplierTenantId || offer?.dataset?.tenantId
+    setIsSupplier(Boolean(supplierId && tenantId && supplierId === tenantId))
+  }, [offer, tenantId])
 
   const fetchOffer = async () => {
     try {
@@ -120,7 +150,8 @@ export default function AccessOfferDetailPage() {
   const constraints = offer.constraints || {}
 
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50">
+      <div className="max-w-[1400px] mx-auto px-6 md:px-8 py-8">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-start justify-between mb-4">
@@ -128,7 +159,7 @@ export default function AccessOfferDetailPage() {
             <h1 className={`${heading.className} text-3xl font-semibold text-gray-900 tracking-tight mb-2`}>{offer.title}</h1>
             <p className="text-sm text-gray-600 max-w-3xl">{offer.description}</p>
           </div>
-          <Badge className={'bg-gray-100 text-gray-800 border border-gray-300'}>
+          <Badge variant="outline" className={'text-gray-800 border border-gray-300'}>
             {offer.riskClass} RISK
           </Badge>
         </div>
@@ -148,7 +179,9 @@ export default function AccessOfferDetailPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className={`${hasSidebar ? 'lg:col-span-2' : 'lg:col-span-3'} space-y-6`}>
+          {/* Top Row: Pricing & Allowed Purposes */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           {/* Pricing */}
           <Card className="bg-white border border-gray-200 rounded-xl">
             <CardHeader>
@@ -190,6 +223,7 @@ export default function AccessOfferDetailPage() {
               </ul>
             </CardContent>
           </Card>
+          </div>
 
           {/* Constraints (Streaming-only) */}
           <Card className="bg-white border border-gray-200 rounded-xl">
@@ -245,77 +279,95 @@ export default function AccessOfferDetailPage() {
               <CardHeader>
                 <CardTitle className="text-gray-900">Dataset Information</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2 text-sm text-gray-800">
-                <div><strong className="text-gray-900">Name:</strong> {offer.dataset.name}</div>
-                <div><strong className="text-gray-900">Total Duration:</strong> {offer.dataset.totalDurationHours}h</div>
-                <div><strong className="text-gray-900">Recordings:</strong> {offer.dataset.numRecordings}</div>
-                <div><strong className="text-gray-900">Language:</strong> {offer.dataset.primaryLanguage}</div>
-                <div><strong className="text-gray-900">Sample Rate:</strong> {offer.dataset.primarySampleRate} Hz</div>
-                <div><strong className="text-gray-900">Codec:</strong> {offer.dataset.primaryCodec}</div>
+              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm text-gray-800">
+                {!!offer.dataset.name && (<div><strong className="text-gray-900">Name:</strong> {offer.dataset.name}</div>)}
+                {!!offer.dataset.totalDurationHours && (<div><strong className="text-gray-900">Total Duration:</strong> {offer.dataset.totalDurationHours}h</div>)}
+                {!!offer.dataset.numRecordings && (<div><strong className="text-gray-900">Recordings:</strong> {offer.dataset.numRecordings}</div>)}
+                {!!offer.dataset.primaryLanguage && (<div><strong className="text-gray-900">Language:</strong> {offer.dataset.primaryLanguage}</div>)}
+                {!!offer.dataset.primarySampleRate && (<div><strong className="text-gray-900">Sample Rate:</strong> {offer.dataset.primarySampleRate} Hz</div>)}
+                {!!offer.dataset.primaryCodec && (<div><strong className="text-gray-900">Codec:</strong> {offer.dataset.primaryCodec}</div>)}
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Manage Offer - only for suppliers (fills sidebar when applicable) */}
+          {tenantId && isSupplier && (
+            <Card className="bg-white border border-gray-200 rounded-xl">
+              <CardHeader>
+                <CardTitle className="text-gray-900">Manage Offer</CardTitle>
+                <CardDescription className="text-gray-600">Quick actions for publishers</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2 text-sm">
+                <Button variant="outline" className="w-full border-gray-300 text-gray-900 hover:bg-gray-50" onClick={() => router.push(`/xase/voice/offers/new?datasetId=${offer?.dataset?.datasetId || ''}`)}>Republish / New Version</Button>
+                <Button variant="outline" className="w-full border-gray-300 text-gray-900 hover:bg-gray-50" onClick={() => router.push(`/xase/voice/policies`)}>View Policies</Button>
+                <Button variant="outline" className="w-full border-gray-300 text-gray-900 hover:bg-gray-50" onClick={() => router.push(`/xase/voice/leases`)}>View Leases</Button>
               </CardContent>
             </Card>
           )}
         </div>
 
         {/* Sidebar */}
+        {hasSidebar && (
         <div className="space-y-6">
-          {/* Request Access */}
-          <Card className="bg-white border border-gray-200 rounded-xl">
-            <CardHeader>
-              <CardTitle className="text-gray-900">Request Governed Access</CardTitle>
-              <CardDescription className="text-gray-600">Execute this access contract</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {!showRequestModal ? (
-                <Button
-                  className="w-full h-9 text-sm bg-gray-900 hover:bg-gray-800 text-white"
-                  onClick={() => setShowRequestModal(true)}
-                >
-                  Request Access
-                </Button>
-              ) : (
-                <div className="space-y-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block text-gray-900">Usage Purpose *</label>
-                    <Textarea
-                      placeholder="Describe how you will use this data..."
-                      value={requestForm.usagePurpose}
-                      onChange={(e) => setRequestForm({ ...requestForm, usagePurpose: e.target.value })}
-                      rows={4}
-                    />
+          {/* Request Access - only show to buyers (not supplier). Wait for tenantId to avoid flicker. */}
+          {tenantId && !isSupplier && (
+            <Card className="bg-white border border-gray-200 rounded-xl">
+              <CardHeader>
+                <CardTitle className="text-gray-900">Request Governed Access</CardTitle>
+                <CardDescription className="text-gray-600">Execute this access contract</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {!showRequestModal ? (
+                  <Button
+                    className="w-full h-9 text-sm bg-gray-900 hover:bg-gray-800 text-white"
+                    onClick={() => setShowRequestModal(true)}
+                  >
+                    Request Access
+                  </Button>
+                ) : (
+                  <div className="space-y-4">
+                    <div>
+                      <label className="text-sm font-medium mb-2 block text-gray-900">Usage Purpose *</label>
+                      <Textarea
+                        placeholder="Describe how you will use this data..."
+                        value={requestForm.usagePurpose}
+                        onChange={(e) => setRequestForm({ ...requestForm, usagePurpose: e.target.value })}
+                        rows={4}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block text-gray-900">Requested Hours (optional)</label>
+                      <Input
+                        type="number"
+                        placeholder={`Max: ${offer.scopeHours}`}
+                        value={requestForm.requestedHours}
+                        onChange={(e) => setRequestForm({ ...requestForm, requestedHours: e.target.value })}
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-2 block text-gray-900">Environment (optional)</label>
+                      <Input
+                        placeholder="e.g., production, staging"
+                        value={requestForm.environment}
+                        onChange={(e) => setRequestForm({ ...requestForm, environment: e.target.value })}
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Button onClick={handleRequestAccess} disabled={requesting} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white">
+                        {requesting ? 'Requesting...' : 'Confirm Request'}
+                      </Button>
+                      <Button variant="outline" onClick={() => setShowRequestModal(false)} className="border-gray-300 text-gray-800 hover:bg-gray-50">
+                        Cancel
+                      </Button>
+                    </div>
                   </div>
-                  <div>
-                    <label className="text-sm font-medium mb-2 block text-gray-900">Requested Hours (optional)</label>
-                    <Input
-                      type="number"
-                      placeholder={`Max: ${offer.scopeHours}`}
-                      value={requestForm.requestedHours}
-                      onChange={(e) => setRequestForm({ ...requestForm, requestedHours: e.target.value })}
-                    />
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-2 block text-gray-900">Environment (optional)</label>
-                    <Input
-                      placeholder="e.g., production, staging"
-                      value={requestForm.environment}
-                      onChange={(e) => setRequestForm({ ...requestForm, environment: e.target.value })}
-                    />
-                  </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleRequestAccess} disabled={requesting} className="flex-1 bg-gray-900 hover:bg-gray-800 text-white">
-                      {requesting ? 'Requesting...' : 'Confirm Request'}
-                    </Button>
-                    <Button variant="outline" onClick={() => setShowRequestModal(false)} className="border-gray-300 text-gray-800 hover:bg-gray-50">
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
+        )}
+      </div>
       </div>
     </div>
   )

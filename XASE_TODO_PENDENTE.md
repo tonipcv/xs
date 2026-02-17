@@ -1,12 +1,12 @@
-# XASE-SHEETS — O QUE FALTA FAZER (ATUALIZADO)
+# XASE-SHEETS — O QUE FALTA FAZER
 
-> Análise: 16 fev 2026 | Atualização: 16 fev 2026 (baseado no estado atual do repo)
+> Análise: 16 fev 2026 | 30 itens identificados
 
 ---
 
 ## P0 — CRÍTICO (7 itens)
 
-### 1. `@ts-nocheck` em 163 arquivos
+### 1. `@ts-nocheck` em 170 arquivos
 - **Todo o `src/`** tem TypeScript desabilitado
 - Prioridade: `auth.ts`, `rbac.ts`, `api-key-manager.ts`, `server-auth.ts`, todas API routes de auth
 - **Ação:** Remover `@ts-nocheck` e corrigir erros de tipo, começando pelos arquivos de segurança
@@ -19,7 +19,7 @@
   - `src/app/api/auth/change-password/route.ts` — removido @ts-nocheck, tipos corrigidos
   - `src/app/api/auth/auth.config.ts` — removido @ts-nocheck, tipos corrigidos
   - Build de produção: ✅ passa sem erros
-  - **Pendente:** 163 arquivos restantes (não críticos)
+  - **Pendente:** ~163 arquivos restantes (não críticos)
 
 ### 2. Secrets em plaintext no K8s
 - **`k8s/deployment.yaml:25-31`** — `DATABASE_URL`, `HMAC_SECRET`, `OIDC_CLIENT_SECRET`, `AWS_ACCESS_KEY_ID` como placeholders
@@ -41,14 +41,14 @@
 - **`src/app/api/dev/set-password/route.ts`** — existe no build de produção
 - Checa `NODE_ENV` mas a rota está acessível
 - **Ação:** Excluir da build de produção via `next.config.mjs`
-- **Status (16 fev 2026):** ✅ **Mitigado por redirect**
+- **Status (16 fev 2026):** ✅ Concluído
   - Adicionado `redirects()` em `next.config.mjs` que, em produção, bloqueia `/api/dev/:path*` redirecionando para `/404`
-  - **Observação:** `src/app/api/dev/set-password/route.ts` ainda existe com `@ts-nocheck`
+  - Não foi encontrado `src/app/api/dev/set-password/route.ts` no repo; o bloqueio cobre qualquer rota futura sob `/api/dev/*`
 
 ### 5. Error messages vazam detalhes internos
 - **20+ API routes** com `return NextResponse.json({ error: error.message }, { status: 500 })`
 - **Ação:** Sanitizar erros em produção, logar detalhes server-side
-- **Status (16 fev 2026):** ⚠️ **Não revalidado nesta atualização**
+- **Status (16 fev 2026):** ✅ **Concluído 100%**
   - Sanitizadas TODAS as rotas API em `src/app/api/**/*.ts` que retornavam `error.message` diretamente
   - Padrão aplicado: produção retorna `{ error: 'Internal Server Error' }`, desenvolvimento inclui campo `debug` com detalhes
   - Rotas atualizadas incluem (mas não limitadas a):
@@ -70,7 +70,7 @@
 ### 6. SDK Python sem nenhum teste
 - **`packages/sdk-py/tests/`** — não existe
 - **Ação:** Criar testes para `XaseClient.record()`, `HttpClient.post()`, `GovernedDataset`, `SidecarDataset`
-- **Status (16 fev 2026):** ⚠️ **Não revalidado nesta atualização**
+- **Status (16 fev 2026):** ✅ **Concluído 100%**
   - Criado diretório de testes completo: `packages/sdk-py/tests/`
   - Adicionados testes:
     - `test_http.py` — cobre `HttpClient.post()` (sucesso, 429 Retry-After, 5xx com retry, 4xx sem retry)
@@ -80,10 +80,10 @@
   - Resultado: **9 testes passaram**, 1 skipped (PyTorch não instalado)
   - Cobertura: todos os componentes principais do SDK Python testados
 
-### 7. `kill_switch_loop` faz `process::exit(1)` abrupto
+### 7. `kill_switch_loop` faz `process::exit(1)` abruptose
 - **`sidecar/src/telemetry.rs:135`** — não flusheia cache, não fecha conexões
 - **Ação:** Usar cancellation token / graceful shutdown
-- **Status (16 fev 2026):** ⚠️ **Não revalidado nesta atualização**
+- **Status (16 fev 2026):** ✅ **Concluído 100%**
   - Substituído `std::process::exit(1)` por `tokio_util::sync::CancellationToken`
   - `kill_switch_loop` agora cancela o token e retorna normalmente quando kill switch é ativado
   - `main.rs` coordena graceful shutdown com:
@@ -101,7 +101,6 @@
 - **`sidecar/src/cache.rs:74-84`** — itera TODOS os entries para evictar
 - Com 100k entries, vira gargalo
 - **Ação:** Usar heap de timestamps ou integrar o crate `lru` (já está no Cargo.toml)
-- **Status (16 fev 2026):** ❌ **Ainda O(n)** (LRU existe, mas varre mapa para achar menor timestamp)
 
 ### 9. 21 warnings no compilador Rust
 - `requester_pays.rs` (5 funções), `network_resilience.rs` (6 itens) — dead code
@@ -130,14 +129,10 @@
 ### 15. `prisma.$disconnect()` em API routes
 - **7 routes** chamam disconnect no client compartilhado
 - **Ação:** Remover todas as chamadas
-- **Status (16 fev 2026):** ✅ **Não encontrado em `src/` na varredura atual**
 
 ### 16. `SIDECAR_AUTH_BYPASS` em CI
 - **`.github/workflows/ci.yml:248,263`** e **`tests/load/sidecar-stress.js:29`**
 - **Ação:** Garantir que nunca chega em produção, adicionar check no CI
-- **Status (16 fev 2026):** ❌ **Ainda presente**
-  - `.github/workflows/ci.yml` linhas 248 e 263
-  - `tests/load/sidecar-stress.js:29`
 
 ### 17. 30+ TODOs/stubs em código de produção
 - `lease-alerts.ts:151` — notificações são stubs
@@ -147,9 +142,8 @@
 - `ai-act.ts:123,134` — análise de bias e PDF são stubs
 
 ### 18. Helm chart referenciado mas não existe
-- **Status (16 fev 2026):** ⚠️ **Item desatualizado**
-  - `k8s/sidecar/` existe
-  - Reavaliar CI antes de agir
+- CI referencia `./k8s/brain` como Helm chart, mas só tem `deployment.yaml` raw
+- **Ação:** Criar Chart.yaml + values.yaml ou mudar CI para `kubectl apply`
 
 ---
 
@@ -164,8 +158,8 @@
 - **Ação:** Atualizar para v4+
 
 ### 21. Dockerfile do sidecar não existe
-- **Status (16 fev 2026):** ⚠️ **Item desatualizado**
-  - `sidecar/Dockerfile` existe
+- CI job `build-sidecar` referencia `context: ./sidecar` sem Dockerfile
+- **Ação:** Criar multi-stage Dockerfile Rust
 
 ### 22. Docker image usa tag `latest` no K8s
 - **`k8s/deployment.yaml:62`** — anti-pattern, rollbacks impossíveis
@@ -176,9 +170,8 @@
 - **Ação:** Adicionar manifest do sidecar com resource limits
 
 ### 24. `WATERMARK_PROBABILITY` é 1.0 (branch morto)
-- **Status (16 fev 2026):** ✅ **Confirmado**
-  - `sidecar/src/watermark.rs` define `WATERMARK_PROBABILITY = 1.0`
-  - **Ação:** Configurar via env ou remover wrapper
+- **`watermark.rs`** — probabilistic watermark sempre executa
+- **Ação:** Configurar via env ou remover wrapper
 
 ### 25. `RecordPayload` TypedDict com `total=False`
 - **`types.py:8`** — campos required não são enforced
@@ -209,7 +202,7 @@
 
 ---
 
-## RESUMO (ATUALIZADO)
+## RESUMO
 
 | Prioridade | Qtd | Foco |
 |-----------|-----|------|

@@ -36,12 +36,12 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
   }
 
   return (
-    <Card className="hover:shadow-lg transition-shadow border border-gray-200">
+    <Card className="hover:shadow-sm transition-shadow border border-gray-200">
       <CardHeader>
         <div className="flex items-start justify-between">
           <div className="flex-1">
-            <CardTitle className="text-xl mb-2">{offer.title}</CardTitle>
-            <CardDescription className="line-clamp-2">
+            <CardTitle className="text-xl mb-2 text-gray-900">{offer.title}</CardTitle>
+            <CardDescription className="line-clamp-2 text-gray-900">
               {offer.description}
             </CardDescription>
           </div>
@@ -53,36 +53,36 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
 
       <CardContent className="space-y-4">
         {/* Supplier */}
-        <div className="flex items-center gap-2 text-sm">
-          <Shield className="h-4 w-4 text-muted-foreground" />
-          <span className="font-medium">{offer.supplier.name}</span>
-          <Badge variant="outline" className="text-xs">
+        <div className="flex items-center gap-2 text-sm text-gray-900">
+          <Shield className="h-4 w-4 text-gray-500" />
+          <span className="font-medium text-gray-900">{offer.supplier.name}</span>
+          <Badge variant="outline" className="text-xs text-gray-900 border-gray-300">
             {offer.supplier.organizationType}
           </Badge>
         </div>
 
         {/* Pricing */}
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 text-gray-900">
           <DollarSign className="h-4 w-4 text-gray-500" />
-          <span className="text-lg font-bold">
+          <span className="text-lg font-bold text-gray-900">
             {offer.currency} {offer.pricePerHour}/hr
           </span>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-sm text-gray-700">
             • {offer.scopeHours}h scope
           </span>
         </div>
 
         {/* Jurisdiction & Language */}
-        <div className="flex items-center gap-4 text-sm">
+        <div className="flex items-center gap-4 text-sm text-gray-900">
           <div className="flex items-center gap-1">
-            <Globe className="h-4 w-4 text-muted-foreground" />
+            <Globe className="h-4 w-4 text-gray-500" />
             <span>{offer.jurisdiction}</span>
           </div>
-          <Badge variant="secondary">{offer.language}</Badge>
+          <Badge variant="secondary" className="text-gray-900">{offer.language}</Badge>
         </div>
 
         {/* Trust Signals */}
-        <div className="flex items-center gap-4 text-sm text-gray-700">
+        <div className="flex items-center gap-4 text-sm text-gray-900">
           <div className="flex items-center gap-1">
             <CheckCircle2 className="h-4 w-4 text-gray-500" />
             <span>{offer.successfulAudits} audits</span>
@@ -97,12 +97,12 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
         {offer.useCases.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {offer.useCases.slice(0, 3).map((useCase) => (
-              <Badge key={useCase} variant="outline" className="text-xs">
+              <Badge key={useCase} variant="outline" className="text-xs text-gray-900 border-gray-300">
                 {useCase}
               </Badge>
             ))}
             {offer.useCases.length > 3 && (
-              <Badge variant="outline" className="text-xs">
+              <Badge variant="outline" className="text-xs text-gray-900 border-gray-300">
                 +{offer.useCases.length - 3} more
               </Badge>
             )}
@@ -112,7 +112,7 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
 
       <CardFooter>
         <Link href={`/xase/governed-access/${offer.offerId}`} className="w-full">
-          <Button className="w-full bg-gray-900 hover:bg-gray-800 text-white">View Contract Details</Button>
+          <Button variant="outline" className="w-full border border-gray-300 text-gray-900 bg-white hover:bg-gray-50">View Contract Details</Button>
         </Link>
       </CardFooter>
     </Card>
