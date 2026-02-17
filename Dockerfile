@@ -6,17 +6,16 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 COPY package.json package-lock.json ./
-RUN npm ci --only=production
+# Install full deps (including dev) to support building in the next stage
+RUN npm ci
 
 # Stage 2: Builder
 FROM node:20-alpine AS builder
 WORKDIR /app
 
-COPY package.json package-lock.json ./
-RUN npm ci
-
-COPY . .
+# Reuse node_modules from deps for faster and consistent builds
 COPY --from=deps /app/node_modules ./node_modules
+COPY . .
 
 # Generate Prisma client
 RUN npx prisma generate
