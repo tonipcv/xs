@@ -203,10 +203,36 @@ jobs:
           webhook_url: ${{ secrets.SLACK_WEBHOOK }}
         if: always()
 
-      - name: Create PagerDuty alert on failure
+      - name: Create PagerDuty change event on failure
         if: failure()
-        uses: PagerDuty/pagerduty-change-events-action@v1
-        with:
-          integration-key: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
-          summary: 'Deployment failed for commit ${{ github.sha }}'
-          severity: 'error'
+        env:
+          PD_ROUTING_KEY: ${{ secrets.PAGERDUTY_INTEGRATION_KEY }}
+          GITHUB_SHA: ${{ github.sha }}
+          GITHUB_ACTOR: ${{ github.actor }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_RUN_ID: ${{ github.run_id }}
+        run: |
+          if [ -z "$PD_ROUTING_KEY" ]; then
+            echo "PagerDuty routing key not set, skipping notification."
+            exit 0
+          fi
+          NOW_TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+          cat >payload.json <<'JSON'
+          {
+            "routing_key": "__RK__",
+            "payload": {
+              "summary": "Deployment failed for commit __SHA__",
+              "source": "github/__REPO__",
+              "timestamp": "__TS__",
+              "custom_details": {
+                "actor": "__ACTOR__",
+                "run_url": "https://github.com/__REPO__/actions/runs/__RUN_ID__"
+              }
+            }
+          }
+          JSON
+          sed -i.bak "s|__RK__|$PD_ROUTING_KEY|g; s|__SHA__|$GITHUB_SHA|g; s|__REPO__|$GITHUB_REPOSITORY|g; s|__ACTOR__|$GITHUB_ACTOR|g; s|__RUN_ID__|$GITHUB_RUN_ID|g; s|__TS__|$NOW_TS|g" payload.json || true
+          curl -sS -X POST \
+            -H "Content-Type: application/json" \
+            --data @payload.json \
+            https://events.pagerduty.com/v2/change/enqueue || true

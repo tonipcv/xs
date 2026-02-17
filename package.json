@@ -7,6 +7,7 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
+    "type-check": "tsc -p tsconfig.json --noEmit",
     "postinstall": "prisma generate",
     "migrate:data-connectors": "node scripts/migrate-data-connectors.js",
     "worker:audio": "tsx src/workers/audio-ingest.ts",
