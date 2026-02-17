@@ -66,6 +66,20 @@ export function AppSidebar() {
   const { data: session } = useSession();
   const { setOpen } = useSidebar();
 
+  // Hydrate organizationType from sessionStorage immediately to avoid flicker
+  useEffect(() => {
+    try {
+      const cached = typeof window !== 'undefined' ? window.sessionStorage.getItem('xase_org_type') : null;
+      if (cached && !organizationType) {
+        setOrganizationType(cached);
+        setOrgLoading(false);
+      }
+    } catch (_) {
+      // ignore storage errors
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   useEffect(() => {
     let cancelled = false;
     async function fetchOrganizationType() {
@@ -78,6 +92,13 @@ export function AppSidebar() {
         if (!cancelled && res.ok) {
           const data = await res.json();
           setOrganizationType(data.organizationType);
+          try {
+            if (typeof window !== 'undefined') {
+              window.sessionStorage.setItem('xase_org_type', String(data.organizationType || ''));
+            }
+          } catch (_) {
+            // ignore storage errors
+          }
         }
       } catch (_) {
         // suppress logs to avoid noisy console during startup
