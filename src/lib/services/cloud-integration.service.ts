@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { CloudProvider, IntegrationStatus } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { encryptToken, decryptToken } from './encryption';
@@ -252,7 +251,95 @@ export class CloudIntegrationService {
     refreshToken?: string;
     expiresIn: number;
   }> {
-    throw new Error('Token refresh not implemented for provider: ' + provider);
+    switch (provider) {
+      case CloudProvider.GCS:
+      case CloudProvider.BIGQUERY:
+        return await this.refreshGoogleToken(refreshToken);
+      
+      case CloudProvider.AWS_S3:
+        // AWS uses IAM roles or long-lived credentials, no refresh needed
+        throw new Error('AWS S3 does not use OAuth refresh tokens. Use IAM roles or access keys.');
+      
+      case CloudProvider.AZURE_BLOB:
+        return await this.refreshAzureToken(refreshToken);
+      
+      default:
+        throw new Error(`Token refresh not implemented for provider: ${provider}`);
+    }
+  }
+
+  private async refreshGoogleToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresIn: number;
+  }> {
+    const clientId = process.env.GOOGLE_CLIENT_ID;
+    const clientSecret = process.env.GOOGLE_CLIENT_SECRET;
+
+    if (!clientId || !clientSecret) {
+      throw new Error('GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET must be set for token refresh');
+    }
+
+    const response = await fetch('https://oauth2.googleapis.com/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Google token refresh failed: ${error}`);
+    }
+
+    const data = await response.json();
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token || refreshToken, // Google may not return new refresh token
+      expiresIn: data.expires_in,
+    };
+  }
+
+  private async refreshAzureToken(refreshToken: string): Promise<{
+    accessToken: string;
+    refreshToken?: string;
+    expiresIn: number;
+  }> {
+    const clientId = process.env.AZURE_CLIENT_ID;
+    const clientSecret = process.env.AZURE_CLIENT_SECRET;
+    const tenantId = process.env.AZURE_TENANT_ID;
+
+    if (!clientId || !clientSecret || !tenantId) {
+      throw new Error('AZURE_CLIENT_ID, AZURE_CLIENT_SECRET, and AZURE_TENANT_ID must be set for token refresh');
+    }
+
+    const response = await fetch(`https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: refreshToken,
+        grant_type: 'refresh_token',
+        scope: 'https://storage.azure.com/.default',
+      }),
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Azure token refresh failed: ${error}`);
+    }
+
+    const data = await response.json();
+    return {
+      accessToken: data.access_token,
+      refreshToken: data.refresh_token || refreshToken,
+      expiresIn: data.expires_in,
+    };
   }
 
   async deleteIntegration(integrationId: string) {

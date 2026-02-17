@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { validateApiKey } from '@/lib/xase/auth'
 import { prisma } from '@/lib/prisma'
@@ -72,8 +71,6 @@ export async function GET(req: NextRequest) {
             policyId: true,
             usagePurpose: true,
             maxHours: true,
-            pricePerHour: true,
-            currency: true,
           },
         },
       },
@@ -91,8 +88,6 @@ export async function GET(req: NextRequest) {
         maxHours: true,
         hoursConsumed: true,
         maxDownloads: true,
-        pricePerHour: true,
-        currency: true,
         status: true,
         expiresAt: true,
         createdAt: true,
@@ -176,8 +171,8 @@ export async function GET(req: NextRequest) {
         maxHours: policy.maxHours,
         hoursConsumed: policy.hoursConsumed,
         maxDownloads: policy.maxDownloads,
-        pricePerHour: policy.pricePerHour ? policy.pricePerHour.toString() : null,
-        currency: policy.currency,
+        // pricePerHour: null, // Pricing not yet implemented
+        // currency: "USD", // Pricing not yet implemented
         status: policy.status,
         expiresAt: policy.expiresAt?.toISOString() || null,
         createdAt: policy.createdAt.toISOString(),
@@ -207,7 +202,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('[Voice Evidence] Error:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { requireClient } from '@/lib/rbac'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'

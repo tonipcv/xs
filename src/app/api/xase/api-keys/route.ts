@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -34,7 +33,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ keys })
   } catch (error: any) {
     console.error('[API] GET /api/xase/api-keys error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to fetch API keys' }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }
 
@@ -83,6 +86,10 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[API] POST /api/xase/api-keys error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to create API key' }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }

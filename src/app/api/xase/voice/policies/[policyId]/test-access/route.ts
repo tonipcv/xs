@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -6,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { getTenantId } from '@/lib/xase/server-auth'
 import { validatePolicy, logAccess } from '@/lib/xase/policy-engine'
 
-export async function GET(req: NextRequest, context: any) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ policyId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -54,6 +53,7 @@ export async function GET(req: NextRequest, context: any) {
       apiKeyId: undefined,
       ipAddress,
       userAgent,
+      action: 'POLICY_CHECK',
     })
 
     // Log POLICY_CHECK without side effects
@@ -63,6 +63,7 @@ export async function GET(req: NextRequest, context: any) {
         requestedHours,
         clientTenantId: tenantId,
         userId: undefined,
+        action: 'POLICY_CHECK',
         apiKeyId: undefined,
         ipAddress,
         userAgent,

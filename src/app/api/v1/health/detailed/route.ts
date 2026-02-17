@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getRedisClient } from '@/lib/redis'
@@ -32,7 +31,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     checks.database = {
       status: 'unhealthy',
-      error: error.message,
+      error: 'Internal Server Error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}),
     }
     overallHealthy = false
     await ObservabilityMetrics.recordHealthCheck({
@@ -60,7 +59,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     checks.redis = {
       status: 'unhealthy',
-      error: error.message,
+      error: 'Internal Server Error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}),
     }
     overallHealthy = false
     await ObservabilityMetrics.recordHealthCheck({
@@ -101,7 +100,7 @@ export async function GET(req: NextRequest) {
     } catch (error: any) {
       checks.federatedAgent = {
         status: 'unhealthy',
-        error: error.message,
+        error: 'Internal Server Error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}),
       }
       overallHealthy = false
       await ObservabilityMetrics.recordHealthCheck({
@@ -130,7 +129,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     checks.system = {
       status: 'unhealthy',
-      error: error.message,
+      error: 'Internal Server Error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}),
     }
   }
 
@@ -148,7 +147,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     checks.apiLatency = {
       status: 'unknown',
-      error: error.message,
+      error: 'Internal Server Error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}),
     }
   }
 

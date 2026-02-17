@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     return NextResponse.json(
-      { error: 'JIT access request failed', details: error.message },
+      { error: 'JIT access request failed', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

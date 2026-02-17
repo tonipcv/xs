@@ -1,22 +1,37 @@
 use dashmap::DashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 
-/// High-performance segment cache using lock-free concurrent hashmap.
+/// Cache entry with LRU tracking
+struct CacheEntry {
+    data: Arc<Vec<u8>>,
+    last_access: AtomicU64, // Unix timestamp in milliseconds
+}
+
+/// High-performance segment cache using lock-free concurrent hashmap with LRU eviction.
 ///
-/// Key changes vs previous LRU-based implementation:
+/// Key features:
 /// - `Arc<Vec<u8>>` instead of `Vec<u8>`: eliminates expensive .clone() on every cache hit
 ///   (cloning an Arc is 8 bytes / atomic increment vs copying megabytes of audio data)
 /// - `DashMap` instead of `Mutex<LruCache>`: lock-free concurrent reads, no serialization
+/// - LRU eviction: tracks access time per entry, evicts least recently used
 /// - Atomic metrics for real-time performance monitoring
 ///
 /// Performance impact: 3-10x throughput improvement for concurrent GPU workers.
 pub struct SegmentCache {
-    cache: DashMap<String, Arc<Vec<u8>>>,
+    cache: DashMap<String, CacheEntry>,
     max_bytes: usize,
     current_bytes: AtomicUsize,
     hits: AtomicU64,
     misses: AtomicU64,
+}
+
+fn current_timestamp_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as u64
 }
 
 impl SegmentCache {
@@ -32,11 +47,14 @@ impl SegmentCache {
 
     /// Get a segment from cache. Returns Arc (zero-copy, just increments refcount).
     /// Multiple concurrent readers do NOT block each other.
+    /// Updates access time for LRU tracking.
     pub fn get(&self, key: &str) -> Option<Arc<Vec<u8>>> {
         match self.cache.get(key) {
             Some(entry) => {
                 self.hits.fetch_add(1, Ordering::Relaxed);
-                Some(Arc::clone(entry.value()))
+                // Update last access time for LRU
+                entry.last_access.store(current_timestamp_ms(), Ordering::Relaxed);
+                Some(Arc::clone(&entry.data))
             }
             None => {
                 self.misses.fetch_add(1, Ordering::Relaxed);
@@ -45,21 +63,30 @@ impl SegmentCache {
         }
     }
 
-    /// Insert a segment into cache. Evicts entries if over capacity.
+    /// Insert a segment into cache. Evicts LRU entries if over capacity.
     pub fn insert(&self, key: String, data: Vec<u8>) {
         let size = data.len();
 
-        // Evict if needed (simple strategy: remove random entries until we have space)
+        // Evict LRU entries if needed
         while self.current_bytes.load(Ordering::Relaxed) + size > self.max_bytes
             && !self.cache.is_empty()
         {
-            // Remove an arbitrary entry (DashMap doesn't have LRU, but for high cache sizes
-            // this is acceptable - the working set fits in 100GB RAM)
-            if let Some(entry) = self.cache.iter().next() {
-                let evict_key = entry.key().clone();
-                let evict_size = entry.value().len();
-                drop(entry);
-                if self.cache.remove(&evict_key).is_some() {
+            // Find least recently used entry
+            let mut lru_key: Option<String> = None;
+            let mut lru_time = u64::MAX;
+            
+            for entry in self.cache.iter() {
+                let access_time = entry.value().last_access.load(Ordering::Relaxed);
+                if access_time < lru_time {
+                    lru_time = access_time;
+                    lru_key = Some(entry.key().clone());
+                }
+            }
+            
+            // Evict LRU entry
+            if let Some(evict_key) = lru_key {
+                if let Some((_, evicted)) = self.cache.remove(&evict_key) {
+                    let evict_size = evicted.data.len();
                     self.current_bytes.fetch_sub(evict_size, Ordering::Relaxed);
                 }
             } else {
@@ -68,7 +95,11 @@ impl SegmentCache {
         }
 
         let arc_data = Arc::new(data);
-        self.cache.insert(key, arc_data);
+        let entry = CacheEntry {
+            data: arc_data,
+            last_access: AtomicU64::new(current_timestamp_ms()),
+        };
+        self.cache.insert(key, entry);
         self.current_bytes.fetch_add(size, Ordering::Relaxed);
     }
 
@@ -76,14 +107,26 @@ impl SegmentCache {
     pub fn insert_arc(&self, key: String, data: Arc<Vec<u8>>) {
         let size = data.len();
 
+        // Evict LRU entries if needed
         while self.current_bytes.load(Ordering::Relaxed) + size > self.max_bytes
             && !self.cache.is_empty()
         {
-            if let Some(entry) = self.cache.iter().next() {
-                let evict_key = entry.key().clone();
-                let evict_size = entry.value().len();
-                drop(entry);
-                if self.cache.remove(&evict_key).is_some() {
+            // Find least recently used entry
+            let mut lru_key: Option<String> = None;
+            let mut lru_time = u64::MAX;
+            
+            for entry in self.cache.iter() {
+                let access_time = entry.value().last_access.load(Ordering::Relaxed);
+                if access_time < lru_time {
+                    lru_time = access_time;
+                    lru_key = Some(entry.key().clone());
+                }
+            }
+            
+            // Evict LRU entry
+            if let Some(evict_key) = lru_key {
+                if let Some((_, evicted)) = self.cache.remove(&evict_key) {
+                    let evict_size = evicted.data.len();
                     self.current_bytes.fetch_sub(evict_size, Ordering::Relaxed);
                 }
             } else {
@@ -91,7 +134,11 @@ impl SegmentCache {
             }
         }
 
-        self.cache.insert(key, data);
+        let entry = CacheEntry {
+            data,
+            last_access: AtomicU64::new(current_timestamp_ms()),
+        };
+        self.cache.insert(key, entry);
         self.current_bytes.fetch_add(size, Ordering::Relaxed);
     }
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { prisma } from '@/lib/prisma'
 
 export type JobStatus = 'PENDING' | 'RUNNING' | 'DONE' | 'FAILED'

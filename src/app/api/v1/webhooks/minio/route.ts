@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { processAudioFile, updateDatasetMetrics, createAudioSegment } from '@/lib/xase/audio-processor'

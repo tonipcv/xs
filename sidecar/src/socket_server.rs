@@ -66,35 +66,22 @@ async fn handle_connection(
         // Cache hit: zero-copy Arc<Vec<u8>>, no blocking
         cached
     } else {
-        // Cache miss: download from S3
+        // Cache miss: download from S3 and watermark BEFORE serving
         let raw_data = s3_client.download(&segment_id).await?;
 
-        // Store raw data in cache immediately (GPU gets data FAST)
-        let arc_data = Arc::new(raw_data);
+        // CRITICAL: Apply watermark synchronously to enforce "always watermarked" guarantee
+        let watermarked_data = watermark::watermark_audio_probabilistic(
+            raw_data,
+            &config.contract_id,
+            watermark::WATERMARK_PROBABILITY,
+        ).map_err(|e| {
+            error!("Watermarking failed for segment {}: {}", segment_id, e);
+            anyhow::anyhow!("Watermarking failed: {}", e)
+        })?;
+
+        // Store watermarked data in cache
+        let arc_data = Arc::new(watermarked_data);
         cache.insert_arc(segment_id.clone(), Arc::clone(&arc_data));
-
-        // Watermark in background - GPU does NOT wait for FFT
-        let bg_cache = cache.clone();
-        let bg_segment_id = segment_id.clone();
-        let bg_contract_id = config.contract_id.clone();
-        let bg_data = Arc::clone(&arc_data);
-
-        tokio::spawn(async move {
-            match watermark::watermark_audio_probabilistic(
-                (*bg_data).clone(),
-                &bg_contract_id,
-                watermark::WATERMARK_PROBABILITY,
-            ) {
-                Ok(watermarked) => {
-                    // Replace raw data with watermarked version in cache
-                    bg_cache.insert(bg_segment_id, watermarked);
-                }
-                Err(e) => {
-                    // Non-fatal: GPU got data, watermark is for audit trail
-                    warn!("Background watermarking failed for segment: {}", e);
-                }
-            }
-        });
 
         arc_data
     };

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { getServerSession } from "next-auth/next";
 import { prisma } from '@/lib/prisma';
@@ -13,10 +12,14 @@ export async function GET() {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { planTier: true }
+      select: { 
+        tenant: {
+          select: { plan: true }
+        }
+      }
     });
 
-    const isPremium = user ? user.planTier !== 'sandbox' : false;
+    const isPremium = user?.tenant ? user.tenant.plan !== 'sandbox' : false;
     return NextResponse.json({ isPremium });
   } catch (error) {
     console.error('Error fetching premium status:', error);

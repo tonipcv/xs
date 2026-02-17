@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * XASE CORE - API Key Management (Individual)
  * 

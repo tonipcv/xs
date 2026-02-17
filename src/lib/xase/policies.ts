@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * XASE CORE - Policy Management
  * 

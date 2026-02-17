@@ -1,4 +1,3 @@
-// @ts-nocheck
 import crypto from 'crypto'
 import { NextRequest } from 'next/server'
 import { getRedisClient } from '@/lib/redis'

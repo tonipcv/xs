@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Dataset Workflow Helper
  * Facilita o fluxo completo: upload → processamento → download controlado

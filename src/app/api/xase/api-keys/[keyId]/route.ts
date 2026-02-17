@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -7,7 +6,7 @@ import { getTenantId } from '@/lib/xase/server-auth'
 
 export async function DELETE(
   req: NextRequest,
-  context: any
+  { params }: { params: Promise<{ keyId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -40,6 +39,10 @@ export async function DELETE(
     return NextResponse.json({ success: true, message: 'API key revoked' })
   } catch (error: any) {
     console.error('[API] DELETE /api/xase/api-keys/[keyId] error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to revoke API key' }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }

@@ -245,7 +245,8 @@ jobs:
         run: npm run dev &
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/xase_test
-          SIDECAR_AUTH_BYPASS: '1'
+          NODE_ENV: test
+          SIDECAR_AUTH_BYPASS: '1'  # TEST ONLY - never set in production
       
       - name: Wait for server
         run: npx wait-on http://localhost:3000/api/health -t 60000

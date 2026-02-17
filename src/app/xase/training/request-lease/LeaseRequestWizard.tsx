@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 interface Policy {
   policyId: string;
   datasetId: string;
-  pricePerHour: number;
+  // pricePerHour: number; // Not yet in schema
   maxHours: number | null;
   maxConcurrentLeases: number | null;
   allowedEnvironment: string | null;
@@ -98,9 +98,7 @@ export function LeaseRequestWizard({ policies, tenantId }: LeaseRequestWizardPro
     }
   };
 
-  const estimatedCost = selectedPolicy
-    ? (estimatedHours * selectedPolicy.pricePerHour).toFixed(2)
-    : '0.00';
+  const estimatedCost = '0.00'; // Pricing not yet implemented in schema
 
   return (
     <div className="space-y-4">
@@ -163,7 +161,7 @@ export function LeaseRequestWizard({ policies, tenantId }: LeaseRequestWizardPro
                     <div>
                       <p className="text-[10px] text-gray-500 uppercase tracking-wider">Price</p>
                       <p className="text-sm text-gray-900 tabular-nums mt-0.5">
-                        ${policy.pricePerHour.toFixed(2)}/h
+                        TBD
                       </p>
                     </div>
                   </div>
@@ -197,8 +195,7 @@ export function LeaseRequestWizard({ policies, tenantId }: LeaseRequestWizardPro
             <h3 className="text-xs font-medium text-gray-900 mb-1">Selected Dataset</h3>
             <p className="text-sm text-gray-900">{selectedPolicy.dataset.name}</p>
             <p className="text-xs text-gray-600 mb-0">
-              <span className="tabular-nums">{selectedPolicy.dataset.totalDurationHours.toFixed(1)}h</span> available · $
-              <span className="tabular-nums">{selectedPolicy.pricePerHour.toFixed(2)}</span>/h
+              <span className="tabular-nums">{selectedPolicy.dataset.totalDurationHours.toFixed(1)}h</span> available
             </p>
           </div>
 

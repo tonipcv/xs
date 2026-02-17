@@ -1,5 +1,5 @@
-// @ts-nocheck
-import { NextAuthOptions } from 'next-auth'
+import { NextAuthOptions, User } from 'next-auth'
+import { JWT } from 'next-auth/jwt'
 import GoogleProvider from 'next-auth/providers/google'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { prisma } from '@/lib/prisma'
@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
         otp: { label: 'One-Time Code', type: 'text' },
         totp: { label: 'Authenticator Code', type: 'text' }
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<User | null> {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Credenciais inválidas')
         }
@@ -57,7 +57,7 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.name || "",
           email: user.email,
-          image: user.image,
+          image: user.image || null,
           isPremium: false,
         }
       }
@@ -71,14 +71,14 @@ export const authOptions: NextAuthOptions = {
   },
   debug: process.env.NODE_ENV === 'development',
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user }: { token: JWT; user?: User }) {
       if (user) {
         token.isPremium = user.isPremium;
         token.id = user.id;
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: JWT }) {
       if (session.user) {
         session.user.isPremium = token.isPremium as boolean;
         session.user.id = token.id as string;

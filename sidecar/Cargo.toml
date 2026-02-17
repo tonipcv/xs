@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 tokio = { version = "1.35", features = ["full"] }
+tokio-util = "0.7"
 hyper = { version = "1.1", features = ["full"] }
 aws-sdk-s3 = "1.12"
 aws-config = "1.1"
@@ -21,6 +22,7 @@ tracing = "0.1"
 tracing-subscriber = "0.3"
 rand = "0.8"
 sha2 = "0.10"
+chrono = { version = "0.4", features = ["clock", "std"] }
 
 [profile.release]
 opt-level = 3

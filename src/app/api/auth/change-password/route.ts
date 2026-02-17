@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -13,7 +12,12 @@ export async function POST(request: Request) {
       return new NextResponse('Unauthorized', { status: 401 })
     }
 
-    const { currentPassword, newPassword } = await request.json()
+    const body = await request.json() as { currentPassword?: string; newPassword?: string };
+    const { currentPassword, newPassword } = body;
+    
+    if (!currentPassword || !newPassword) {
+      return new NextResponse('Missing required fields', { status: 400 });
+    }
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email }

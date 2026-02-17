@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * DATASET LIFECYCLE ENFORCEMENT
  * Garante transições de estado obrigatórias e não puláveis

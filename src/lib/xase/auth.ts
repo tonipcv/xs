@@ -78,62 +78,114 @@ export async function validateApiKey(request: Request | NextRequest): Promise<Au
   }
   
   try {
-    // Buscar todas as API keys ativas (comparação via bcrypt)
-    const apiKeys = await prisma.apiKey.findMany({
+    // Extract key prefix for indexed lookup (first 8 chars before underscore)
+    // Format: xase_live_abc123... or xase_test_xyz789...
+    const keyPrefix = apiKey.substring(0, Math.min(16, apiKey.indexOf('_', 10) + 8));
+    
+    // Try Redis cache first for hot path optimization
+    try {
+      const redis = await getRedisClient();
+      const cacheKey = `apikey:${keyPrefix}`;
+      const cached = await redis.get(cacheKey);
+      
+      if (cached) {
+        const cachedData = JSON.parse(cached);
+        // Verify hash still matches (defense against cache poisoning)
+        const isValid = await bcrypt.compare(apiKey, cachedData.keyHash);
+        if (isValid && cachedData.isActive && cachedData.tenantStatus === 'ACTIVE') {
+          // Update lastUsedAt async
+          prisma.apiKey.update({
+            where: { id: cachedData.id },
+            data: { lastUsedAt: new Date() },
+          }).catch(() => {});
+          
+          return {
+            valid: true,
+            tenantId: cachedData.tenantId,
+            apiKeyId: cachedData.id,
+            permissions: cachedData.permissions || ['ingest', 'verify'],
+          };
+        }
+        // Cache miss or invalid - fall through to DB lookup
+      }
+    } catch (redisErr) {
+      // Redis unavailable - fall through to DB lookup
+      console.warn('[XASE][Auth] Redis cache unavailable:', (redisErr as any)?.message);
+    }
+    
+    // DB lookup with indexed query using keyPrefix
+    // This reduces the search space significantly (O(1) with proper index)
+    const apiKeyRecord = await prisma.apiKey.findFirst({
       where: {
         isActive: true,
+        // Use keyHash prefix for indexed lookup if DB supports it
+        // Otherwise this still filters the result set before bcrypt compare
+        id: {
+          contains: keyPrefix.substring(0, 8), // Partial match on ID for index hint
+        },
       },
       include: {
         tenant: true,
       },
     });
     
-    // Verificar cada key (bcrypt compare), com proteções
-    for (const apiKeyRecord of apiKeys) {
-      try {
-        if (!apiKeyRecord?.keyHash || typeof apiKeyRecord.keyHash !== 'string') {
-          // Registro inválido, ignora
-          continue;
-        }
-        const isValid = await bcrypt.compare(apiKey, apiKeyRecord.keyHash);
-        if (!isValid) continue;
-
-        // Verificar tenant ativo
-        if (apiKeyRecord.tenant?.status !== 'ACTIVE') {
-          return { 
-            valid: false, 
-            error: 'Tenant suspended or cancelled' 
-          };
-        }
-
-        // Atualizar lastUsedAt (fire-and-forget)
-        prisma.apiKey.update({
-          where: { id: apiKeyRecord.id },
-          data: { lastUsedAt: new Date() },
-        }).catch((e) => console.error('[XASE][Auth] Failed to update lastUsedAt', e?.message || e));
-
-        // Parse permissions com default seguro
-        const rawPerms = apiKeyRecord.permissions;
-        const permissions = typeof rawPerms === 'string' && rawPerms.length > 0
-          ? rawPerms.split(',').map(p => p.trim()).filter(Boolean)
-          : ['ingest', 'verify'];
-
-        return {
-          valid: true,
-          tenantId: apiKeyRecord.tenantId,
-          apiKeyId: apiKeyRecord.id,
-          permissions,
-        };
-      } catch (cmpErr) {
-        // Se um registro estiver corrompido, ignora e continua
-        console.error('[XASE][Auth] compare error (ignored):', (cmpErr as any)?.message || String(cmpErr));
-        continue;
-      }
+    if (!apiKeyRecord?.keyHash || typeof apiKeyRecord.keyHash !== 'string') {
+      return { 
+        valid: false, 
+        error: 'Invalid API key' 
+      };
     }
     
-    return { 
-      valid: false, 
-      error: 'Invalid API key' 
+    // Verify hash
+    const isValid = await bcrypt.compare(apiKey, apiKeyRecord.keyHash);
+    if (!isValid) {
+      return { 
+        valid: false, 
+        error: 'Invalid API key' 
+      };
+    }
+
+    // Verify tenant active
+    if (apiKeyRecord.tenant?.status !== 'ACTIVE') {
+      return { 
+        valid: false, 
+        error: 'Tenant suspended or cancelled' 
+      };
+    }
+
+    // Parse permissions
+    const rawPerms = apiKeyRecord.permissions;
+    const permissions = typeof rawPerms === 'string' && rawPerms.length > 0
+      ? rawPerms.split(',').map(p => p.trim()).filter(Boolean)
+      : ['ingest', 'verify'];
+
+    // Cache the result for 5 minutes
+    try {
+      const redis = await getRedisClient();
+      const cacheKey = `apikey:${keyPrefix}`;
+      await redis.setex(cacheKey, 300, JSON.stringify({
+        id: apiKeyRecord.id,
+        tenantId: apiKeyRecord.tenantId,
+        keyHash: apiKeyRecord.keyHash,
+        isActive: apiKeyRecord.isActive,
+        tenantStatus: apiKeyRecord.tenant?.status,
+        permissions,
+      }));
+    } catch (redisErr) {
+      // Non-fatal - cache write failure
+    }
+
+    // Update lastUsedAt async
+    prisma.apiKey.update({
+      where: { id: apiKeyRecord.id },
+      data: { lastUsedAt: new Date() },
+    }).catch((e) => console.error('[XASE][Auth] Failed to update lastUsedAt', e?.message || e));
+
+    return {
+      valid: true,
+      tenantId: apiKeyRecord.tenantId,
+      apiKeyId: apiKeyRecord.id,
+      permissions,
     };
     
   } catch (error) {

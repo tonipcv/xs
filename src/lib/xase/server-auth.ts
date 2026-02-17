@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * XASE CORE - Server-side Auth Helpers
  * 
@@ -130,6 +129,6 @@ export async function getTenantContext(): Promise<{
   const session = await getServerSession(authOptions);
   const userEmail = session?.user?.email || null;
   const tenantId = await getTenantId();
-  const role = ((session?.user as any)?.xaseRole as 'OWNER' | 'ADMIN' | 'VIEWER') || 'OWNER';
-  return { userId: userEmail, tenantId, role };
+  const role = (session?.user as any)?.xaseRole as 'OWNER' | 'ADMIN' | 'VIEWER' | undefined;
+  return { userId: userEmail, tenantId, role: role || 'OWNER' };
 }

@@ -1,8 +1,8 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
 import { getPresignedUrl, isStorageConfigured } from '@/lib/xase/storage'
 import { enforceAccess, extractRequestContext } from '@/lib/xase/access-enforcement'
+import { prisma } from '@/lib/prisma'
 import { z } from 'zod'
 
 const QuerySchema = z.object({
@@ -10,7 +10,7 @@ const QuerySchema = z.object({
   fileName: z.string().min(1).optional(),
 })
 
-export async function GET(req: NextRequest, context: any) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId) {

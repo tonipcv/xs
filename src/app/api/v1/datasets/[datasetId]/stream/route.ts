@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
@@ -130,20 +129,19 @@ export async function GET(
     // For now, basic enforcement is done via policy.canStream check above
 
     // 3.5) Check and consume epsilon budget for differential privacy
-    // TODO: Re-enable after fixing epsilon_budget_configs schema
-    // const budgetTracker = new EpsilonBudgetTracker()
-    // const epsilon = 0.1 // Small epsilon per streaming batch
-    // const budgetCheck = await budgetTracker.canExecuteQuery(
-    //   clientTenantId as string,
-    //   dataset.id,
-    //   epsilon
-    // )
-    // if (!budgetCheck.allowed) {
-    //   return NextResponse.json(
-    //     { error: budgetCheck.reason || 'Epsilon budget exhausted' },
-    //     { status: 429 }
-    //   )
-    // }
+    const budgetTracker = new EpsilonBudgetTracker()
+    const epsilon = 0.1 // Small epsilon per streaming batch
+    const budgetCheck = await budgetTracker.canExecuteQuery(
+      clientTenantId as string,
+      dataset.id,
+      epsilon
+    )
+    if (!budgetCheck.allowed) {
+      return NextResponse.json(
+        { error: budgetCheck.reason || 'Epsilon budget exhausted' },
+        { status: 429 }
+      )
+    }
 
     // 4) Optional soft metering and auditing (estimate hours per batch if provided)
     if (estimatedHours > 0) {
@@ -165,7 +163,8 @@ export async function GET(
           where: {
             policyId: policy.id,
             leaseId: lease.id,
-            status: 'ACTIVE',
+            revokedAt: null,
+            expiresAt: { gt: now },
           },
         })
         if (execution) {
@@ -206,26 +205,24 @@ export async function GET(
       })
 
       // Consume epsilon budget after successful access
-      // TODO: Re-enable after fixing epsilon_budget_configs schema
-      // await budgetTracker.consumeBudget(
-      //   clientTenantId as string,
-      //   dataset.id,
-      //   epsilon,
-      //   (apiKeyId as string) || null,
-      //   'streaming_access',
-      //   jobId || `stream_${Date.now()}`
-      // )
+      await budgetTracker.consumeBudget(
+        clientTenantId as string,
+        dataset.id,
+        epsilon,
+        (apiKeyId as string) || 'system',
+        'streaming_access',
+        jobId || `stream_${Date.now()}`
+      )
     } else {
       // Even without estimatedHours, consume epsilon budget
-      // TODO: Re-enable after fixing epsilon_budget_configs schema
-      // await budgetTracker.consumeBudget(
-      //   clientTenantId as string,
-      //   dataset.id,
-      //   epsilon,
-      //   (apiKeyId as string) || null,
-      //   'streaming_access',
-      //   jobId || `stream_${Date.now()}`
-      // )
+      await budgetTracker.consumeBudget(
+        clientTenantId as string,
+        dataset.id,
+        epsilon,
+        (apiKeyId as string) || 'system',
+        'streaming_access',
+        jobId || `stream_${Date.now()}`
+      )
     }
 
     const body = {

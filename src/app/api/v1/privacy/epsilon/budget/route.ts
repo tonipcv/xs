@@ -39,7 +39,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('Error getting epsilon budget:', error);
     return NextResponse.json(
-      { error: 'Failed to get budget', details: error.message },
+      { error: 'Failed to get budget', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     );
   }
@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Error consuming epsilon budget:', error);
     return NextResponse.json(
-      { error: 'Failed to consume budget', details: error.message },
+      { error: 'Failed to consume budget', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     );
   }

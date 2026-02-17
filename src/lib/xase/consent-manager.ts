@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CONSENT MANAGER - Real-time Consent Propagation
  * 

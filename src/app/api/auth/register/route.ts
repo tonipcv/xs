@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
@@ -8,7 +7,7 @@ import { type Region } from '@/lib/prices';
 
 export async function POST(req: Request) {
   try {
-    const body = await req.json().catch(() => null as any);
+    const body = await req.json().catch(() => null);
 
     if (!body || typeof body !== 'object') {
       return NextResponse.json(
@@ -104,7 +103,7 @@ export async function POST(req: Request) {
         },
       });
     } catch (dbError) {
-      const dbErrMsg = dbError instanceof Error ? dbError.message : String(dbError ?? 'Unknown database error');
+      const dbErrMsg = dbError instanceof Error ? dbError.message : 'Unknown database error';
       console.error('Database error:', dbErrMsg);
       const isDev = process.env.NODE_ENV !== 'production';
       return NextResponse.json(
@@ -113,7 +112,7 @@ export async function POST(req: Request) {
       );
     }
   } catch (error) {
-    const errMsg = error instanceof Error ? error.message : String(error ?? 'Unknown registration error');
+    const errMsg = error instanceof Error ? error.message : 'Unknown registration error';
     console.error('Registration error:', errMsg);
     const isDev = process.env.NODE_ENV !== 'production';
     return NextResponse.json(

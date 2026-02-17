@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * CLICKHOUSE CLIENT
  * ClickHouse Client for XASE
@@ -13,10 +12,20 @@ let client: CHClient | null = null
 
 export function getClickHouseClient(): CHClient {
   if (!client) {
+    const isProduction = process.env.NODE_ENV === 'production'
     const url = process.env.CLICKHOUSE_URL || 'http://localhost:8123'
     const username = process.env.CLICKHOUSE_USER || 'xase'
-    const password = process.env.CLICKHOUSE_PASSWORD || 'xase_dev_password'
+    const password = process.env.CLICKHOUSE_PASSWORD || (isProduction ? '' : 'xase_dev_password')
     const database = process.env.CLICKHOUSE_DATABASE || 'xase_audit'
+
+    // SECURITY: Require password in production
+    if (isProduction && !password) {
+      throw new Error('CRITICAL: CLICKHOUSE_PASSWORD must be set in production')
+    }
+
+    if (!isProduction && password === 'xase_dev_password') {
+      console.warn('[ClickHouse] ⚠️  Using default dev password - NOT FOR PRODUCTION')
+    }
 
     client = createClient({
       url,
@@ -103,7 +112,8 @@ class ChainManager {
     const key = `${tenantId}:${tableName}`
     
     if (this.chains.has(key)) {
-      return this.chains.get(key)!
+      const cached = this.chains.get(key)!
+      return { hash: cached.lastHash, index: cached.index }
     }
 
     // Fetch from ClickHouse
@@ -123,16 +133,16 @@ class ChainManager {
     const rows = await result.json<{ event_hash: string; chain_index: string }>()
     
     if (rows.length > 0) {
-      const lastHash = rows[0].event_hash
+      const hash = rows[0].event_hash
       const index = parseInt(rows[0].chain_index, 10)
-      this.chains.set(key, { lastHash, index })
-      return { hash: lastHash, index }
+      this.chains.set(key, { lastHash: hash, index })
+      return { hash, index }
     }
 
     // Genesis hash
-    const genesisHash = generateHMAC(`genesis:${tenantId}:${tableName}`, process.env.XASE_HMAC_SECRET || 'dev-secret')
-    this.chains.set(key, { lastHash: genesisHash, index: 0 })
-    return { hash: genesisHash, index: 0 }
+    const hash = generateHMAC(`genesis:${tenantId}:${tableName}`, process.env.XASE_HMAC_SECRET || 'dev-secret')
+    this.chains.set(key, { lastHash: hash, index: 0 })
+    return { hash, index: 0 }
   }
 
   updateChain(tenantId: string, tableName: string, hash: string, index: number) {
@@ -171,7 +181,8 @@ export async function insertAuditEvent(event: AuditEvent): Promise<void> {
   let checkpointIndex = 0
   if (chainManager.shouldCheckpoint(chainIndex)) {
     const kms = getKMSProvider()
-    checkpointSignature = await kms.sign(eventHash)
+    const signatureResult = await kms.sign(eventHash)
+    checkpointSignature = signatureResult.signature
     checkpointIndex = chainIndex
 
     // Store checkpoint
@@ -185,7 +196,7 @@ export async function insertAuditEvent(event: AuditEvent): Promise<void> {
         event_count: chainIndex,
         last_event_hash: eventHash,
         signature: checkpointSignature,
-        kms_key_id: process.env.KMS_KEY_ID || 'mock',
+        kms_key_id: signatureResult.keyId,
       }],
       format: 'JSONEachRow',
     })

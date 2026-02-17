@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { redirect } from 'next/navigation'
@@ -37,7 +36,7 @@ export default async function EvidencePrintPage({ searchParams }: { searchParams
     orderBy: { timestamp: 'desc' },
     include: {
       dataset: { select: { datasetId: true, name: true, language: true, consentStatus: true, jurisdiction: true } },
-      policy: { select: { policyId: true, usagePurpose: true, maxHours: true, hoursConsumed: true, expiresAt: true, pricePerHour: true, currency: true } },
+      policy: { select: { policyId: true, usagePurpose: true, maxHours: true, hoursConsumed: true, expiresAt: true } },
     }
   })
 
@@ -77,7 +76,7 @@ export default async function EvidencePrintPage({ searchParams }: { searchParams
           </div>
 
           <div className="h1">{title}</div>
-          <div className="muted">Window: last {days} day(s){searchParams.datasetId ? ` • Dataset: ${searchParams.datasetId}` : ''}</div>
+          <div className="muted">Window: last {days} day(s){params.datasetId ? ` • Dataset: ${params.datasetId}` : ''}</div>
 
           <div className="card">
             <div className="muted" style={{ marginBottom: 8 }}>Events</div>

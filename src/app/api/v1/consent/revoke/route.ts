@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API] POST /api/v1/consent/revoke error:', error)
     return NextResponse.json(
-      { error: 'Internal error', details: error.message },
+      { error: 'Internal error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

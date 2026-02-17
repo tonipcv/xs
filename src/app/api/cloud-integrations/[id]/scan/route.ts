@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -116,8 +115,9 @@ export async function POST(
     return NextResponse.json(results)
   } catch (error: any) {
     console.error('Scan error:', error)
+    const isDev = process.env.NODE_ENV !== 'production';
     return NextResponse.json(
-      { error: error.message || 'Failed to scan folder' },
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

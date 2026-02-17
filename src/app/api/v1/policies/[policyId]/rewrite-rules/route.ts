@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey } from '@/lib/xase/auth'
@@ -13,7 +12,7 @@ const RewriteRulesSchema = z.object({
 
 export async function PUT(
   req: NextRequest,
-  context: any
+  { params }: { params: Promise<{ policyId: string }> }
 ) {
   try {
     const auth = await validateApiKey(req)
@@ -83,7 +82,7 @@ export async function PUT(
 
 export async function GET(
   req: NextRequest,
-  context: any
+  { params }: { params: Promise<{ policyId: string }> }
 ) {
   try {
     const auth = await validateApiKey(req)

@@ -1,9 +1,9 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
 import { publishDataset } from '@/lib/xase/dataset-lifecycle'
+import { prisma } from '@/lib/prisma'
 
-export async function POST(req: NextRequest, context: any) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId) {

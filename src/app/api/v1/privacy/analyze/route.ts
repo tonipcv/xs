@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * PRIVACY ANALYSIS API
  * 
@@ -30,7 +29,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch dataset
-    const dataset = await prisma.voiceDataset.findFirst({
+    const dataset = await prisma.dataset.findFirst({
       where: {
         datasetId,
         tenantId: session.user.id || undefined,
@@ -55,7 +54,7 @@ export async function POST(req: NextRequest) {
     // Store analysis result
     await prisma.auditLog.create({
       data: {
-        tenantId: auth.tenantId,
+        tenantId: dataset.tenantId,
         userId: session.user.id || 'system',
         action: 'PRIVACY_ANALYSIS',
         resourceType: 'DATASET',
@@ -78,7 +77,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[PrivacyAnalysis] Error:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

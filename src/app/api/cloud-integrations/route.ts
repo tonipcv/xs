@@ -1,4 +1,3 @@
-// @ts-nocheck
 export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
@@ -119,8 +118,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ id: result.id });
   } catch (error: any) {
     console.error('Create integration error:', error);
+    const isDev = process.env.NODE_ENV !== 'production';
     return NextResponse.json(
-      { error: error.message || 'Failed to create integration' },
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     );
   }

@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API] POST /api/v1/ingestion/quality error:', error)
     return NextResponse.json(
-      { error: error.message || 'Validation failed' },
+      { error: 'Internal Server Error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

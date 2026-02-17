@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API] POST /api/v1/ingestion/pii error:', error)
     return NextResponse.json(
-      { error: error.message || 'PII processing failed' },
+      { error: 'Internal Server Error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

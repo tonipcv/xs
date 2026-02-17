@@ -246,7 +246,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('Audit query error:', error);
     return NextResponse.json(
-      { error: 'Failed to query audit logs', details: error.message },
+      { error: 'Failed to query audit logs', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     );
   }
@@ -317,7 +317,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('Audit query error:', error);
     return NextResponse.json(
-      { error: 'Failed to query audit logs', details: error.message },
+      { error: 'Failed to query audit logs', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     );
   }

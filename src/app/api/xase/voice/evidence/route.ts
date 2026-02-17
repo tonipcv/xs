@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -37,7 +36,7 @@ export async function GET(req: NextRequest) {
       orderBy: { timestamp: 'desc' },
       include: {
         dataset: { select: { datasetId: true, name: true, language: true, consentStatus: true, jurisdiction: true } },
-        policy: { select: { policyId: true, usagePurpose: true, maxHours: true, hoursConsumed: true, expiresAt: true, pricePerHour: true, currency: true } },
+        policy: { select: { policyId: true, usagePurpose: true, maxHours: true, hoursConsumed: true, expiresAt: true } },
       }
     })
 
@@ -61,8 +60,7 @@ export async function GET(req: NextRequest) {
           maxHours: log.policy.maxHours,
           hoursConsumed: log.policy.hoursConsumed,
           expiresAt: log.policy.expiresAt,
-          pricePerHour: log.policy.pricePerHour,
-          currency: log.policy.currency,
+          // pricePerHour and currency not yet in schema
         })
       }
     }

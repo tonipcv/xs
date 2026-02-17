@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Audio Processor - MVP Internal Worker
  * Processa arquivos de áudio de forma síncrona (leve) para MVP
@@ -139,6 +138,7 @@ export async function createAudioSegment(
       fileSize: result.fileSize ? BigInt(result.fileSize) : null,
       fileHash: result.fileHash || null,
       language: dataset.language,
+      dataSourceId: "legacy", // TODO: link to actual DataSource
     },
   })
 }

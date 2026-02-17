@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
@@ -14,7 +13,7 @@ function genPolicyId() {
 export async function GET(req: NextRequest) {
   try {
     const auth = await validateApiKey(req)
-    let tenantId: string | null = auth.valid ? auth.tenantId : null
+    let tenantId: string | null = auth.valid ? (auth.tenantId || null) : null
     if (!tenantId) {
       const session = await getServerSession(authOptions)
       if (!session?.user?.email) {
@@ -97,7 +96,7 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const auth = await validateApiKey(req)
-    let tenantId: string | null = auth.valid ? auth.tenantId : null
+    let tenantId: string | null = auth.valid ? (auth.tenantId || null) : null
     if (!tenantId) {
       const session = await getServerSession(authOptions)
       if (!session?.user?.email) {

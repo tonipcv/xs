@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Metadata } from 'next';
 import { requireClient } from '@/lib/rbac';
 import { AppLayout } from '@/components/AppSidebar';
@@ -53,7 +52,7 @@ export default async function RequestLeasePage() {
 
   const serializedPolicies = availablePolicies.map((policy) => ({
     ...policy,
-    pricePerHour: policy.pricePerHour ? Number(policy.pricePerHour) : 0,
+    // pricePerHour not yet in schema
     createdAt: policy.createdAt.toISOString(),
     revokedAt: policy.revokedAt?.toISOString() || null,
     dataset: {

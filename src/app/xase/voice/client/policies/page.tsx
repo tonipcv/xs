@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { AppLayout } from '@/components/AppSidebar'
 import { prisma } from '@/lib/prisma'
 import { requireClient } from '@/lib/rbac'

@@ -8,7 +8,6 @@
  * - Per-tenant and per-user limits
  */
 
-// @ts-nocheck
 import { redis } from '@/lib/redis'
 
 export interface RateLimitConfig {

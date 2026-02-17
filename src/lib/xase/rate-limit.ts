@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { prisma } from '@/lib/prisma';
 import { TenantContext } from '@/lib/xase/rbac';
 

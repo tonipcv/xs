@@ -10,7 +10,8 @@ const MAX_FREQUENCY: usize = 8000; // Hz
 const NUM_BINS: usize = 128; // Number of frequency bins to modify
 
 // Probabilistic watermarking config
-pub const WATERMARK_PROBABILITY: f32 = 0.20; // 20% dos arquivos (80% CPU saved)
+// Production guarantee: always watermarked
+pub const WATERMARK_PROBABILITY: f32 = 1.0; // 100% dos arquivos
 
 /// Decide se deve aplicar watermark baseado em hash determinístico
 /// 
@@ -31,11 +32,12 @@ fn should_watermark_probabilistic(audio_data: &[u8], probability: f32) -> bool {
 /// Apenas 20% dos arquivos são marcados (determinístico por hash).
 /// Economia: 80% CPU, ainda detecta leaks (200 arquivos em 1000).
 pub fn watermark_audio_probabilistic(audio_data: Vec<u8>, contract_id: &str, probability: f32) -> Result<Vec<u8>> {
+    // With probability set to 1.0 in production, this always watermarks.
     if should_watermark_probabilistic(&audio_data, probability) {
         watermark_audio(audio_data, contract_id)
     } else {
-        // Passthrough sem watermark (0ms overhead)
-        Ok(audio_data)
+        // This branch will not be taken in production configuration.
+        Ok(watermark_audio(audio_data, contract_id)?)
     }
 }
 
@@ -53,7 +55,7 @@ pub fn watermark_audio(audio_data: Vec<u8>, contract_id: &str) -> Result<Vec<u8>
     // Read samples
     let samples: Vec<f32> = reader
         .samples::<i16>()
-        .map(|s| s.unwrap() as f32 / i16::MAX as f32)
+        .filter_map(|s| s.ok().map(|v| v as f32 / i16::MAX as f32))
         .collect();
     
     if samples.is_empty() {
@@ -131,7 +133,7 @@ pub fn detect_watermark(audio_data: Vec<u8>) -> Result<Option<String>> {
     // Read samples
     let samples: Vec<f32> = reader
         .samples::<i16>()
-        .map(|s| s.unwrap() as f32 / i16::MAX as f32)
+        .filter_map(|s| s.ok().map(|v| v as f32 / i16::MAX as f32))
         .collect();
     
     if samples.is_empty() {
@@ -167,7 +169,7 @@ pub fn detect_watermark_with_candidates(audio_data: Vec<u8>, candidates: &[&str]
     // Read samples
     let samples: Vec<f32> = reader
         .samples::<i16>()
-        .map(|s| s.unwrap() as f32 / i16::MAX as f32)
+        .filter_map(|s| s.ok().map(|v| v as f32 / i16::MAX as f32))
         .collect();
 
     if samples.is_empty() {
@@ -276,7 +278,7 @@ pub fn watermark_audio_pn(audio_data: Vec<u8>, contract_id: &str) -> Result<Vec<
     let spec = reader.spec();
     let mut samples: Vec<f32> = reader
         .samples::<i16>()
-        .map(|s| s.unwrap() as f32 / i16::MAX as f32)
+        .filter_map(|s| s.ok().map(|v| v as f32 / i16::MAX as f32))
         .collect();
     if samples.is_empty() { return Ok(audio_data); }
     let pn = pn_sequence(contract_id, samples.len());
@@ -299,7 +301,7 @@ pub fn detect_watermark_pn_with_candidates(audio_data: Vec<u8>, candidates: &[&s
     let mut reader = WavReader::new(cursor).context("Failed to decode WAV audio")?;
     let samples: Vec<f32> = reader
         .samples::<i16>()
-        .map(|s| s.unwrap() as f32 / i16::MAX as f32)
+        .filter_map(|s| s.ok().map(|v| v as f32 / i16::MAX as f32))
         .collect();
     if samples.is_empty() { return Ok(None); }
     let mut best: Option<(String, f32)> = None;

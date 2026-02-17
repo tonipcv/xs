@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * BAFIN COMPLIANCE MODULE (Bundesanstalt für Finanzdienstleistungsaufsicht - Germany)
  * 
@@ -48,7 +47,6 @@ export interface AIRiskClassification {
   humanOversightRequired: boolean
 }
 
-// @ts-nocheck
 export class BaFinCompliance {
   /**
    * MaRisk Assessment
@@ -253,7 +251,7 @@ export class BaFinCompliance {
     }
 
     // Upgrade to high risk if data quality is poor
-    if (dataQuality === 'poor' && riskClass !== 'unacceptable') {
+    if (dataQuality === 'poor') {
       riskClass = 'high'
       reasoning.push('Poor data quality elevates risk classification')
       mitigationRequired = true

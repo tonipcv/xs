@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -6,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 
 export async function POST(
   req: NextRequest,
-  context: any
+  { params }: { params: Promise<{ datasetId: string }> }
 ) {
   try {
     const { datasetId } = await params
@@ -76,7 +75,7 @@ export async function POST(
     })
 
     const totalRecordings = activeSources.reduce((a, s) => a + (s.numRecordings || 0), 0)
-    const totalSize = activeSources.reduce((a, s) => a + Number(s.sizeBytes || 0n), 0)
+    const totalSize = activeSources.reduce((a, s) => a + Number(s.sizeBytes || 0), 0)
     const totalHours = activeSources.reduce((a, s) => {
       const v = Number(s.durationHours || 0)
       const hours = v > 100 ? v / 3600 : v

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * GDPR Article 17 - Right to Erasure Workflow
  * Complete implementation for data deletion requests
@@ -252,9 +251,53 @@ export class ErasureWorkflow {
   }
 
   async getRequest(requestId: string): Promise<ErasureRequest | null> {
-    // In a real implementation, this would fetch from a database
-    // For now, we'll return a mock
-    return null
+    // Fetch erasure request from audit logs
+    const logs = await prisma.auditLog.findMany({
+      where: {
+        resourceType: 'erasure_request',
+        resourceId: requestId,
+      },
+      orderBy: { timestamp: 'desc' },
+    })
+
+    if (logs.length === 0) {
+      return null
+    }
+
+    // Reconstruct request state from audit logs
+    const createLog = logs.find(l => l.action === 'ERASURE_REQUEST_CREATED')
+    if (!createLog) {
+      return null
+    }
+
+    const approveLog = logs.find(l => l.action === 'ERASURE_REQUEST_APPROVED')
+    const rejectLog = logs.find(l => l.action === 'ERASURE_REQUEST_REJECTED')
+    const completeLog = logs.find(l => l.action === 'ERASURE_COMPLETED')
+    const failLog = logs.find(l => l.action === 'ERASURE_FAILED')
+
+    const metadata = createLog.metadata ? JSON.parse(createLog.metadata) : {}
+    
+    let status: ErasureRequest['status'] = 'pending'
+    if (failLog) status = 'failed'
+    else if (completeLog) status = 'completed'
+    else if (rejectLog) status = 'rejected'
+    else if (approveLog) status = 'approved'
+
+    return {
+      id: requestId,
+      tenantId: createLog.tenantId || '',
+      userId: createLog.userId || undefined,
+      datasetId: metadata.datasetId,
+      reason: metadata.reason || 'user_request',
+      status,
+      requestedBy: createLog.userId || 'system',
+      requestedAt: createLog.timestamp,
+      approvedBy: approveLog?.userId || undefined,
+      approvedAt: approveLog?.timestamp || undefined,
+      completedAt: completeLog?.timestamp || failLog?.timestamp || undefined,
+      error: failLog?.errorMessage || undefined,
+      metadata,
+    }
   }
 
   async listRequests(tenantId: string, status?: ErasureRequest['status']): Promise<ErasureRequest[]> {

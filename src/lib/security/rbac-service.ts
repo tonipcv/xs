@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * RBAC Service - Role-Based Access Control
  * Manages roles, permissions, and access control

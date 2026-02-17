@@ -44,7 +44,11 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
     console.error('[API] GET /api/v1/billing/usage error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }
 
@@ -87,6 +91,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
   } catch (error: any) {
     console.error('[API] POST /api/v1/billing/usage error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }

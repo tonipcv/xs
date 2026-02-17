@@ -1,4 +1,3 @@
-// @ts-nocheck
 export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
@@ -172,8 +171,9 @@ export async function GET(
     return NextResponse.json({ assets })
   } catch (error: any) {
     console.error('Browse error:', error)
+    const isDev = process.env.NODE_ENV !== 'production';
     return NextResponse.json(
-      { error: error.message || 'Failed to browse assets' },
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

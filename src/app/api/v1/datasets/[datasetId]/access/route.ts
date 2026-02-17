@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
@@ -11,9 +10,8 @@ const BodySchema = z.object({
   requestId: z.string().min(1).optional(),
 })
 
-export async function POST(req: NextRequest, context: any) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
-    const { params } = context as { params: Promise<{ datasetId: string }> }
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId || !auth.apiKeyId) {
       return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
@@ -71,8 +69,6 @@ export async function POST(req: NextRequest, context: any) {
         hoursConsumed: true,
         maxDownloads: true,
         downloadsCount: true,
-        pricePerHour: true,
-        currency: true,
         canBatchDownload: true,
       },
     })
@@ -127,8 +123,8 @@ export async function POST(req: NextRequest, context: any) {
     }
 
     // 6) Persistir efeitos (transação): atualizar policy, registrar log e lançar débito no ledger
-    const unitPrice = Number(policy.pricePerHour ?? 0)
-    const amount = unitPrice * hoursToDebit * -1 // débito
+    const unitPrice = 0; // Pricing not yet implemented in schema
+    const amount = unitPrice * hoursToDebit * -1; // débito
 
     await prisma.$transaction(async (tx) => {
       // Policy counters
@@ -153,7 +149,7 @@ export async function POST(req: NextRequest, context: any) {
           tenantId: auth.tenantId,
           amount,
           eventType: 'USAGE_DEBIT',
-          description: `Dataset ${dataset.datasetId} access: ${hoursToDebit}h @ ${unitPrice}/${policy.currency ?? 'USD'}`,
+          description: `Dataset ${dataset.datasetId} access: ${hoursToDebit}h`,
           balanceAfter,
           metadata: { datasetId: dataset.datasetId, files: safeKeys } as any,
         } as any,
@@ -185,7 +181,7 @@ export async function POST(req: NextRequest, context: any) {
       downloadUrls,
       expiresIn,
       hoursConsumed: hoursToDebit,
-      currency: policy.currency ?? 'USD',
+      currency: 'USD',
     })
   } catch (err: any) {
     console.error('[API] datasets/:datasetId/access error:', err?.message || err)

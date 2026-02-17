@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[API] FCA Consumer Duty error:', error)
     return NextResponse.json(
-      { error: error.message || 'Internal server error' },
+      { error: 'Internal Server Error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

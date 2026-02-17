@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
@@ -8,7 +7,7 @@ import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
  * Visualizar metadados sem consumir quota
  * Usado por clients para avaliar datasets antes de comprar acesso
  */
-export async function GET(req: NextRequest, context: any) {
+export async function GET(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId) {
@@ -35,22 +34,6 @@ export async function GET(req: NextRequest, context: any) {
         version: true,
         totalDurationHours: true,
         numRecordings: true,
-        sampleRate: true,
-        codec: true,
-        channelCount: true,
-        collectionStartTs: true,
-        collectionEndTs: true,
-        // Metadados de qualidade
-        avgSnr: true,
-        avgSpeechRatio: true,
-        avgOverlapRatio: true,
-        avgSilenceRatio: true,
-        noiseLevel: true,
-        // Metadados semânticos
-        callType: true,
-        intentCluster: true,
-        emotionBand: true,
-        outcomeFlag: true,
         // Metadados de governança
         consentStatus: true,
         allowedPurposes: true,

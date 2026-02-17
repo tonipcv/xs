@@ -1,4 +1,3 @@
-// @ts-nocheck
 export const runtime = 'nodejs'
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
@@ -8,7 +7,7 @@ import { getTenantId } from '@/lib/xase/server-auth'
 
 export async function PATCH(
   req: NextRequest,
-  context: any
+  { params }: { params: Promise<{ datasetId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -44,7 +43,7 @@ export async function PATCH(
 
 export async function DELETE(
   req: NextRequest,
-  context: any
+  { params }: { params: Promise<{ datasetId: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions)

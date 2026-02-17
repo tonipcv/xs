@@ -9,7 +9,7 @@ from typing import Optional, Iterator, List, Dict, Any
 import os
 import time
 import threading
-import requests
+import httpx
 import logging
 from datetime import datetime
 
@@ -214,23 +214,24 @@ class TelemetrySender:
             return
         
         batch = self.logs[:]
-        self.logs.clear()
+    self.logs.clear()
         
-        try:
-            response = requests.post(
+    try:
+        with httpx.Client() as client:
+            response = client.post(
                 f"{self.base_url}/api/v1/sidecar/telemetry",
                 json={"sessionId": self.session_id, "logs": batch},
                 headers={"X-API-Key": self.api_key},
-                timeout=5.0,
+                timeout=5.0
             )
             response.raise_for_status()
-        except Exception as e:
-            print(f"Telemetry flush failed: {e}")
+    except Exception as e:
+        logger.error(f"Telemetry flush failed: {e}")
     
-    def _flush_loop(self) -> None:
-        """Background loop to flush periodically."""
-        while not self.stop_event.is_set():
-            time.sleep(self.flush_interval)
+def _flush_loop(self) -> None:
+    """Background loop to flush periodically."""
+    while not self.stop_event.is_set():
+        time.sleep(self.flush_interval)
             with self.lock:
                 self._flush()
     
@@ -261,8 +262,10 @@ class WatermarkDetector:
             Detection result with contract_id and confidence, or None if no watermark
         """
         try:
-            response = requests.post(
-                f"{self.base_url}/api/v1/watermark/detect",
+            try:
+            with httpx.Client() as client:
+                response = client.post(
+                    f"{self.base_url}/api/v1/watermark/detect",
                 files={"audio": ("audio.wav", audio_data, "audio/wav")},
                 headers={"X-API-Key": self.api_key},
                 timeout=30.0,
@@ -278,7 +281,7 @@ class WatermarkDetector:
                 }
             return None
         except Exception as e:
-            print(f"Watermark detection failed: {e}")
+            logger.error(f"Watermark detection failed: {e}")
             return None
 
 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { AppLayout } from '@/components/AppSidebar'
 import { prisma } from '@/lib/prisma'
 import { requireClient } from '@/lib/rbac'
@@ -107,8 +106,8 @@ export default async function ClientBillingPage() {
                           {Number(entry.amount).toFixed(2)}
                         </td>
                         <td className="px-4 py-2 text-xs text-white/60 max-w-[220px] truncate">
-                          {entry.metadata?.policyId || '-'}
-                          {entry.metadata?.datasetName ? ` • ${entry.metadata.datasetName}` : ''}
+                          {(entry.metadata as any)?.policyId || '-'}
+                          {(entry.metadata as any)?.datasetName ? ` • ${(entry.metadata as any).datasetName}` : ''}
                         </td>
                         <td className="px-4 py-2 text-xs text-white/60 max-w-[260px] truncate">
                           {entry.description || entry.eventType}

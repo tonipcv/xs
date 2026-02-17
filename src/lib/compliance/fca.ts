@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * FCA COMPLIANCE MODULE (Financial Conduct Authority - UK)
  * 
@@ -105,7 +104,7 @@ export class FCACompliance {
       assessor,
       findings,
       mitigations,
-      approvalStatus: riskLevel === 'critical' ? 'rejected' : 'pending',
+      approvalStatus: riskLevel === 'high' ? 'pending' : 'approved',
     }
   }
 

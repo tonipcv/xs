@@ -41,7 +41,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     console.error('[PIIDetection] Error:', error)
     return NextResponse.json(
-      { error: 'Internal server error', details: error.message },
+      { error: 'Internal server error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * JIT (JUST-IN-TIME) ACCESS
  * 

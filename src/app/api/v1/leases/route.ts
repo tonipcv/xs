@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
@@ -83,7 +82,7 @@ export async function POST(req: NextRequest) {
         if (userEmail) {
           const user = await prisma.user.findUnique({ where: { email: userEmail }, select: { tenantId: true } })
           if (user?.tenantId) {
-            auth = { valid: true, tenantId: user.tenantId, apiKeyId: 'session-dev', error: null }
+            auth = { valid: true, tenantId: user.tenantId, apiKeyId: 'session-dev', error: undefined }
           }
         }
       }

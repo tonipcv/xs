@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -240,7 +239,7 @@ export async function POST(
       language: dataset.language
     }))
 
-    await prisma.audioSegment.createMany({ data: segments, skipDuplicates: true })
+    await prisma.audioSegment.createMany({ data: segments.map((s: any) => ({ ...s, dataSourceId: dataSource.id })), skipDuplicates: true })
 
     // Recalculate dataset aggregates
     await recalculateDatasetAggregates(dataset.id)
@@ -254,7 +253,11 @@ export async function POST(
     return NextResponse.json(toJSONSafe({ dataSource }), { status: 201 })
   } catch (error: any) {
     console.error('POST /datasets/[datasetId]/sources error:', error?.message || error, error?.stack)
-    return NextResponse.json({ error: error.message || 'Internal error' }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }
 
@@ -395,7 +398,7 @@ async function recalculateDatasetAggregates(datasetId: string) {
   })
 
   const totalRecordings = activeSources.reduce((a, s) => a + (s.numRecordings || 0), 0)
-  const totalSize = activeSources.reduce((a, s) => a + Number(s.sizeBytes || 0n), 0)
+  const totalSize = activeSources.reduce((a, s) => a + Number(s.sizeBytes || 0), 0)
   const totalHours = activeSources.reduce((a, s) => {
     const v = Number(s.durationHours || 0)
     const hours = v > 100 ? v / 3600 : v

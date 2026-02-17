@@ -148,24 +148,41 @@ async function sendEmailAlert(
   to: string,
   message: { subject: string; body: string; priority: string }
 ): Promise<void> {
-  // TODO: Integrate with Resend/SendGrid
-  // For now, just log
-  console.log(`📧 Email to ${to}: ${message.subject}`)
+  const resendApiKey = process.env.RESEND_API_KEY;
   
-  // Example integration:
-  // await fetch('https://api.resend.com/emails', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Authorization': `Bearer ${process.env.RESEND_API_KEY}`,
-  //     'Content-Type': 'application/json'
-  //   },
-  //   body: JSON.stringify({
-  //     from: 'alerts@xase.ai',
-  //     to,
-  //     subject: message.subject,
-  //     text: message.body
-  //   })
-  // })
+  if (!resendApiKey) {
+    console.warn(`📧 Email alert skipped (RESEND_API_KEY not configured): ${message.subject}`);
+    return;
+  }
+
+  try {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${resendApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        from: process.env.RESEND_FROM_EMAIL || 'alerts@xase.ai',
+        to,
+        subject: message.subject,
+        text: message.body,
+        tags: [
+          { name: 'priority', value: message.priority },
+          { name: 'type', value: 'lease-alert' }
+        ]
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`Resend API error: ${error}`);
+    }
+
+    console.log(`📧 Email sent to ${to}: ${message.subject}`);
+  } catch (error) {
+    console.error('Failed to send email alert:', error);
+  }
 }
 
 /**
@@ -175,24 +192,40 @@ async function sendPushNotification(
   tenantId: string,
   message: { subject: string; body: string; priority: string }
 ): Promise<void> {
-  // TODO: Integrate with OneSignal
-  console.log(`🔔 Push to tenant ${tenantId}: ${message.subject}`)
-  
-  // Example integration:
-  // await fetch('https://onesignal.com/api/v1/notifications', {
-  //   method: 'POST',
-  //   headers: {
-  //     'Authorization': `Basic ${process.env.ONESIGNAL_API_KEY}`,
-  //     'Content-Type': 'application/json'
-  //   },
-  //   body: JSON.stringify({
-  //     app_id: process.env.ONESIGNAL_APP_ID,
-  //     filters: [{ field: 'tag', key: 'tenant_id', value: tenantId }],
-  //     headings: { en: message.subject },
-  //     contents: { en: message.body },
-  //     priority: message.priority === 'high' ? 10 : 5
-  //   })
-  // })
+  const onesignalApiKey = process.env.ONESIGNAL_API_KEY;
+  const onesignalAppId = process.env.ONESIGNAL_APP_ID;
+
+  if (!onesignalApiKey || !onesignalAppId) {
+    console.warn(`🔔 Push notification skipped (OneSignal not configured): ${message.subject}`);
+    return;
+  }
+
+  try {
+    const response = await fetch('https://onesignal.com/api/v1/notifications', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Basic ${onesignalApiKey}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        app_id: onesignalAppId,
+        filters: [{ field: 'tag', key: 'tenant_id', value: tenantId }],
+        headings: { en: message.subject },
+        contents: { en: message.body },
+        priority: message.priority === 'high' ? 10 : 5,
+        data: { type: 'lease-alert', tenant_id: tenantId }
+      })
+    });
+
+    if (!response.ok) {
+      const error = await response.text();
+      throw new Error(`OneSignal API error: ${error}`);
+    }
+
+    console.log(`🔔 Push notification sent to tenant ${tenantId}: ${message.subject}`);
+  } catch (error) {
+    console.error('Failed to send push notification:', error);
+  }
 }
 
 /**
@@ -204,10 +237,10 @@ async function sendWebhook(
   alertType: AlertType,
   context?: AlertContext
 ): Promise<void> {
-  // Webhook functionality disabled - Tenant model doesn't have webhookUrl/webhookSecret fields
-  // TODO: Add webhook configuration to Tenant schema if needed
-  console.log(`Webhook notification skipped for tenant ${tenantId} - not configured`)
-  return
+  // Webhook functionality requires adding webhookUrl and webhookSecret fields to Tenant schema
+  // For now, webhooks are disabled until schema is updated
+  console.log(`Webhook notification skipped for tenant ${tenantId} - schema not yet configured`);
+  return;
 }
 
 /**

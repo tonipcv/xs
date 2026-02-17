@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -77,8 +76,7 @@ export async function POST(req: NextRequest) {
         usagePurpose,
         maxHours: maxHours || null,
         maxDownloads: maxDownloads || null,
-        pricePerHour,
-        currency,
+        // pricePerHour and currency not yet in schema
         expiresAt: expiresAt ? new Date(expiresAt) : null,
         hoursConsumed: 0,
         downloadsCount: 0,

@@ -5,7 +5,6 @@
  * Integra com policy engine existente.
  */
 
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { PolicyEnforcementPoint } from '@/lib/xase/policy-enforcement-point'
 import { parseAndValidatePolicy } from '@/lib/xase/policy-validator'

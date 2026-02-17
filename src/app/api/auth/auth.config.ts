@@ -1,5 +1,5 @@
-// @ts-nocheck
-import { NextAuthOptions } from "next-auth"
+import { NextAuthOptions, User } from "next-auth"
+import { JWT } from "next-auth/jwt"
 import { prisma } from "@/lib/prisma"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -19,7 +19,7 @@ export const authOptions: NextAuthOptions = {
         password: { label: 'Password', type: 'password' },
         totp: { label: 'Authenticator Code', type: 'text' },
       },
-      async authorize(credentials) {
+      async authorize(credentials): Promise<User | null> {
         if (!credentials?.email || !credentials?.password) {
           throw new Error('Credenciais inválidas')
         }
@@ -70,10 +70,10 @@ export const authOptions: NextAuthOptions = {
           id: user.id,
           name: user.name || "",
           email: user.email,
-          image: user.image,
+          image: user.image || null,
           tenantId: user.tenantId,
           xaseRole: user.xaseRole,
-        } as any
+        } as User & { tenantId: string | null; xaseRole: string | null }
       }
     })
   ],
@@ -89,7 +89,7 @@ export const authOptions: NextAuthOptions = {
     maxAge: 2 * 60 * 60, // 2 hours
   },
   callbacks: {
-    async jwt({ token, user, account }) {
+    async jwt({ token, user, account }: { token: JWT; user?: User; account?: any }) {
       if (user) {
         token.id = user.id;
         token.tenantId = (user as any).tenantId;
@@ -97,7 +97,7 @@ export const authOptions: NextAuthOptions = {
       }
       return token;
     },
-    async session({ session, token }) {
+    async session({ session, token }: { session: any; token: JWT }) {
       if (session.user) {
         session.user.id = token.id as string;
         (session.user as any).tenantId = token.tenantId;

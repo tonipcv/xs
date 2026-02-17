@@ -15,20 +15,41 @@ data:
   PORT: "3000"
 
 ---
-apiVersion: v1
-kind: Secret
+apiVersion: external-secrets.io/v1beta1
+kind: ExternalSecret
 metadata:
   name: xase-secrets
   namespace: production
-type: Opaque
-stringData:
-  DATABASE_URL: "postgresql://xase_admin:PASSWORD@rds-endpoint:5432/xase"
-  REDIS_URL: "redis://redis-endpoint:6379"
-  CLICKHOUSE_URL: "http://clickhouse-ip:8123"
-  XASE_HMAC_SECRET: "your-hmac-secret"
-  OIDC_CLIENT_SECRET: "your-oidc-secret"
-  AWS_ACCESS_KEY_ID: "your-access-key"
-  AWS_SECRET_ACCESS_KEY: "your-secret-key"
+spec:
+  refreshInterval: 1h
+  secretStoreRef:
+    kind: ClusterSecretStore
+    name: aws-secretsmanager
+  target:
+    name: xase-secrets
+    creationPolicy: Owner
+  data:
+    - secretKey: DATABASE_URL
+      remoteRef:
+        key: xase/DATABASE_URL
+    - secretKey: REDIS_URL
+      remoteRef:
+        key: xase/REDIS_URL
+    - secretKey: CLICKHOUSE_URL
+      remoteRef:
+        key: xase/CLICKHOUSE_URL
+    - secretKey: XASE_HMAC_SECRET
+      remoteRef:
+        key: xase/XASE_HMAC_SECRET
+    - secretKey: OIDC_CLIENT_SECRET
+      remoteRef:
+        key: xase/OIDC_CLIENT_SECRET
+    - secretKey: AWS_ACCESS_KEY_ID
+      remoteRef:
+        key: xase/AWS_ACCESS_KEY_ID
+    - secretKey: AWS_SECRET_ACCESS_KEY
+      remoteRef:
+        key: xase/AWS_SECRET_ACCESS_KEY
 
 ---
 apiVersion: apps/v1

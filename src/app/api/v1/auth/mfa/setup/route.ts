@@ -21,7 +21,7 @@ export async function POST(req: NextRequest) {
     })
   } catch (error: any) {
     return NextResponse.json(
-      { error: 'MFA setup failed', details: error.message },
+      { error: 'MFA setup failed', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

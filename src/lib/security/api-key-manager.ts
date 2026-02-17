@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * API Key Manager - Enhanced with scopes and rotation
  */
@@ -62,8 +61,9 @@ export class ApiKeyManager {
         resourceId: apiKey.id,
         metadata: JSON.stringify({ name, scopes }),
         status: 'SUCCESS',
+        timestamp: new Date(),
       },
-    })
+    }).catch(() => {})
 
     return {
       key: `${keyPrefix}_${rawKey}`,
@@ -122,8 +122,9 @@ export class ApiKeyManager {
         resourceId: keyId,
         metadata: JSON.stringify({ newKeyId: newKey.id }),
         status: 'SUCCESS',
+        timestamp: new Date(),
       },
-    })
+    }).catch(() => {})
 
     return {
       key: `${keyPrefix}_${rawKey}`,
@@ -155,8 +156,9 @@ export class ApiKeyManager {
         resourceType: 'api_key',
         resourceId: keyId,
         status: 'SUCCESS',
+        timestamp: new Date(),
       },
-    })
+    }).catch(() => {})
   }
 
   /**
@@ -290,14 +292,23 @@ export class ApiKeyManager {
     keyId: string,
     schedule: 'never' | 'monthly' | 'quarterly' | 'yearly'
   ): Promise<void> {
-    await prisma.auditLog.create({
-      data: {
-        action: 'API_KEY_ROTATION_SCHEDULED',
-        resourceType: 'api_key',
-        resourceId: keyId,
-        metadata: JSON.stringify({ schedule }),
-        status: 'SUCCESS',
-      },
-    })
+    const apiKey = await prisma.apiKey.findUnique({
+      where: { id: keyId },
+      select: { tenantId: true },
+    });
+    
+    if (apiKey) {
+      await prisma.auditLog.create({
+        data: {
+          tenantId: apiKey.tenantId,
+          action: 'API_KEY_ROTATION_SCHEDULED',
+          resourceType: 'api_key',
+          resourceId: keyId,
+          metadata: JSON.stringify({ schedule }),
+          status: 'SUCCESS',
+          timestamp: new Date(),
+        },
+      }).catch(() => {});
+    }
   }
 }

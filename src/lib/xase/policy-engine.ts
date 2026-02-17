@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Policy Engine - EXECUTÁVEL E DETERMINÍSTICO
  * Enforcement real de políticas de acesso a datasets

@@ -10,7 +10,6 @@
  * - Consent revocations
  */
 
-// @ts-nocheck
 /**
  * Metrics Collection and Aggregation
  * Provides standardized metrics for monitoring and observability
@@ -155,7 +154,7 @@ export class ObservabilityMetrics {
       return percentiles.reduce((acc, p) => ({ ...acc, [`p${p}`]: 0 }), {})
     }
 
-    const sorted = latencies.map(Number).sort((a, b) => a - b)
+    const sorted = latencies.map(Number).sort((a: number, b: number) => a - b)
     const result: Record<string, number> = {}
 
     for (const p of percentiles) {

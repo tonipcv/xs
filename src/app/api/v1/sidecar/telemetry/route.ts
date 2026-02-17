@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { validateApiKey } from '@/lib/xase/auth'
 import { z } from 'zod'
 
 const TelemetryLogSchema = z.object({
@@ -18,6 +19,12 @@ const BodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
+    // SECURITY: Require API key authentication
+    const auth = await validateApiKey(req)
+    if (!auth.valid || !auth.tenantId) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    }
+
     const parsed = BodySchema.safeParse(await req.json().catch(() => ({})))
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid body', details: parsed.error.flatten() }, { status: 400 })
@@ -25,14 +32,23 @@ export async function POST(req: NextRequest) {
 
     const { sessionId, logs } = parsed.data
 
-    // Validate session exists and is active
+    // Validate session exists, is active, and belongs to authenticated tenant
     const session = await prisma.sidecarSession.findUnique({
       where: { id: sessionId },
-      select: { id: true, status: true },
+      select: { 
+        id: true, 
+        status: true,
+        clientTenantId: true,
+      },
     })
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    }
+
+    // SECURITY: Verify session belongs to authenticated tenant
+    if (session.clientTenantId !== auth.tenantId) {
+      return NextResponse.json({ error: 'Session does not belong to authenticated tenant' }, { status: 403 })
     }
 
     if (session.status !== 'active') {
@@ -101,6 +117,12 @@ export async function POST(req: NextRequest) {
 
 export async function GET(req: NextRequest) {
   try {
+    // SECURITY: Require API key authentication
+    const auth = await validateApiKey(req)
+    if (!auth.valid || !auth.tenantId) {
+      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    }
+
     const url = new URL(req.url)
     const sessionId = url.searchParams.get('sessionId')
 
@@ -115,6 +137,11 @@ export async function GET(req: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 })
+    }
+
+    // SECURITY: Verify session belongs to authenticated tenant
+    if (session.clientTenantId !== auth.tenantId) {
+      return NextResponse.json({ error: 'Session does not belong to authenticated tenant' }, { status: 403 })
     }
 
     const metrics = await prisma.sidecarMetric.findMany({

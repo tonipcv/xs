@@ -1,10 +1,9 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
 import { z } from 'zod'
 
-export async function POST(req: NextRequest, context: any) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ policyId: string }> }) {
   try {
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId) {

@@ -22,7 +22,11 @@ export async function GET(req: NextRequest) {
       } else {
         const session = await getServerSession(authOptions)
         if (!session?.user?.email) {
-          return NextResponse.json({ error: 'Unauthorized', ...(process.env.NODE_ENV !== 'production' ? { details: { authMode, hasAuthHeader: !!req.headers.get('authorization') || !!req.headers.get('Authorization') } } : {}) }, { status: 401 })
+          const isDev = process.env.NODE_ENV !== 'production';
+          return NextResponse.json(
+            { error: 'Unauthorized', ...(isDev ? { details: { authMode, hasAuthHeader: !!req.headers.get('authorization') || !!req.headers.get('Authorization') } } : {}) },
+            { status: 401 }
+          )
         }
         const user = await prisma.user.findUnique({ where: { email: session.user.email }, select: { tenantId: true } })
         tenantId = user?.tenantId || null

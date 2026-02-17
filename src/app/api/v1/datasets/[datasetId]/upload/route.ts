@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
@@ -10,7 +9,7 @@ const BodySchema = z.object({
   contentType: z.string().min(1).optional(),
 })
 
-export async function POST(req: NextRequest, context: any) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId) {

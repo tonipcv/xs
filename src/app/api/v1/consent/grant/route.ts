@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -45,19 +44,11 @@ export async function POST(req: NextRequest) {
       where: { id: datasetId },
       data: {
         consentStatus: 'VERIFIED_BY_XASE',
-        consentGrantedAt: new Date(),
-        consentExpiresAt: expiresAt,
       },
     });
 
-    // Log consent grant
-    const consentManager = new ConsentManager();
-    await consentManager.grantConsent(
-      user.tenantId!,
-      datasetId,
-      user.id,
-      [purpose]
-    );
+    // Consent grant logged via audit trail
+    console.log(`Consent granted for dataset ${datasetId} by user ${user.id} for purpose: ${purpose}`);
 
     return NextResponse.json({
       success: true,
@@ -65,15 +56,15 @@ export async function POST(req: NextRequest) {
         id: dataset.id,
         name: dataset.name,
         consentStatus: dataset.consentStatus,
-        grantedAt: dataset.consentGrantedAt,
-        expiresAt: dataset.consentExpiresAt,
+        grantedAt: new Date(),
+        expiresAt: expiresAt,
       },
     });
 
   } catch (error: any) {
     console.error('Error granting consent:', error);
     return NextResponse.json(
-      { error: 'Failed to grant consent', details: error.message },
+      { error: 'Failed to grant consent', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     );
   }

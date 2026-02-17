@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -50,7 +49,11 @@ export async function GET(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[API] GET /api/xase/settings error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to fetch settings' }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }
 
@@ -100,6 +103,10 @@ export async function PUT(req: NextRequest) {
     })
   } catch (error: any) {
     console.error('[API] PUT /api/xase/settings error:', error)
-    return NextResponse.json({ error: error.message || 'Failed to save settings' }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }

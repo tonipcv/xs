@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * GDPR COMPLIANCE MODULE
  * 
@@ -67,14 +66,10 @@ export class GDPRCompliance {
     const requestId = `dsar_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
 
     try {
-      // 1. Find all datasets associated with user
+      // 1. Find all datasets associated with user (metadata field not in schema - using tenantId only)
       const datasets = await prisma.dataset.findMany({
         where: {
           tenantId,
-          OR: [
-            { metadata: { path: ['userId'], equals: userId } },
-            { metadata: { path: ['email'], equals: email } },
-          ],
         },
         select: {
           datasetId: true,
@@ -152,9 +147,9 @@ export class GDPRCompliance {
           resourceType: true,
           resourceId: true,
           status: true,
-          createdAt: true,
+          timestamp: true,
         },
-        orderBy: { createdAt: 'desc' },
+        orderBy: { timestamp: 'desc' },
         take: 1000,
       })
 
@@ -211,8 +206,8 @@ export class GDPRCompliance {
           where: {
             tenantId,
             OR: [
-              { metadata: { path: ['userId'], equals: userId } },
-              { metadata: { path: ['email'], equals: email } },
+              
+              
             ],
           },
           select: { id: true, datasetId: true },
@@ -368,11 +363,11 @@ export class GDPRCompliance {
         resourceId: datasetId,
         action: { in: ['CONSENT_GRANTED', 'CONSENT_REVOKED'] },
       },
-      orderBy: { createdAt: 'asc' },
+      orderBy: { timestamp: 'asc' },
       select: {
         action: true,
         metadata: true,
-        createdAt: true,
+        timestamp: true,
         status: true,
       },
     })

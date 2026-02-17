@@ -90,7 +90,7 @@ export async function POST(
     return NextResponse.json(offer, { status: 201 })
   } catch (error: any) {
     const errPayload = error instanceof Error
-      ? { name: error.name, message: error.message, stack: error.stack }
+      ? { name: error.name, ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}), stack: error.stack }
       : { value: String(error) }
     console.error('Create access offer error', errPayload)
     if (error?.name === 'ZodError') {

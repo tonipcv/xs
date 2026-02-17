@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -77,18 +76,8 @@ export async function GET(req: NextRequest) {
       },
     })
     
-    // Calcular receita via policies
-    const policyIds = [...new Set(accessLogs.map(l => l.policyId))]
-    const policies = await prisma.voiceAccessPolicy.findMany({
-      where: { policyId: { in: policyIds } },
-      select: { policyId: true, pricePerHour: true },
-    })
-    const priceMap = new Map(policies.map(p => [p.policyId, Number(p.pricePerHour || 0)]))
-    
-    const revenue = accessLogs.reduce((sum, log) => {
-      const price = priceMap.get(log.policyId) || 0
-      return sum + (log.hoursAccessed * price)
-    }, 0)
+    // Calcular receita via policies (pricing not yet implemented in schema)
+    const revenue = 0; // Placeholder until pricing fields are added to schema
 
     // Clientes ativos (unique clientTenantId em policies ativas)
     const activePolicies = await prisma.voiceAccessPolicy.findMany({

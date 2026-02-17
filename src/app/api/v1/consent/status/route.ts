@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
   } catch (error: any) {
     console.error('[API] GET /api/v1/consent/status error:', error)
     return NextResponse.json(
-      { error: 'Internal error', details: error.message },
+      { error: 'Internal error', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     )
   }

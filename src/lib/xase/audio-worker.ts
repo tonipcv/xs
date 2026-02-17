@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * AUDIO WORKER - Processamento Assíncrono Real
  * Worker que processa arquivos de áudio de forma assíncrona

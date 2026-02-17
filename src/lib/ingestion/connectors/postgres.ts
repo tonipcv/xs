@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * PostgreSQL Connector for data ingestion
  */

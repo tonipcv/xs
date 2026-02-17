@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { validateApiKey } from '@/lib/xase/auth'
@@ -9,7 +8,7 @@ import { enqueueAudioProcessing } from '@/lib/xase/audio-worker'
  * Processa arquivos de áudio após upload
  * Funciona de forma síncrona no Vercel (sem workers externos)
  */
-export async function POST(req: NextRequest, context: any) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
     const auth = await validateApiKey(req)
     if (!auth.valid || !auth.tenantId) {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { Metadata } from 'next';
 import { requireClient } from '@/lib/rbac';
 import { AppLayout } from '@/components/AppSidebar';

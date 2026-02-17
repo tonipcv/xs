@@ -3,7 +3,6 @@
  * Tracks hours, requests, and other billable metrics
  */
 
-// @ts-nocheck
 import { prisma } from '@/lib/prisma'
 import { getRedisClient } from '@/lib/redis'
 
@@ -53,7 +52,7 @@ export class MeteringService {
    * Record usage metric
    */
   static async recordUsage(metric: UsageMetrics): Promise<void> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const key = `${this.REDIS_PREFIX}${metric.tenantId}:${metric.metric}`
     
     // Add to Redis sorted set for real-time tracking
@@ -79,7 +78,7 @@ export class MeteringService {
    * Batch write to database
    */
   private static async batchWriteToDatabase(metric: UsageMetrics): Promise<void> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const batchKey = `${this.REDIS_PREFIX}batch:${metric.tenantId}`
     
     await redis.lpush(batchKey, JSON.stringify(metric))
@@ -95,17 +94,17 @@ export class MeteringService {
    * Flush batch to database
    */
   static async flushBatch(tenantId: string): Promise<void> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const batchKey = `${this.REDIS_PREFIX}batch:${tenantId}`
     
     const batch = await redis.lrange(batchKey, 0, this.BATCH_SIZE - 1)
     if (batch.length === 0) return
 
-    const metrics = batch.map(item => JSON.parse(item))
+    const metrics = batch.map((item: string) => JSON.parse(item))
 
     // Write to database
     await prisma.creditLedger.createMany({
-      data: metrics.map(m => ({
+      data: metrics.map((m: any) => ({
         tenantId: m.tenantId,
         leaseId: m.leaseId,
         datasetId: m.datasetId,
@@ -128,7 +127,7 @@ export class MeteringService {
     start: Date,
     end: Date
   ): Promise<UsageSummary> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     
     const metrics = {
       totalHours: 0,
@@ -189,7 +188,7 @@ export class MeteringService {
    * Get real-time usage for tenant
    */
   static async getRealTimeUsage(tenantId: string): Promise<Record<string, number>> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const now = Date.now()
     const hourAgo = now - 60 * 60 * 1000
 
@@ -199,7 +198,7 @@ export class MeteringService {
       const key = `${this.REDIS_PREFIX}${tenantId}:${metric}`
       const data = await redis.zrangebyscore(key, hourAgo, now)
       
-      usage[metric] = data.reduce((sum, item) => {
+      usage[metric] = data.reduce((sum: number, item: string) => {
         const parsed = JSON.parse(item)
         return sum + parsed.value
       }, 0)
@@ -218,13 +217,13 @@ export class MeteringService {
   ): Promise<void> {
     const lease = await prisma.voiceAccessLease.findUnique({
       where: { id: leaseId },
-      select: { tenantId: true, datasetId: true },
+      select: { clientTenantId: true, datasetId: true },
     })
 
     if (!lease) return
 
     await this.recordUsage({
-      tenantId: lease.tenantId,
+      tenantId: lease.clientTenantId,
       leaseId,
       datasetId: lease.datasetId,
       metric: 'hours',
@@ -234,7 +233,7 @@ export class MeteringService {
 
     if (requests > 0) {
       await this.recordUsage({
-        tenantId: lease.tenantId,
+        tenantId: lease.clientTenantId,
         leaseId,
         datasetId: lease.datasetId,
         metric: 'requests',
@@ -283,7 +282,7 @@ export class MeteringService {
     }
 
     // Store in Redis for processing
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     await redis.lpush(
       'billing:events',
       JSON.stringify(billingEvent)
@@ -308,7 +307,7 @@ export class MeteringService {
    * Process billing events
    */
   static async processBillingEvents(): Promise<number> {
-    const redis = getRedisClient()
+    const redis = await getRedisClient()
     const events = await redis.lrange('billing:events', 0, 99)
     
     let processed = 0

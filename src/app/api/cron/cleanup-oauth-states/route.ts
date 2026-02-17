@@ -20,7 +20,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('OAuth state cleanup error:', error);
     return NextResponse.json(
-      { error: 'Cleanup failed', message: error.message },
+      { error: 'Cleanup failed', ...(process.env.NODE_ENV !== 'production' ? { debug: String(error?.message ?? error) } : {}) },
       { status: 500 }
     );
   }

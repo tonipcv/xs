@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * ACCESS ENFORCEMENT MIDDLEWARE
  * Middleware obrigatório que intercepta TODAS as rotas de acesso a dados

@@ -184,6 +184,14 @@ export class AWSKMSProvider implements KMSProvider {
  */
 export function createKMSProvider(): KMSProvider {
   const kmsType = process.env.XASE_KMS_TYPE || 'mock';
+  const isProduction = process.env.NODE_ENV === 'production';
+
+  // SECURITY: Block mock KMS in production
+  if (isProduction && kmsType === 'mock') {
+    throw new Error(
+      'CRITICAL: Mock KMS is not allowed in production. Set XASE_KMS_TYPE=aws and configure XASE_KMS_KEY_ID'
+    );
+  }
 
   switch (kmsType.toLowerCase()) {
     case 'aws':
@@ -197,8 +205,14 @@ export function createKMSProvider(): KMSProvider {
       return new AWSKMSProvider(keyId, region);
 
     case 'mock':
-    default:
+      if (isProduction) {
+        throw new Error('Mock KMS is not allowed in production');
+      }
+      console.warn('[KMS] ⚠️  Using Mock KMS - NOT FOR PRODUCTION');
       return new MockKMSProvider();
+
+    default:
+      throw new Error(`Unsupported KMS type: ${kmsType}. Use 'aws' or 'mock' (dev only)`);
   }
 }
 

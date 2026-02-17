@@ -21,7 +21,7 @@ def capture_context() -> Dict[str, Any]:
         "arch": platform.machine(),
         "hostname": socket.gethostname(),
         "pid": os.getpid(),
-        "lib_version": "0.1.0",
+        "lib_version": __import__("xase").__version__,
         "env": os.getenv("ENV") or os.getenv("PYTHON_ENV") or "development",
         "timestamp": int(__import__("time").time() * 1000),
     }

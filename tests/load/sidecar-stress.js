@@ -28,6 +28,11 @@ const BASE_URL = __ENV.BASE_URL || 'http://localhost:3000';
 const API_KEY = __ENV.API_KEY || 'xase_pk_load_test';
 const BYPASS = (__ENV.SIDECAR_AUTH_BYPASS || '') === '1';
 
+// Safety check: SIDECAR_AUTH_BYPASS should NEVER be used in production
+if (BYPASS && BASE_URL.includes('xase.ai')) {
+  throw new Error('SIDECAR_AUTH_BYPASS is enabled but BASE_URL points to production. This is a security violation.');
+}
+
 export default function () {
   const leaseId = `lease_load_${__VU}_${__ITER}`;
 

@@ -65,9 +65,15 @@ export async function runCheckpointCron(): Promise<{
  */
 export function validateCronSecret(secret: string | null): boolean {
   const expectedSecret = process.env.XASE_CRON_SECRET;
+  const isProduction = process.env.NODE_ENV === 'production';
 
+  // SECURITY: Require secret in production
   if (!expectedSecret) {
-    console.warn('[CheckpointCron] XASE_CRON_SECRET not set, allowing all requests');
+    if (isProduction) {
+      console.error('[CheckpointCron] CRITICAL: XASE_CRON_SECRET not set in production - denying all requests');
+      return false;
+    }
+    console.warn('[CheckpointCron] ⚠️  XASE_CRON_SECRET not set, allowing all requests (DEV ONLY)');
     return true;
   }
 

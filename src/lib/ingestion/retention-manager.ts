@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Data Retention and TTL Manager
  * Manages data lifecycle, retention policies, and automatic cleanup

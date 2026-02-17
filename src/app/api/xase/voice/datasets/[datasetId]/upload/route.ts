@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -12,7 +11,7 @@ const BodySchema = z.object({
   contentType: z.string().min(1).optional(),
 })
 
-export async function POST(req: NextRequest, context: any) {
+export async function POST(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session) {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
@@ -151,7 +150,7 @@ export async function PATCH(
       language: dataset.language
     }))
 
-    await prisma.audioSegment.createMany({ data: segments })
+    await prisma.audioSegment.createMany({ data: segments.map((s: any) => ({ ...s, dataSourceId: sourceId })) })
 
     // Update source stats
     await prisma.dataSource.update({
@@ -187,7 +186,11 @@ export async function PATCH(
       }
     } catch {}
 
-    return NextResponse.json({ error: error.message || 'Internal error' }, { status: 500 })
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
   }
 }
 
