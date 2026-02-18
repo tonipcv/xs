@@ -57,7 +57,7 @@ export async function GET(req: NextRequest) {
         { sourcesCount: 0, numRecordings: 0, durationHours: 0, sizeBytes: 0 }
       )
 
-      const accessAgg = await prisma.voiceAccessLog.aggregate({
+      const accessAgg = await prisma.accessLog.aggregate({
         where: { datasetId: ds.id },
         _sum: { hoursAccessed: true },
         _count: { _all: true },

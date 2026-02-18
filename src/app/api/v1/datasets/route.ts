@@ -5,6 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
 import crypto from 'crypto'
 import { z } from 'zod'
+import { DataType as PrismaDataType } from '@prisma/client'
 
 function genDatasetId() {
   return 'ds_' + crypto.randomBytes(12).toString('hex')
@@ -51,14 +52,14 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid body', details: parsed.error.flatten() }, { status: 400 })
     }
-    const { name, description, language, storageLocation: bodyStorageLocation, integrationId } = parsed.data
+    const { name, description, language, storageLocation: bodyStorageLocation, integrationId, dataType } = parsed.data
 
     const datasetId = genDatasetId()
     const storageLocation = bodyStorageLocation && bodyStorageLocation.trim().length > 0
       ? bodyStorageLocation.trim()
       : `datasets/${datasetId}/`
 
-    // If integrationId provided, scan folder to get files and create AudioSegments
+    // If integrationId provided, scan folder to get files and create DataAssets
     let numRecordings = 0
     let totalDurationHours = 0
     let totalSizeBytes = 0
@@ -102,6 +103,8 @@ export async function POST(req: NextRequest) {
         description: description || null,
         language,
         primaryLanguage: language,
+        // Persist primary modality when provided
+        dataType: dataType ? (dataType as unknown as PrismaDataType) : null,
         totalDurationHours,
         numRecordings,
         storageSize: totalSizeBytes > 0 ? BigInt(totalSizeBytes) : null,
@@ -116,6 +119,7 @@ export async function POST(req: NextRequest) {
         datasetId: true,
         name: true,
         primaryLanguage: true,
+        dataType: true,
         status: true,
         processingStatus: true,
         storageLocation: true,
@@ -125,7 +129,7 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Create AudioSegments in batch if we have files
+    // Create DataAssets in batch if we have files
     if (audioFiles.length > 0) {
       const segments = audioFiles.map((file, i) => ({
         datasetId: dataset.id,
@@ -144,7 +148,7 @@ export async function POST(req: NextRequest) {
       const batchSize = 1000
       for (let i = 0; i < segments.length; i += batchSize) {
         const batch = segments.slice(i, i + batchSize)
-        await prisma.audioSegment.createMany({
+        await prisma.dataAsset.createMany({
           data: batch,
           skipDuplicates: true,
         })
@@ -323,13 +327,14 @@ export async function GET(req: NextRequest) {
       language: z.string().min(1).optional(),
       consentStatus: z.enum(['VERIFIED_BY_XASE', 'MISSING', 'SUPPLIER_ATTESTED']).optional(),
       status: z.enum(['DRAFT', 'ACTIVE', 'ARCHIVED']).optional(),
+      dataType: z.enum(['AUDIO', 'IMAGE', 'TEXT', 'TIMESERIES', 'TABULAR']).optional(),
       limit: z.coerce.number().int().min(1).max(100).optional(),
     })
     const parsed = QuerySchema.safeParse(Object.fromEntries(url.searchParams.entries()))
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid query', details: parsed.error.flatten() }, { status: 400 })
     }
-    const { language, consentStatus, status, limit } = parsed.data
+    const { language, consentStatus, status, dataType, limit } = parsed.data
     const take = Math.min(limit ?? 20, 100)
 
     const datasets = await prisma.dataset.findMany({
@@ -338,6 +343,7 @@ export async function GET(req: NextRequest) {
         primaryLanguage: language || undefined,
         consentStatus: consentStatus as any || undefined,
         status: status as any || undefined,
+        dataType: dataType ? (dataType as unknown as PrismaDataType) : undefined,
       },
       orderBy: { createdAt: 'desc' },
       take,
@@ -345,6 +351,7 @@ export async function GET(req: NextRequest) {
         datasetId: true,
         name: true,
         primaryLanguage: true,
+        dataType: true,
         status: true,
         processingStatus: true,
         consentStatus: true,

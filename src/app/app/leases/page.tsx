@@ -30,7 +30,7 @@ export default async function LeasesPage() {
   // If user is a CLIENT (AI Lab), list leases where this tenant is the client
   if (orgType === 'CLIENT') {
     const [leases, total, activeCount, expiredTodayCount] = await prisma.$transaction([
-      prisma.voiceAccessLease.findMany({
+      prisma.accessLease.findMany({
         where: {
           clientTenantId: tenantId,
         },
@@ -50,18 +50,18 @@ export default async function LeasesPage() {
           },
         },
       }),
-      prisma.voiceAccessLease.count({
+      prisma.accessLease.count({
         where: {
           clientTenantId: tenantId,
         },
       }),
-      prisma.voiceAccessLease.count({
+      prisma.accessLease.count({
         where: {
           clientTenantId: tenantId,
           status: 'ACTIVE',
         },
       }),
-      prisma.voiceAccessLease.count({
+      prisma.accessLease.count({
         where: {
           clientTenantId: tenantId,
           status: 'EXPIRED',
@@ -73,7 +73,7 @@ export default async function LeasesPage() {
       }),
     ]);
 
-    const revokedCount = await prisma.voiceAccessLease.count({
+    const revokedCount = await prisma.accessLease.count({
       where: {
         clientTenantId: tenantId,
         status: 'REVOKED',
@@ -150,7 +150,7 @@ export default async function LeasesPage() {
   }
 
   const [leases, total, activeCount, expiredTodayCount] = await prisma.$transaction([
-    prisma.voiceAccessLease.findMany({
+    prisma.accessLease.findMany({
       where: {
         policy: {
           dataset: { tenantId },
@@ -172,14 +172,14 @@ export default async function LeasesPage() {
         },
       },
     }),
-    prisma.voiceAccessLease.count({
+    prisma.accessLease.count({
       where: {
         policy: {
           dataset: { tenantId },
         },
       },
     }),
-    prisma.voiceAccessLease.count({
+    prisma.accessLease.count({
       where: {
         policy: {
           dataset: { tenantId },
@@ -187,7 +187,7 @@ export default async function LeasesPage() {
         status: 'ACTIVE',
       },
     }),
-    prisma.voiceAccessLease.count({
+    prisma.accessLease.count({
       where: {
         policy: {
           dataset: { tenantId },
@@ -201,7 +201,7 @@ export default async function LeasesPage() {
     }),
   ]);
 
-  const revokedCount = await prisma.voiceAccessLease.count({
+  const revokedCount = await prisma.accessLease.count({
     where: {
       policy: {
         dataset: { tenantId },

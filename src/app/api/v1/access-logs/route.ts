@@ -42,7 +42,7 @@ export async function GET(req: NextRequest) {
       datasetIdInternal = ds.id
     }
 
-    const logs = await prisma.voiceAccessLog.findMany({
+    const logs = await prisma.accessLog.findMany({
       where: {
         clientTenantId: clientTenantId || undefined,
         action: action as any || undefined,

@@ -34,7 +34,7 @@ export async function PUT(
     const { allowedColumns, deniedColumns, rowFilters, maskingRules } = parsed.data
 
     // Verify policy exists and belongs to tenant
-    const policy = await prisma.voiceAccessPolicy.findFirst({
+    const policy = await prisma.accessPolicy.findFirst({
       where: {
         policyId,
         OR: [
@@ -49,7 +49,7 @@ export async function PUT(
     }
 
     // Update rewrite rules
-    const updated = await prisma.voiceAccessPolicy.update({
+    const updated = await prisma.accessPolicy.update({
       where: { id: policy.id },
       data: {
         allowedColumns: allowedColumns || [],
@@ -92,7 +92,7 @@ export async function GET(
 
     const { policyId } = await params
 
-    const policy = await prisma.voiceAccessPolicy.findFirst({
+    const policy = await prisma.accessPolicy.findFirst({
       where: {
         policyId,
         OR: [

@@ -85,7 +85,7 @@ async function syncAuditLogs(): Promise<number> {
 
 async function syncAccessLogs(): Promise<number> {
   try {
-    const logs = await prisma.voiceAccessLog.findMany({
+    const logs = await prisma.accessLog.findMany({
       take: BATCH_SIZE,
       orderBy: { timestamp: 'asc' },
       include: {

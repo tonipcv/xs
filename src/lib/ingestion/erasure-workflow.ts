@@ -158,7 +158,7 @@ export class ErasureWorkflow {
       await prisma.$transaction(async (tx) => {
         // 1. Revoke active leases
         if (request.datasetId) {
-          const revokedLeases = await tx.voiceAccessLease.updateMany({
+          const revokedLeases = await tx.accessLease.updateMany({
             where: {
               datasetId: request.datasetId,
               status: 'ACTIVE',
@@ -174,7 +174,7 @@ export class ErasureWorkflow {
 
         // 2. Delete or archive policies
         if (request.datasetId) {
-          const deletedPolicies = await tx.voiceAccessPolicy.deleteMany({
+          const deletedPolicies = await tx.accessPolicy.deleteMany({
             where: { datasetId: request.datasetId },
           })
           result.policiesDeleted = deletedPolicies.count
@@ -349,7 +349,7 @@ export class ErasureWorkflow {
         recordsCount = dataset.numRecordings
       }
 
-      const activeLeases = await prisma.voiceAccessLease.count({
+      const activeLeases = await prisma.accessLease.count({
         where: {
           datasetId: request.datasetId,
           status: 'ACTIVE',
@@ -361,7 +361,7 @@ export class ErasureWorkflow {
         warnings.push(`${activeLeases} active leases will be revoked`)
       }
 
-      const policies = await prisma.voiceAccessPolicy.count({
+      const policies = await prisma.accessPolicy.count({
         where: { datasetId: request.datasetId },
       })
       policiesCount = policies
@@ -443,7 +443,7 @@ export class ErasureWorkflow {
         remainingData.push(`Dataset ${request.datasetId} still exists`)
       }
 
-      const activeLeases = await prisma.voiceAccessLease.count({
+      const activeLeases = await prisma.accessLease.count({
         where: {
           datasetId: request.datasetId,
           status: 'ACTIVE',

@@ -153,7 +153,7 @@ model Tenant {
   users             User[]
   apiKeys           ApiKey[]
   datasets          Dataset[]
-  clientPolicies    VoiceAccessPolicy[] @relation("ClientPolicies")
+  clientPolicies    AccessPolicy[] @relation("ClientPolicies")
   creditLedger      CreditLedger[]
   cloudIntegrations CloudIntegration[]
   dataConnectors    DataConnector[]
@@ -306,20 +306,24 @@ model Dataset {
   createdAt           DateTime          @default(now()) @map("created_at")
   updatedAt           DateTime          @updatedAt @map("updated_at")
   
+  // Multi-modal primary type (AUDIO, IMAGE, TEXT, TIMESERIES, TABULAR)
+  dataType            DataType?         @map("data_type")
+  
   tenant              Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   cloudIntegration    CloudIntegration?     @relation(fields: [cloudIntegrationId], references: [id], onDelete: SetNull)
   dataConnector       DataConnector?        @relation(fields: [dataConnectorId], references: [id], onDelete: SetNull)
   dataSources         DataSource[]
-  policies            VoiceAccessPolicy[]
-  accessLogs          VoiceAccessLog[]
-  audioSegments       AudioSegment[]
-  leases              VoiceAccessLease[]
+  policies            AccessPolicy[]
+  accessLogs          AccessLog[]
+  dataAssets          DataAsset[]
+  leases              AccessLease[]
   accessOffers        AccessOffer[]
   
   @@index([tenantId])
   @@index([status])
   @@index([language])
   @@index([primaryLanguage])
+  @@index([dataType])
   @@index([avgNoiseLevel])
   @@index([callType])
   @@index([processingStatus])
@@ -334,6 +338,7 @@ enum ConsentStatus {
   VERIFIED_BY_XASE
   SELF_DECLARED
   MISSING
+  REVOKED
   @@map("consent_status")
 }
 
@@ -388,7 +393,7 @@ model DataSource {
   
   dataset             Dataset           @relation(fields: [datasetId], references: [id], onDelete: Cascade)
   cloudIntegration    CloudIntegration  @relation(fields: [cloudIntegrationId], references: [id])
-  audioSegments       AudioSegment[]
+  dataAssets          DataAsset[]
   
   @@index([datasetId])
   @@index([cloudIntegrationId])
@@ -396,7 +401,7 @@ model DataSource {
   @@map("data_sources")
 }
 
-model AudioSegment {
+model DataAsset {
   id             String   @id @default(cuid())
   datasetId      String   @map("dataset_id")
   dataSourceId   String   @map("data_source_id")
@@ -436,7 +441,7 @@ model AudioSegment {
   @@map("xase_data_assets")
 }
 
-model VoiceAccessPolicy {
+model AccessPolicy {
   id              String    @id @default(cuid())
   datasetId       String    @map("dataset_id")
   clientTenantId  String    @map("client_tenant_id")
@@ -474,8 +479,8 @@ model VoiceAccessPolicy {
   
   dataset         Dataset           @relation(fields: [datasetId], references: [id], onDelete: Cascade)
   clientTenant    Tenant            @relation("ClientPolicies", fields: [clientTenantId], references: [id], onDelete: Cascade)
-  accessLogs      VoiceAccessLog[]
-  leases          VoiceAccessLease[]
+  accessLogs      AccessLog[]
+  leases          AccessLease[]
   executions      PolicyExecution[]
   
   @@index([datasetId])
@@ -493,7 +498,7 @@ enum PolicyStatus {
   @@map("policy_status")
 }
 
-model VoiceAccessLog {
+model AccessLog {
   id              String    @id @default(cuid())
   datasetId       String    @map("dataset_id")
   policyId        String    @map("policy_id")
@@ -501,7 +506,7 @@ model VoiceAccessLog {
   userId          String?   @map("user_id")
   apiKeyId        String?   @map("api_key_id")
   
-  action          VoiceAccessAction
+  action          AccessAction
   filesAccessed   Int       @default(0) @map("files_accessed")
   hoursAccessed   Float     @default(0) @map("hours_accessed")
   bytesTransferred BigInt?  @map("bytes_transferred")
@@ -514,7 +519,7 @@ model VoiceAccessLog {
   timestamp       DateTime  @default(now())
   
   dataset     Dataset            @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  policy      VoiceAccessPolicy  @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  policy      AccessPolicy  @relation(fields: [policyId], references: [id], onDelete: Cascade)
   
   @@index([datasetId])
   @@index([policyId])
@@ -534,7 +539,7 @@ enum LeaseStatus {
   @@map("lease_status")
 }
 
-model VoiceAccessLease {
+model AccessLease {
   id             String      @id @default(cuid())
   leaseId        String      @unique @map("lease_id")
   datasetId      String      @map("dataset_id")
@@ -564,7 +569,7 @@ model VoiceAccessLease {
 
   // Relations
   dataset        Dataset     @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  policy         VoiceAccessPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  policy         AccessPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
   executions     PolicyExecution[]
   sidecarSessions SidecarSession[]
 
@@ -577,7 +582,7 @@ model VoiceAccessLease {
   @@map("xase_access_leases")
 }
 
-enum VoiceAccessAction {
+enum AccessAction {
   BATCH_DOWNLOAD
   STREAM_ACCESS
   METADATA_VIEW
@@ -944,8 +949,8 @@ model PolicyExecution {
   // Relations
   offer           AccessOffer       @relation(fields: [offerId], references: [id], onDelete: Cascade)
   buyer           Tenant            @relation("BuyerExecutions", fields: [buyerTenantId], references: [id], onDelete: Cascade)
-  policy          VoiceAccessPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  lease           VoiceAccessLease  @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  policy          AccessPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  lease           AccessLease  @relation(fields: [leaseId], references: [id], onDelete: Cascade)
   review          AccessReview?
   merkleTrees     EvidenceMerkleTree[]
   snapshots       ExecutionContractSnapshot[]
@@ -1071,7 +1076,7 @@ model SidecarSession {
   createdAt            DateTime  @default(now()) @map("created_at")
   updatedAt            DateTime  @updatedAt @map("updated_at")
   
-  lease                VoiceAccessLease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  lease                AccessLease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
   metrics              SidecarMetric[]
   
   @@index([leaseId])

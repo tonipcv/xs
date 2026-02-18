@@ -48,7 +48,7 @@ export async function GET(req: NextRequest) {
       datasetInternalId = ds.id
     }
 
-    const policies = await prisma.voiceAccessPolicy.findMany({
+    const policies = await prisma.accessPolicy.findMany({
       where: {
         // tenant pode ver policies como supplier (dono do dataset) ou como client
         OR: [
@@ -172,7 +172,7 @@ export async function POST(req: NextRequest) {
 
     const policyId = genPolicyId()
 
-    const created = await prisma.voiceAccessPolicy.create({
+    const created = await prisma.accessPolicy.create({
       data: {
         datasetId: dataset.id,
         clientTenantId: clientTenant.id,

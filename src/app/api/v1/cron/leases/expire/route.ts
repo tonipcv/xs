@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     const now = new Date()
 
     // Find ACTIVE leases that are expired
-    const expired = await prisma.voiceAccessLease.findMany({
+    const expired = await prisma.accessLease.findMany({
       where: { status: 'ACTIVE', expiresAt: { lte: now } },
       select: { id: true, leaseId: true, clientTenantId: true },
       take: 1000,
@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     const ids = expired.map(l => l.id)
 
     await prisma.$transaction(async (tx) => {
-      await tx.voiceAccessLease.updateMany({
+      await tx.accessLease.updateMany({
         where: { id: { in: ids } },
         data: { status: 'EXPIRED', revokedAt: now, revokedReason: 'ttl_expired' },
       })

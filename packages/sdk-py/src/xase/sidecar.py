@@ -228,12 +228,12 @@ class TelemetrySender:
         except Exception as e:
             logger.error(f"Telemetry flush failed: {e}")
     
-def _flush_loop(self) -> None:
-    """Background loop to flush periodically."""
-    while not self.stop_event.is_set():
-        time.sleep(self.flush_interval)
-        with self.lock:
-            self._flush()
+    def _flush_loop(self) -> None:
+        """Background loop to flush periodically."""
+        while not self.stop_event.is_set():
+            time.sleep(self.flush_interval)
+            with self.lock:
+                self._flush()
     
     def stop(self) -> None:
         """Stop telemetry sender and flush remaining logs."""

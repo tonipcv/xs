@@ -47,7 +47,7 @@ export async function POST(
     }
 
     // Create Policy (enforcement layer)
-    const policy = await prisma.voiceAccessPolicy.create({
+    const policy = await prisma.accessPolicy.create({
       data: {
         policyId: `policy_${nanoid(16)}`,
         datasetId: offer.datasetId,
@@ -65,7 +65,7 @@ export async function POST(
     })
 
     // Create Lease (TTL-based access)
-    const lease = await prisma.voiceAccessLease.create({
+    const lease = await prisma.accessLease.create({
       data: {
         leaseId: `lease_${nanoid(16)}`,
         datasetId: offer.datasetId,

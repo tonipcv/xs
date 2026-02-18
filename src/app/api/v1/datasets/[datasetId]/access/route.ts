@@ -52,7 +52,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dat
 
     // 2) Policy ativa para o CLIENT (tenant do auth)
     const now = new Date()
-    const policy = await prisma.voiceAccessPolicy.findFirst({
+    const policy = await prisma.accessPolicy.findFirst({
       where: {
         datasetId: dataset.id,
         clientTenantId: auth.tenantId,
@@ -94,7 +94,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dat
 
     // 4) Idempotência básica por requestId (opcional)
     if (requestId) {
-      const existing = await prisma.voiceAccessLog.findFirst({ where: { requestId } })
+      const existing = await prisma.accessLog.findFirst({ where: { requestId } })
       if (existing) {
         return NextResponse.json({
           accessGranted: true,
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dat
 
     await prisma.$transaction(async (tx) => {
       // Policy counters
-      await tx.voiceAccessPolicy.update({
+      await tx.accessPolicy.update({
         where: { id: policy.id },
         data: {
           hoursConsumed: nextHours,
@@ -156,7 +156,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dat
       })
 
       // Access log (imutável)
-      await tx.voiceAccessLog.create({
+      await tx.accessLog.create({
         data: {
           datasetId: dataset.id,
           policyId: policy.id,

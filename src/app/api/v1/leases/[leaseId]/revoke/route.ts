@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ lea
     const reason = parsed.data.reason || 'revoked_by_supplier'
 
     // Load lease with dataset owner
-    const lease = await prisma.voiceAccessLease.findFirst({
+    const lease = await prisma.accessLease.findFirst({
       where: { leaseId },
       select: {
         id: true,
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ lea
       return NextResponse.json({ status: 'REVOKED' })
     }
 
-    const updated = await prisma.voiceAccessLease.update({
+    const updated = await prisma.accessLease.update({
       where: { id: lease.id },
       data: { status: 'REVOKED', revokedAt: new Date(), revokedReason: reason },
       select: { status: true, revokedAt: true, revokedReason: true },

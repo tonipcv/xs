@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     const where: any = { clientTenantId: tenantId as string }
     if (status) where.status = status
 
-    const leases = await prisma.voiceAccessLease.findMany({
+    const leases = await prisma.accessLease.findMany({
       where,
       orderBy: { issuedAt: 'desc' },
       take: limit,
@@ -113,7 +113,7 @@ export async function POST(req: NextRequest) {
 
     // Find active policy for this client & dataset
     const now = new Date()
-    const policy = await prisma.voiceAccessPolicy.findFirst({
+    const policy = await prisma.accessPolicy.findFirst({
       where: {
         datasetId: dataset.id,
         clientTenantId: tenantId as string,
@@ -128,7 +128,7 @@ export async function POST(req: NextRequest) {
     // Enforce concurrent lease limit if configured
     const maxConc = (policy as any).maxConcurrentLeases as number | null | undefined
     if (maxConc && maxConc > 0) {
-      const activeLeases = await prisma.voiceAccessLease.count({
+      const activeLeases = await prisma.accessLease.count({
         where: {
           policyId: policy.id,
           status: 'ACTIVE',
@@ -147,7 +147,7 @@ export async function POST(req: NextRequest) {
     const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
 
     // Create lease (typed Prisma)
-    const created = await prisma.voiceAccessLease.create({
+    const created = await prisma.accessLease.create({
       data: {
         leaseId,
         datasetId: dataset.id,

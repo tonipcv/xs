@@ -22,7 +22,7 @@ export async function checkAndRenewLeases(): Promise<RenewalResult[]> {
   const renewalThreshold = new Date(now.getTime() + RENEWAL_WINDOW_MINUTES * 60 * 1000)
 
   // Find active leases with auto-renew enabled expiring in next 30min
-  const leasesToRenew = await prisma.voiceAccessLease.findMany({
+  const leasesToRenew = await prisma.accessLease.findMany({
     where: {
       status: 'ACTIVE',
       autoRenew: true,
@@ -78,7 +78,7 @@ export async function checkAndRenewLeases(): Promise<RenewalResult[]> {
       // Renew lease by extending expiresAt by ttlSeconds
       const newExpiresAt = new Date(lease.expiresAt.getTime() + lease.ttlSeconds * 1000)
 
-      await prisma.voiceAccessLease.update({
+      await prisma.accessLease.update({
         where: { id: lease.id },
         data: {
           expiresAt: newExpiresAt,
@@ -137,7 +137,7 @@ export async function manuallyExtendLease(
   additionalSeconds: number
 ): Promise<{ success: boolean; newExpiresAt?: Date; error?: string }> {
   try {
-    const lease = await prisma.voiceAccessLease.findUnique({
+    const lease = await prisma.accessLease.findUnique({
       where: { leaseId },
       include: {
         executions: {
@@ -165,7 +165,7 @@ export async function manuallyExtendLease(
     // Extend lease
     const newExpiresAt = new Date(lease.expiresAt.getTime() + additionalSeconds * 1000)
 
-    await prisma.voiceAccessLease.update({
+    await prisma.accessLease.update({
       where: { id: lease.id },
       data: {
         expiresAt: newExpiresAt,

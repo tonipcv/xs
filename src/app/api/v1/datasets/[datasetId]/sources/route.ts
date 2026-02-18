@@ -225,7 +225,7 @@ export async function POST(
       }
     })
 
-    // Create AudioSegments in batch
+    // Create DataAssets in batch
     const segments = uniqueFiles.map((file, i) => ({
       datasetId: dataset.id,
       dataSourceId: dataSource.id,
@@ -239,7 +239,7 @@ export async function POST(
       language: dataset.language
     }))
 
-    await prisma.audioSegment.createMany({ data: segments.map((s: any) => ({ ...s, dataSourceId: dataSource.id })), skipDuplicates: true })
+    await prisma.dataAsset.createMany({ data: segments.map((s: any) => ({ ...s, dataSourceId: dataSource.id })), skipDuplicates: true })
 
     // Recalculate dataset aggregates
     await recalculateDatasetAggregates(dataset.id)

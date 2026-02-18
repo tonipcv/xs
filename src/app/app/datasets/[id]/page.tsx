@@ -106,7 +106,7 @@ export default async function DatasetDetailPage({ params }: { params: Promise<{ 
   });
 
   // Policies relacionadas
-  const policies = await prisma.voiceAccessPolicy.findMany({
+  const policies = await prisma.accessPolicy.findMany({
     where: { datasetId: dataset.id },
     orderBy: { createdAt: 'desc' },
     take: 5,
@@ -118,7 +118,7 @@ export default async function DatasetDetailPage({ params }: { params: Promise<{ 
   });
 
   // Access logs recentes
-  const accessLogs = await prisma.voiceAccessLog.findMany({
+  const accessLogs = await prisma.accessLog.findMany({
     where: { datasetId: dataset.id },
     orderBy: { timestamp: 'desc' },
     take: 10,

@@ -49,8 +49,8 @@ export async function DELETE(
       data: { status: 'REMOVED' }
     })
 
-    // Delete associated AudioSegments
-    await prisma.audioSegment.deleteMany({
+    // Delete associated DataAssets
+    await prisma.dataAsset.deleteMany({
       where: { dataSourceId: source.id }
     })
 
@@ -128,7 +128,7 @@ export async function PATCH(
     const audioFiles = await getAllAudioFiles(source.cloudIntegration, source.storageLocation)
 
     // Delete old segments
-    await prisma.audioSegment.deleteMany({
+    await prisma.dataAsset.deleteMany({
       where: { dataSourceId: source.id }
     })
 
@@ -150,7 +150,7 @@ export async function PATCH(
       language: dataset.language
     }))
 
-    await prisma.audioSegment.createMany({ data: segments.map((s: any) => ({ ...s, dataSourceId: sourceId })) })
+    await prisma.dataAsset.createMany({ data: segments.map((s: any) => ({ ...s, dataSourceId: sourceId })) })
 
     // Update source stats
     await prisma.dataSource.update({

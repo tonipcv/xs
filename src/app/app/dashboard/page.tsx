@@ -23,13 +23,13 @@ export default async function DashboardPage() {
       // Supplier: datasets count, active policies, active leases
       const [ds, ledger, leases] = await Promise.all([
         prisma.dataset.count({ where: { tenantId: ctx.tenantId || undefined } }),
-        prisma.voiceAccessLease.count({ where: { policy: { dataset: { tenantId: ctx.tenantId || undefined } }, status: 'ACTIVE' as any } }),
+        prisma.accessLease.count({ where: { policy: { dataset: { tenantId: ctx.tenantId || undefined } }, status: 'ACTIVE' as any } }),
         prisma.creditLedger.count({ where: { tenantId: ctx.tenantId || undefined } }).catch(() => Promise.resolve(0)),
       ]);
       metrics = { a: ds, b: leases, c: ledger };
 
       // Supplier recent leases (latest 5 for datasets owned by this tenant)
-      recentLeases = await prisma.voiceAccessLease
+      recentLeases = await prisma.accessLease
         .findMany({
           where: { policy: { dataset: { tenantId: ctx.tenantId || undefined } } },
           orderBy: { issuedAt: 'desc' },
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
         .catch(() => Promise.resolve([] as any[]));
 
       // Supplier recent activity: show latest 5 logs for datasets owned by this tenant (if available)
-      recentActivity = await prisma.voiceAccessLog
+      recentActivity = await prisma.accessLog
         .findMany({
           where: { policy: { dataset: { tenantId: ctx.tenantId || undefined } } } as any,
           orderBy: { timestamp: 'desc' },
@@ -50,13 +50,13 @@ export default async function DashboardPage() {
     } else {
       // Client: active leases, executions, policies available
       const [leases, logs] = await Promise.all([
-        prisma.voiceAccessLease.count({ where: { clientTenantId: ctx.tenantId || undefined, status: 'ACTIVE' as any } }),
-        prisma.voiceAccessLog.count({ where: { clientTenantId: ctx.tenantId || undefined } }).catch(() => Promise.resolve(0)),
+        prisma.accessLease.count({ where: { clientTenantId: ctx.tenantId || undefined, status: 'ACTIVE' as any } }),
+        prisma.accessLog.count({ where: { clientTenantId: ctx.tenantId || undefined } }).catch(() => Promise.resolve(0)),
       ]);
       metrics = { a: leases, b: logs, c: 0 };
 
       // Client recent leases (latest 5 for this tenant)
-      recentLeases = await prisma.voiceAccessLease
+      recentLeases = await prisma.accessLease
         .findMany({
           where: { clientTenantId: ctx.tenantId || undefined },
           orderBy: { issuedAt: 'desc' },
@@ -66,7 +66,7 @@ export default async function DashboardPage() {
         .catch(() => Promise.resolve([] as any[]));
 
       // Client recent activity logs (latest 5)
-      recentActivity = await prisma.voiceAccessLog
+      recentActivity = await prisma.accessLog
         .findMany({
           where: { clientTenantId: ctx.tenantId || undefined },
           orderBy: { timestamp: 'desc' },

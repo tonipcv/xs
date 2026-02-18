@@ -156,7 +156,7 @@ export async function enforceAccess(request: AccessRequest): Promise<AccessResul
 
     await prisma.$transaction(async (tx) => {
       // A. Atualizar consumo da policy
-      await tx.voiceAccessPolicy.update({
+      await tx.accessPolicy.update({
         where: { id: policy.id },
         data: {
           hoursConsumed: policy.hoursConsumed + hoursToConsume,
@@ -194,7 +194,7 @@ export async function enforceAccess(request: AccessRequest): Promise<AccessResul
       }
 
       // C. Log de acesso (imutável)
-      await tx.voiceAccessLog.create({
+      await tx.accessLog.create({
         data: {
           datasetId: dataset.id,
           policyId: policyIdInternal,

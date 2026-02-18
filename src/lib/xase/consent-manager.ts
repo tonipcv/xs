@@ -12,6 +12,7 @@
 
 import { getRedisClient } from '@/lib/redis'
 import { prisma } from '@/lib/prisma'
+import { ConsentStatus as PrismaConsentStatus, LeaseStatus as PrismaLeaseStatus } from '@prisma/client'
 import { logAudit } from './audit'
 
 export interface ConsentRevocationEvent {
@@ -65,20 +66,20 @@ export class ConsentManager {
         await tx.dataset.updateMany({
           where: { datasetId, tenantId },
           data: {
-            consentStatus: 'REVOKED' as any,
+            consentStatus: PrismaConsentStatus.REVOKED,
             consentProofUri: null,
             consentProofHash: null,
           },
         })
 
         // Revogar todos os leases ativos para este dataset
-        const revokedLeases = await tx.voiceAccessLease.updateMany({
+        const revokedLeases = await tx.accessLease.updateMany({
           where: {
             datasetId: dataset.id,
-            status: 'ACTIVE',
+            status: PrismaLeaseStatus.ACTIVE,
           },
           data: {
-            status: 'REVOKED' as any,
+            status: PrismaLeaseStatus.REVOKED,
             revokedAt: now,
             revokedReason: `Consent revoked: ${reason || 'User request'}`,
           },

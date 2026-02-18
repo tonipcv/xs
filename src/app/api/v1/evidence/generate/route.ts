@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Fetch all access logs for this execution
-    const logs = await prisma.voiceAccessLog.findMany({
+    const logs = await prisma.accessLog.findMany({
       where: {
         policyId: execution.policyId,
         clientTenantId: execution.buyerTenantId,

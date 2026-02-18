@@ -47,8 +47,8 @@ export async function GET(req: NextRequest) {
     // Compute state from DB
     const [datasetsCount, policiesCount, leasesCount] = await Promise.all([
       prisma.dataset.count({ where: { tenantId, status: 'ACTIVE' } }),
-      prisma.voiceAccessPolicy.count({ where: { dataset: { tenantId } } }),
-      prisma.voiceAccessLease.count({ where: { policy: { dataset: { tenantId } } } }),
+      prisma.accessPolicy.count({ where: { dataset: { tenantId } } }),
+      prisma.accessLease.count({ where: { policy: { dataset: { tenantId } } } }),
     ])
 
     const roleSelected = true // tenant exists

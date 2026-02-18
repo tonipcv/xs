@@ -22,7 +22,7 @@ export default async function PoliciesPage() {
 
   let policies: any[] = [];
   if (tenantId) {
-    policies = await prisma.voiceAccessPolicy.findMany({
+    policies = await prisma.accessPolicy.findMany({
       where: {
         OR: [
           { dataset: { tenantId } },

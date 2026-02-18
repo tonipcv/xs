@@ -63,7 +63,7 @@ export async function POST(req: NextRequest) {
             continue
           }
 
-          const policy = await tx.voiceAccessPolicy.create({
+          const policy = await tx.accessPolicy.create({
             data: {
               policyId: `pol_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
               datasetId: dataset.id,
@@ -132,7 +132,7 @@ export async function DELETE(req: NextRequest) {
       )
     }
 
-    const deleted = await prisma.voiceAccessPolicy.deleteMany({
+    const deleted = await prisma.accessPolicy.deleteMany({
       where: {
         policyId: { in: policyIds },
         dataset: { tenantId: auth.tenantId },

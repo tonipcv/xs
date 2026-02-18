@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
     const now = new Date()
     const [offers, leases] = await Promise.all([
       prisma.accessOffer.count({}),
-      prisma.voiceAccessLease.count({ where: { expiresAt: { gt: now }, revokedAt: null, deletedAt: null } }),
+      prisma.accessLease.count({ where: { expiresAt: { gt: now }, revokedAt: null, deletedAt: null } }),
     ])
 
     return NextResponse.json({

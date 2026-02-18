@@ -24,7 +24,7 @@ export async function POST(req: NextRequest) {
     const { audioHash, audioUrl } = parsed.data
 
     // Fetch candidate policy IDs for this tenant (as contract proxies)
-    const policies = await prisma.voiceAccessPolicy.findMany({
+    const policies = await prisma.accessPolicy.findMany({
       where: { clientTenantId: auth.tenantId },
       select: { id: true },
       take: 100,

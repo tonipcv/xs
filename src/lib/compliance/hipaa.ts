@@ -1,6 +1,7 @@
 // HIPAA Safe Harbor checker (minimal MVP)
 // Provides basic detection and redaction suggestions for the 18 identifiers.
 
+import { prisma } from '@/lib/prisma'
 export type SafeHarborConfig = {
   dateShiftDays?: number
   redact?: string[]
@@ -78,7 +79,26 @@ export function checkSafeHarbor(payload: unknown, config: SafeHarborConfig = {})
   }
 }
 
-export function trackBAA(tenantId: string, partner: string) {
-  // Placeholder helper for BAA tracking integration point
-  return { tenantId, partner, status: 'NOT_IMPLEMENTED' as const }
+export async function trackBAA(tenantId: string, partner: string, opts?: {
+  effectiveAt?: Date
+  expiresAt?: Date | null
+  agreementUri?: string | null
+  agreementHash?: string | null
+}) {
+  const record = await prisma.auditLog.create({
+    data: {
+      tenantId,
+      action: 'HIPAA_BAA_SIGNED',
+      resourceType: 'TENANT',
+      resourceId: tenantId,
+      details: {
+        partner,
+        effectiveAt: (opts?.effectiveAt || new Date()).toISOString(),
+        expiresAt: opts?.expiresAt ? opts.expiresAt.toISOString() : null,
+        agreementUri: opts?.agreementUri || null,
+        agreementHash: opts?.agreementHash || null,
+      } as any,
+    } as any,
+  })
+  return { id: record.id, tenantId, partner, status: 'RECORDED' as const }
 }

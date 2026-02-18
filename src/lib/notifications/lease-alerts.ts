@@ -28,7 +28,7 @@ export async function sendLeaseExpiryAlert(
   context?: AlertContext
 ): Promise<void> {
   try {
-    const lease = await prisma.voiceAccessLease.findUnique({
+    const lease = await prisma.accessLease.findUnique({
       where: { leaseId },
       include: {
         dataset: {
@@ -252,7 +252,7 @@ export async function checkExpiringLeases(): Promise<void> {
   const in5min = new Date(now.getTime() + 5 * 60 * 1000)
 
   // Find leases expiring in 30min (alert not sent yet)
-  const leases30min = await prisma.voiceAccessLease.findMany({
+  const leases30min = await prisma.accessLease.findMany({
     where: {
       status: 'ACTIVE',
       expiresAt: {
@@ -266,14 +266,14 @@ export async function checkExpiringLeases(): Promise<void> {
 
   for (const lease of leases30min) {
     await sendLeaseExpiryAlert(lease.leaseId, 'EXPIRING_30MIN')
-    await prisma.voiceAccessLease.update({
+    await prisma.accessLease.update({
       where: { id: lease.id },
       data: { alert30minSent: true }
     })
   }
 
   // Find leases expiring in 5min (alert not sent yet)
-  const leases5min = await prisma.voiceAccessLease.findMany({
+  const leases5min = await prisma.accessLease.findMany({
     where: {
       status: 'ACTIVE',
       expiresAt: {
@@ -287,7 +287,7 @@ export async function checkExpiringLeases(): Promise<void> {
 
   for (const lease of leases5min) {
     await sendLeaseExpiryAlert(lease.leaseId, 'EXPIRING_5MIN')
-    await prisma.voiceAccessLease.update({
+    await prisma.accessLease.update({
       where: { id: lease.id },
       data: { alert5minSent: true }
     })

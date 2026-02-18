@@ -221,7 +221,7 @@ describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
   describe('Policy Isolation', () => {
     it('should not allow cross-tenant policy access', async () => {
       // Create policy for tenant1
-      const policy1 = await prisma.voiceAccessPolicy.create({
+      const policy1 = await prisma.accessPolicy.create({
         data: {
           tenantId: tenant1Id,
           datasetId: dataset1Id,
@@ -233,7 +233,7 @@ describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
       })
 
       // Try to access from tenant2 context
-      const policies = await prisma.voiceAccessPolicy.findMany({
+      const policies = await prisma.accessPolicy.findMany({
         where: {
           tenantId: tenant2Id,
           id: policy1.id,
@@ -243,14 +243,14 @@ describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
       expect(policies).toHaveLength(0)
 
       // Cleanup
-      await prisma.voiceAccessPolicy.delete({ where: { id: policy1.id } })
+      await prisma.accessPolicy.delete({ where: { id: policy1.id } })
     })
   })
 
   describe('Lease Isolation', () => {
     it('should not allow cross-tenant lease access', async () => {
       // Create policy and lease for tenant1
-      const policy = await prisma.voiceAccessPolicy.create({
+      const policy = await prisma.accessPolicy.create({
         data: {
           tenantId: tenant1Id,
           datasetId: dataset1Id,
@@ -261,7 +261,7 @@ describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
         },
       })
 
-      const lease = await prisma.voiceAccessLease.create({
+      const lease = await prisma.accessLease.create({
         data: {
           leaseId: 'lease_test_1',
           datasetId: dataset1Id,
@@ -274,7 +274,7 @@ describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
       })
 
       // Try to access from tenant2 context
-      const leases = await prisma.voiceAccessLease.findMany({
+      const leases = await prisma.accessLease.findMany({
         where: {
           clientTenantId: tenant2Id,
           id: lease.id,
@@ -284,8 +284,8 @@ describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
       expect(leases).toHaveLength(0)
 
       // Cleanup
-      await prisma.voiceAccessLease.delete({ where: { id: lease.id } })
-      await prisma.voiceAccessPolicy.delete({ where: { id: policy.id } })
+      await prisma.accessLease.delete({ where: { id: lease.id } })
+      await prisma.accessPolicy.delete({ where: { id: policy.id } })
     })
   })
 
@@ -369,7 +369,7 @@ describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
       // Get all resources for tenant1
       const tenant1Resources = {
         datasets: await prisma.dataset.count({ where: { tenantId: tenant1Id } }),
-        policies: await prisma.voiceAccessPolicy.count({ where: { tenantId: tenant1Id } }),
+        policies: await prisma.accessPolicy.count({ where: { tenantId: tenant1Id } }),
         auditLogs: await prisma.auditLog.count({ where: { tenantId: tenant1Id } }),
         credits: await prisma.creditLedger.count({ where: { tenantId: tenant1Id } }),
       }
@@ -377,7 +377,7 @@ describe.skipIf(!isIntegrationTest)('Cross-Tenant Isolation', () => {
       // Get all resources for tenant2
       const tenant2Resources = {
         datasets: await prisma.dataset.count({ where: { tenantId: tenant2Id } }),
-        policies: await prisma.voiceAccessPolicy.count({ where: { tenantId: tenant2Id } }),
+        policies: await prisma.accessPolicy.count({ where: { tenantId: tenant2Id } }),
         auditLogs: await prisma.auditLog.count({ where: { tenantId: tenant2Id } }),
         credits: await prisma.creditLedger.count({ where: { tenantId: tenant2Id } }),
       }

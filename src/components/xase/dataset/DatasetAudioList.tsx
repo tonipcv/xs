@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { ChevronLeft, ChevronRight, Search } from 'lucide-react'
 
-interface AudioSegment {
+interface DataAsset {
   id: string
   filename: string
   duration: number
@@ -21,7 +21,7 @@ interface AudioSegment {
 
 interface DatasetAudioListProps {
   datasetId: string
-  segments: AudioSegment[]
+  segments: DataAsset[]
   pageSize?: number
 }
 

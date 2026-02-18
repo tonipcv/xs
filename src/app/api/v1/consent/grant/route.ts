@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
+import { ConsentStatus as PrismaConsentStatus } from '@prisma/client';
 import { ConsentManager } from '@/lib/xase/consent-manager';
 
 export async function POST(req: NextRequest) {
@@ -43,7 +44,7 @@ export async function POST(req: NextRequest) {
     const dataset = await prisma.dataset.update({
       where: { id: datasetId },
       data: {
-        consentStatus: 'VERIFIED_BY_XASE',
+        consentStatus: PrismaConsentStatus.VERIFIED_BY_XASE,
       },
     });
 

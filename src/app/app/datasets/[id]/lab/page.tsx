@@ -35,7 +35,7 @@ export default async function LabDatasetView({ params }: { params: Promise<{ dat
     )
   }
 
-  const clientPolicies = await prisma.voiceAccessPolicy.findMany({
+  const clientPolicies = await prisma.accessPolicy.findMany({
     where: {
       clientTenantId: context.tenantId!,
       datasetId: dataset.id,
@@ -67,7 +67,7 @@ export default async function LabDatasetView({ params }: { params: Promise<{ dat
     )
   }
 
-  const accessLogs = await prisma.voiceAccessLog.findMany({
+  const accessLogs = await prisma.accessLog.findMany({
     where: {
       datasetId: dataset.id,
       clientTenantId: context.tenantId!,

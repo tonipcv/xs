@@ -27,7 +27,7 @@ export default async function TrainingDashboard() {
   const now = new Date();
 
   const [activeLeases, totalLeases, recentAccessLogs] = await prisma.$transaction([
-    prisma.voiceAccessLease.findMany({
+    prisma.accessLease.findMany({
       where: {
         clientTenantId: tenantId,
         status: 'ACTIVE',
@@ -49,10 +49,10 @@ export default async function TrainingDashboard() {
         },
       },
     }),
-    prisma.voiceAccessLease.count({
+    prisma.accessLease.count({
       where: { clientTenantId: tenantId },
     }),
-    prisma.voiceAccessLog.findMany({
+    prisma.accessLog.findMany({
       where: {
         policy: {
           clientTenantId: tenantId,
@@ -78,7 +78,7 @@ export default async function TrainingDashboard() {
     return diffMs > 0 && diffMs < 60 * 60 * 1000;
   }).length;
 
-  const totalHoursConsumed = await prisma.voiceAccessLog.aggregate({
+  const totalHoursConsumed = await prisma.accessLog.aggregate({
     where: {
       policy: {
         clientTenantId: tenantId,

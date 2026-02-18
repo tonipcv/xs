@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { DataType as PrismaDataType } from '@prisma/client'
 
 // GET /api/v1/access-offers
 // Optional query params: riskClass, language, jurisdiction, maxPrice, useCase, supplierId, dataType, regulatory, limit, offset
@@ -27,10 +28,10 @@ export async function GET(req: NextRequest) {
     if (supplierId) where.supplierTenantId = supplierId
     if (regulatory) where.regulatoryFrameworks = { has: regulatory }
 
-    // dataType filter via related dataset assets (AudioSegment generalized as DataAsset)
+    // dataType filter via related dataset assets (DataAsset generalized as DataAsset)
     // If filtering by dataType, constrain via related dataset relation
     if (dataType) {
-      where.dataset = { audioSegments: { some: { dataType: dataType as any } } }
+      where.dataset = { dataAssets: { some: { dataType: dataType as unknown as PrismaDataType } } }
     }
 
     const offersRaw = await prisma.accessOffer.findMany({
@@ -57,7 +58,7 @@ export async function GET(req: NextRequest) {
           select: {
             id: true,
             datasetId: true,
-            audioSegments: {
+            dataAssets: {
               take: 1,
               where: { dataType: { not: null } },
               select: { dataType: true },
@@ -80,7 +81,7 @@ export async function GET(req: NextRequest) {
         return !!o.dataset
       })
       .map((o: any) => {
-        const dt = o?.dataset?.audioSegments?.[0]?.dataType || null
+        const dt = o?.dataset?.dataAssets?.[0]?.dataType || null
         const { dataset, ...rest } = o
         return { ...rest, dataType: dt || undefined }
       })

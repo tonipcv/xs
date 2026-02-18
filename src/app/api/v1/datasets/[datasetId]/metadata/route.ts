@@ -59,7 +59,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ data
     }
 
     // Verificar se há políticas ativas para este client
-    const hasActivePolicy = await prisma.voiceAccessPolicy.findFirst({
+    const hasActivePolicy = await prisma.accessPolicy.findFirst({
       where: {
         dataset: { datasetId },
         clientTenantId: auth.tenantId,

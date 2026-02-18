@@ -55,7 +55,7 @@ export async function GET(req: NextRequest) {
     const totalHoursProvided = datasetsAgg._sum?.totalDurationHours || 0
 
     // Horas consumidas (via policies)
-    const policiesAgg = await prisma.voiceAccessPolicy.aggregate({
+    const policiesAgg = await prisma.accessPolicy.aggregate({
       where: {
         dataset: { tenantId },
         status: 'ACTIVE',
@@ -65,7 +65,7 @@ export async function GET(req: NextRequest) {
     const hoursConsumed = policiesAgg._sum?.hoursConsumed || 0
 
     // Receita acumulada (via AccessLogs GRANTED)
-    const accessLogs = await prisma.voiceAccessLog.findMany({
+    const accessLogs = await prisma.accessLog.findMany({
       where: {
         dataset: { tenantId },
         outcome: 'GRANTED',
@@ -80,7 +80,7 @@ export async function GET(req: NextRequest) {
     const revenue = 0; // Placeholder until pricing fields are added to schema
 
     // Clientes ativos (unique clientTenantId em policies ativas)
-    const activePolicies = await prisma.voiceAccessPolicy.findMany({
+    const activePolicies = await prisma.accessPolicy.findMany({
       where: {
         dataset: { tenantId },
         status: 'ACTIVE',

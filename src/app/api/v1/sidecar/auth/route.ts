@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
 
     // Validate lease
     const now = new Date()
-    const lease = await prisma.voiceAccessLease.findFirst({
+    const lease = await prisma.accessLease.findFirst({
       where: {
         leaseId,
         clientTenantId: auth.tenantId as string,

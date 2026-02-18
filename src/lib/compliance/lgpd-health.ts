@@ -1,4 +1,6 @@
 // LGPD (saúde) helpers - Art. 11 consent tracking and ROPA scaffolding (MVP)
+import { prisma } from '@/lib/prisma'
+import { ConsentStatus as PrismaConsentStatus, LeaseStatus as PrismaLeaseStatus } from '@prisma/client'
 
 export type HealthConsentPayload = {
   datasetId: string
@@ -47,4 +49,82 @@ export function buildRopaRecord(input: {
     dpo: input.dpo,
     retention: input.retention,
   }
+}
+
+export function isHealthLegalBasisAllowed(legalBasis: HealthConsentPayload['legalBasis']): boolean {
+  return [
+    'EXPLICIT_CONSENT',
+    'HEALTH_PROTECTION',
+    'RESEARCH_ANONYMIZED',
+    'CONTROLLER_OBLIGATION',
+  ].includes(legalBasis)
+}
+
+export async function registerHealthConsent(payload: HealthConsentPayload) {
+  validateConsentPayload(payload)
+  if (!isHealthLegalBasisAllowed(payload.legalBasis)) {
+    throw new Error('Illegal legalBasis for LGPD-Health')
+  }
+
+  const updated = await prisma.dataset.updateMany({
+    where: { datasetId: payload.datasetId, tenantId: payload.tenantId },
+    data: {
+      consentStatus: PrismaConsentStatus.VERIFIED_BY_XASE,
+      consentProofUri: payload.proofUri || null,
+      consentProofHash: payload.proofHash || null,
+    },
+  })
+
+  await prisma.auditLog.create({
+    data: {
+      tenantId: payload.tenantId,
+      action: 'LGPD_HEALTH_CONSENT_REGISTERED',
+      resourceType: 'DATASET',
+      resourceId: payload.datasetId,
+      details: {
+        legalBasis: payload.legalBasis,
+        purpose: payload.purpose,
+        version: payload.version,
+        proofUri: payload.proofUri || null,
+      } as any,
+    } as any,
+  })
+
+  return { updated: updated.count }
+}
+
+export async function revokeHealthConsent(args: { datasetId: string; tenantId: string; reason?: string; revokedBy: string }) {
+  const now = new Date()
+  const res = await prisma.$transaction(async (tx) => {
+    const ds = await tx.dataset.findFirst({ where: { datasetId: args.datasetId, tenantId: args.tenantId } })
+    if (!ds) throw new Error('Dataset not found')
+
+    const upd = await tx.dataset.update({
+      where: { id: ds.id },
+      data: {
+        consentStatus: PrismaConsentStatus.REVOKED,
+        consentProofUri: null,
+        consentProofHash: null,
+      },
+    })
+
+    const leases = await tx.accessLease.updateMany({
+      where: { datasetId: ds.id, status: PrismaLeaseStatus.ACTIVE },
+      data: { status: PrismaLeaseStatus.REVOKED, revokedAt: now, revokedReason: args.reason || 'lgpd_revoke' },
+    })
+
+    await tx.auditLog.create({
+      data: {
+        tenantId: args.tenantId,
+        action: 'LGPD_HEALTH_CONSENT_REVOKED',
+        resourceType: 'DATASET',
+        resourceId: args.datasetId,
+        details: { reason: args.reason || null, revokedBy: args.revokedBy, leasesRevoked: leases.count } as any,
+      } as any,
+    })
+
+    return { datasetId: args.datasetId, leasesRevoked: leases.count, status: upd.consentStatus }
+  })
+
+  return res
 }

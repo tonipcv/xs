@@ -215,7 +215,7 @@ export class MeteringService {
     hours: number,
     requests: number = 0
   ): Promise<void> {
-    const lease = await prisma.voiceAccessLease.findUnique({
+    const lease = await prisma.accessLease.findUnique({
       where: { id: leaseId },
       select: { clientTenantId: true, datasetId: true },
     })

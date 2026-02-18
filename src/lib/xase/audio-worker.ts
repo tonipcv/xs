@@ -63,7 +63,7 @@ export async function processAudioFile(
 
 /**
  * WORKER PRINCIPAL - Processa um job de áudio
- * Atualiza dataset com metadados + cria AudioSegment
+ * Atualiza dataset com metadados + cria DataAsset
  * Transições de estado: PROCESSING → COMPLETED/FAILED
  */
 export async function processAudioJob(job: AudioProcessingJob): Promise<void> {
@@ -133,7 +133,7 @@ export async function processAudioJob(job: AudioProcessingJob): Promise<void> {
       return
     }
 
-    // 4. SUCESSO - Atualizar dataset (sem AudioSegment por enquanto para debug)
+    // 4. SUCESSO - Atualizar dataset (sem DataAsset por enquanto para debug)
     console.log(`[AudioWorker] Step 4: Updating dataset...`)
     
     const newDurationHours = dataset.totalDurationHours + ((result.durationSeconds || 0) / 3600)

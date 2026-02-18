@@ -86,7 +86,7 @@ export class GDPRCompliance {
       })
 
       // 2. Find all policies
-      const policies = await prisma.voiceAccessPolicy.findMany({
+      const policies = await prisma.accessPolicy.findMany({
         where: {
           OR: [
             { dataset: { tenantId } },
@@ -105,7 +105,7 @@ export class GDPRCompliance {
       })
 
       // 3. Find all leases
-      const leases = await prisma.voiceAccessLease.findMany({
+      const leases = await prisma.accessLease.findMany({
         where: {
           OR: [
             { dataset: { tenantId } },
@@ -123,7 +123,7 @@ export class GDPRCompliance {
       })
 
       // 4. Find access logs
-      const accessLogs = await prisma.voiceAccessLog.findMany({
+      const accessLogs = await prisma.accessLog.findMany({
         where: {
           dataset: { tenantId },
         },

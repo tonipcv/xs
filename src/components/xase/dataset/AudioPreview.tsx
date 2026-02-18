@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge'
 import { Play, Pause, Volume2, VolumeX, Download } from 'lucide-react'
 import { Slider } from '@/components/ui/slider'
 
-interface AudioSegment {
+interface DataAsset {
   id: string
   filename: string
   duration: number
@@ -20,7 +20,7 @@ interface AudioSegment {
 }
 
 interface AudioPreviewProps {
-  segment: AudioSegment
+  segment: DataAsset
   onDownload?: (segmentId: string) => void
 }
 

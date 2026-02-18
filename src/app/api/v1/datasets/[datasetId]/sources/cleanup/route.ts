@@ -63,7 +63,7 @@ export async function POST(
 
     // Soft-remove duplicates and delete their segments
     if (toRemove.length > 0) {
-      await prisma.audioSegment.deleteMany({ where: { dataSourceId: { in: toRemove } } })
+      await prisma.dataAsset.deleteMany({ where: { dataSourceId: { in: toRemove } } })
       await prisma.dataSource.updateMany({ where: { id: { in: toRemove } }, data: { status: 'REMOVED' } })
     }
 

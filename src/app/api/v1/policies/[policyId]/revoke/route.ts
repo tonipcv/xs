@@ -25,7 +25,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pol
     const { reason } = parsed.data as { reason?: string }
     const { policyId } = await params
 
-    const policy = await prisma.voiceAccessPolicy.findFirst({
+    const policy = await prisma.accessPolicy.findFirst({
       where: { policyId },
       include: { dataset: { select: { tenantId: true } } },
     })
@@ -40,7 +40,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ pol
       return NextResponse.json({ status: 'REVOKED', revokedAt: policy.revokedAt })
     }
 
-    const updated = await prisma.voiceAccessPolicy.update({
+    const updated = await prisma.accessPolicy.update({
       where: { id: policy.id },
       data: {
         status: 'REVOKED',

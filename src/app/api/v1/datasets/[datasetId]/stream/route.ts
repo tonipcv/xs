@@ -58,7 +58,7 @@ export async function GET(
 
     // 2) Validate active lease for this client and dataset
     const now = new Date()
-    const lease = await prisma.voiceAccessLease.findFirst({
+    const lease = await prisma.accessLease.findFirst({
       where: {
         leaseId,
         clientTenantId: clientTenantId as string,
@@ -71,7 +71,7 @@ export async function GET(
     if (!lease) return NextResponse.json({ error: 'Lease invalid or expired' }, { status: 403 })
 
     // 2.1) Active streaming policy for client (derived from lease)
-    const policy = await prisma.voiceAccessPolicy.findFirst({
+    const policy = await prisma.accessPolicy.findFirst({
       where: {
         id: lease.policyId,
         datasetId: dataset.id,
@@ -153,7 +153,7 @@ export async function GET(
         }
 
         // Update counters
-        await tx.voiceAccessPolicy.update({
+        await tx.accessPolicy.update({
           where: { id: policy.id },
           data: { hoursConsumed: nextHours, lastAccessAt: new Date() },
         })
@@ -180,7 +180,7 @@ export async function GET(
         }
 
         // Access log
-        await tx.voiceAccessLog.create({
+        await tx.accessLog.create({
           data: {
             datasetId: dataset.id,
             policyId: policy.id,

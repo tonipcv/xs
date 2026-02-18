@@ -108,9 +108,9 @@ export async function updateDatasetMetrics(
 }
 
 /**
- * Cria um AudioSegment no banco
+ * Cria um DataAsset no banco
  */
-export async function createAudioSegment(
+export async function createDataAsset(
   datasetId: string,
   fileKey: string,
   result: ProcessingResult
@@ -126,7 +126,7 @@ export async function createAudioSegment(
 
   const segmentId = 'seg_' + crypto.randomBytes(12).toString('hex')
 
-  await prisma.audioSegment.create({
+  await prisma.dataAsset.create({
     data: {
       datasetId: dataset.id,
       segmentId,

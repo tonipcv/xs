@@ -44,7 +44,7 @@ export async function GET(req: NextRequest) {
     }
 
     // Fetch access logs
-    const accessLogs = await prisma.voiceAccessLog.findMany({
+    const accessLogs = await prisma.accessLog.findMany({
       where: whereClause,
       orderBy: { timestamp: 'desc' },
       take: 1000,
@@ -77,7 +77,7 @@ export async function GET(req: NextRequest) {
     })
 
     // Fetch policies
-    const policies = await prisma.voiceAccessPolicy.findMany({
+    const policies = await prisma.accessPolicy.findMany({
       where: {
         clientTenantId: auth.tenantId,
         updatedAt: { gte: startDate },

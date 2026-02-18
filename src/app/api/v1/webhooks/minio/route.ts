@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { processAudioFile, updateDatasetMetrics, createAudioSegment } from '@/lib/xase/audio-processor'
+import { processAudioFile, updateDatasetMetrics, createDataAsset } from '@/lib/xase/audio-processor'
 import { z } from 'zod'
 
 function getSecret(req: NextRequest): string | null {
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
       const result = await processAudioFile(rec.key, dataset.datasetId)
       
       if (result.success) {
-        await createAudioSegment(dataset.datasetId, rec.key, result)
+        await createDataAsset(dataset.datasetId, rec.key, result)
         await updateDatasetMetrics(dataset.datasetId, result)
       } else {
         await prisma.dataset.update({ 

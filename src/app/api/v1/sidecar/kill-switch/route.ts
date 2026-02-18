@@ -51,7 +51,7 @@ export async function POST(req: NextRequest) {
     ]
     if (session.leaseId) {
       tx.push(
-        prisma.voiceAccessLease.update({
+        prisma.accessLease.update({
           where: { id: session.leaseId },
           data: {
             status: 'REVOKED',

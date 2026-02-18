@@ -26,7 +26,7 @@ export async function GET(req: NextRequest, context: any) {
     const { leaseId } = params
     if (!leaseId) return NextResponse.json({ error: 'Missing leaseId' }, { status: 400 })
 
-    const lease = await prisma.voiceAccessLease.findFirst({
+    const lease = await prisma.accessLease.findFirst({
       where: {
         leaseId,
         clientTenantId: tenantId as string,

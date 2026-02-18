@@ -27,12 +27,12 @@ export async function GET(req: NextRequest) {
     const tenantId = user.tenantId
 
     // Políticas ativas
-    const activePolicies = await prisma.voiceAccessPolicy.count({
+    const activePolicies = await prisma.accessPolicy.count({
       where: { clientTenantId: tenantId, status: 'ACTIVE' },
     })
 
     // Horas usadas (consumidas)
-    const policiesAgg = await prisma.voiceAccessPolicy.aggregate({
+    const policiesAgg = await prisma.accessPolicy.aggregate({
       where: { clientTenantId: tenantId, status: 'ACTIVE' },
       _sum: { hoursConsumed: true },
     })
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     const totalSpent = Math.abs(Number(debitsAgg._sum?.amount || 0))
 
     // Máximo de horas disponíveis (soma de maxHours de policies ativas)
-    const maxHoursAgg = await prisma.voiceAccessPolicy.aggregate({
+    const maxHoursAgg = await prisma.accessPolicy.aggregate({
       where: { clientTenantId: tenantId, status: 'ACTIVE' },
       _sum: { maxHours: true },
     })

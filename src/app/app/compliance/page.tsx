@@ -19,6 +19,7 @@ type ComplianceAction =
   | 'model-risk' | 'consumer-duty'
   | 'marisk' | 'ai-risk'
   | 'safe-harbor'              // HIPAA Safe Harbor check
+  | 'hipaa-baa'                // HIPAA BAA registration
   | 'grant-consent' | 'revoke-consent' // LGPD health consent
 
 export default function ComplianceConsolePage() {
@@ -28,6 +29,11 @@ export default function ComplianceConsolePage() {
   const [datasetId, setDatasetId] = useState('')
   const [modelId, setModelId] = useState('')
   const [hipaaPayload, setHipaaPayload] = useState('') // string or JSON
+  const [hipaaBaaPartner, setHipaaBaaPartner] = useState('')
+  const [hipaaBaaEffectiveAt, setHipaaBaaEffectiveAt] = useState('')
+  const [hipaaBaaExpiresAt, setHipaaBaaExpiresAt] = useState('')
+  const [hipaaBaaAgreementUri, setHipaaBaaAgreementUri] = useState('')
+  const [hipaaBaaAgreementHash, setHipaaBaaAgreementHash] = useState('')
   const [lgpdVersion, setLgpdVersion] = useState('v1')
   const [lgpdProofUri, setLgpdProofUri] = useState('')
   const [lgpdProofHash, setLgpdProofHash] = useState('')
@@ -44,6 +50,7 @@ export default function ComplianceConsolePage() {
     marisk: 'MaRisk Assessment',
     'ai-risk': 'AI Risk Classification',
     'safe-harbor': 'HIPAA Safe Harbor Check',
+    'hipaa-baa': 'HIPAA BAA Registration',
     'grant-consent': 'LGPD Health Consent (Grant)',
     'revoke-consent': 'LGPD Health Consent (Revoke)',
   } as const), [])
@@ -62,6 +69,7 @@ export default function ComplianceConsolePage() {
     }
     if (module === 'hipaa') {
       if (action === 'safe-harbor') return !!hipaaPayload.trim()
+      if (action === 'hipaa-baa') return !!hipaaBaaPartner.trim()
     }
     if (module === 'lgpd') {
       if (action === 'grant-consent') return !!datasetId.trim() && !!lgpdVersion.trim()
@@ -71,7 +79,7 @@ export default function ComplianceConsolePage() {
   }, [module, action, userId, datasetId, modelId, hipaaPayload, lgpdVersion])
 
   const resetForm = () => {
-    setUserId(''); setDatasetId(''); setModelId(''); setHipaaPayload(''); setLgpdVersion('v1'); setLgpdProofUri(''); setLgpdProofHash(''); setResult(null); setError('')
+    setUserId(''); setDatasetId(''); setModelId(''); setHipaaPayload(''); setHipaaBaaPartner(''); setHipaaBaaEffectiveAt(''); setHipaaBaaExpiresAt(''); setHipaaBaaAgreementUri(''); setHipaaBaaAgreementHash(''); setLgpdVersion('v1'); setLgpdProofUri(''); setLgpdProofHash(''); setResult(null); setError('')
   }
 
   const executeAction = async () => {
@@ -115,6 +123,15 @@ export default function ComplianceConsolePage() {
           let parsed: any = hipaaPayload
           try { parsed = JSON.parse(hipaaPayload) } catch {}
           requestBody = { payload: parsed }
+        } else if (action === 'hipaa-baa') {
+          endpoint = '/api/v1/compliance/hipaa/baa'
+          requestBody = {
+            partner: hipaaBaaPartner,
+            effectiveAt: hipaaBaaEffectiveAt || undefined,
+            expiresAt: hipaaBaaExpiresAt || undefined,
+            agreementUri: hipaaBaaAgreementUri || undefined,
+            agreementHash: hipaaBaaAgreementHash || undefined,
+          }
         }
       } else if (module === 'lgpd') {
         if (action === 'grant-consent') {
@@ -233,7 +250,7 @@ export default function ComplianceConsolePage() {
                 )}
                 {(module === 'hipaa') && (
                   <div className="grid gap-2">
-                    {(['safe-harbor'] as ComplianceAction[]).map((a) => (
+                    {(['safe-harbor','hipaa-baa'] as ComplianceAction[]).map((a) => (
                       <Button key={a} variant={action === a ? 'default' : 'outline'} size="sm" className={action===a? 'bg-gray-900 hover:bg-gray-800' : 'border-gray-300 text-gray-800 hover:bg-gray-50'} onClick={()=>{ setAction(a); setResult(null); setError('') }}>
                         {actionLabel[a]}
                       </Button>
@@ -286,6 +303,30 @@ export default function ComplianceConsolePage() {
                   <div>
                     <label className="text-xs font-medium text-gray-700">Sample Clinical Text / JSON</label>
                     <Textarea value={hipaaPayload} onChange={(e)=>setHipaaPayload(e.target.value)} placeholder='{"note":"Patient John Doe with zip 94110"}' className="mt-1" rows={6} />
+                  </div>
+                )}
+                {(module === 'hipaa' && action === 'hipaa-baa') && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-xs font-medium text-gray-700">Partner</label>
+                      <Input value={hipaaBaaPartner} onChange={(e)=>setHipaaBaaPartner(e.target.value)} placeholder="e.g., AWS" className="mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700">Effective At (ISO)</label>
+                      <Input value={hipaaBaaEffectiveAt} onChange={(e)=>setHipaaBaaEffectiveAt(e.target.value)} placeholder="2026-02-18T00:00:00Z" className="mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700">Expires At (ISO, optional)</label>
+                      <Input value={hipaaBaaExpiresAt} onChange={(e)=>setHipaaBaaExpiresAt(e.target.value)} placeholder="2027-02-18T00:00:00Z" className="mt-1" />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700">Agreement URI (optional)</label>
+                      <Input value={hipaaBaaAgreementUri} onChange={(e)=>setHipaaBaaAgreementUri(e.target.value)} placeholder="https://.../baa.pdf" className="mt-1" />
+                    </div>
+                    <div className="md:col-span-2">
+                      <label className="text-xs font-medium text-gray-700">Agreement Hash (optional)</label>
+                      <Input value={hipaaBaaAgreementHash} onChange={(e)=>setHipaaBaaAgreementHash(e.target.value)} placeholder="sha256:..." className="mt-1" />
+                    </div>
                   </div>
                 )}
                 {(module === 'lgpd') && (
