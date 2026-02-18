@@ -25,15 +25,18 @@ def _minimal_payload():
 def test_record_fire_and_forget(monkeypatch):
     # Force fire_and_forget on and non-blocking path
     client = XaseClient({"api_key": "k", "fire_and_forget": True})
-    # swap http client with dummy
+    # swap http client with dummy in both client and queue
     d = DummyHttp()
     client.http_client = d
+    if client.queue:
+        client.queue.http_client = d
 
     # enqueue path returns None
     res = client.record(_minimal_payload())
     assert res is None
     # nothing sent yet because it's queued; flush to force send
-    client.flush(0.0)
+    # Give worker thread time to process (0.5s should be enough)
+    client.flush(0.5)
     # After flush, at least one call should have been made
     assert len(d.calls) >= 1
 

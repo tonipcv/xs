@@ -10,6 +10,8 @@ import Link from 'next/link';
 import { CopyButton } from '@/components/xase/CopyButton';
 import { DatasetNameEditor } from '@/components/xase/DatasetNameEditor';
 import { PublishAccessOfferLink } from '@/components/xase/PublishAccessOfferLink';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
 
 const heading = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] });
 
@@ -96,6 +98,13 @@ export default async function DatasetDetailPage({ params }: { params: Promise<{ 
     notFound();
   }
 
+  // Try to fetch a related offer to retrieve sampleMetadata for adaptive preview
+  const sampleOffer = await prisma.accessOffer.findFirst({
+    where: { datasetId: dataset.id, status: 'ACTIVE' },
+    select: { sampleMetadata: true },
+    orderBy: { publishedAt: 'desc' },
+  });
+
   // Policies relacionadas
   const policies = await prisma.voiceAccessPolicy.findMany({
     where: { datasetId: dataset.id },
@@ -163,6 +172,68 @@ export default async function DatasetDetailPage({ params }: { params: Promise<{ 
             </div>
           </div>
 
+          {/* Adaptive Preview (based on sample metadata from related offers) */}
+          {sampleOffer?.sampleMetadata && (
+            <div className="bg-white border border-gray-200 rounded-xl p-6">
+              <h2 className={`${heading.className} text-xl font-semibold text-gray-900 tracking-tight mb-4`}>
+                Adaptive Preview
+              </h2>
+              <div className="space-y-4">
+                {/* Audio Preview */}
+                {(() => {
+                  try {
+                    const sm: any = sampleOffer.sampleMetadata as any
+                    if (sm?.sampleAudioUrl) {
+                      return (
+                        <div>
+                          <p className="text-xs text-gray-600 mb-2">Sample Audio</p>
+                          <audio controls src={sm.sampleAudioUrl} className="w-full" />
+                        </div>
+                      )
+                    }
+                  } catch {}
+                  return null
+                })()}
+
+                {/* DICOM Preview (lightweight: link or embed) */}
+                {(() => {
+                  try {
+                    const sm: any = sampleOffer.sampleMetadata as any
+                    if (sm?.sampleDicomUrl) {
+                      return (
+                        <div className="space-y-1">
+                          <p className="text-xs text-gray-600">Sample DICOM File</p>
+                          <a href={sm.sampleDicomUrl} target="_blank" rel="noreferrer" className="text-sm text-blue-600 underline">Open DICOM sample</a>
+                          <p className="text-[11px] text-gray-500">Use your preferred DICOM viewer. In-app viewer can be added later.</p>
+                        </div>
+                      )
+                    }
+                  } catch {}
+                  return null
+                })()}
+
+                {/* FHIR/JSON Preview */}
+                {(() => {
+                  try {
+                    const sm: any = sampleOffer.sampleMetadata as any
+                    const json = sm?.sampleJson || sm?.fhir || sm?.sampleFHIR
+                    if (json) {
+                      return (
+                        <div>
+                          <p className="text-xs text-gray-600 mb-2">Sample JSON (FHIR)</p>
+                          <pre className="bg-gray-50 border border-gray-200 rounded-md p-3 text-xs overflow-auto max-h-80">
+{JSON.stringify(json, null, 2)}
+                          </pre>
+                        </div>
+                      )
+                    }
+                  } catch {}
+                  return null
+                })()}
+              </div>
+            </div>
+          )}
+
           {/* Compact Summary */}
           <div className="bg-white border border-gray-200 rounded-xl p-4 flex flex-wrap items-center gap-3">
             <span className="px-2 py-0.5 rounded border border-gray-200 text-[11px] text-gray-700">{dataset.status}</span>
@@ -175,6 +246,32 @@ export default async function DatasetDetailPage({ params }: { params: Promise<{ 
             <div className="h-4 w-px bg-gray-200" />
             <span className="text-xs text-gray-600">Total Size</span>
             <span className="text-sm font-mono text-gray-900">{formatBytes(dataset.totalSizeBytes || 0)}</span>
+          </div>
+
+          {/* Consent & Compliance (LGPD Saúde) */}
+          <div className="bg-white border border-gray-200 rounded-xl p-6">
+            <h2 className={`${heading.className} text-xl font-semibold text-gray-900 tracking-tight mb-4`}>
+              Consent & Compliance
+            </h2>
+            <div className="grid gap-4 md:grid-cols-2 items-start">
+              <div className="space-y-2">
+                <p className="text-xs text-gray-500 mb-1">Consent Status</p>
+                <p className="text-sm text-gray-900 font-mono">{String(dataset.consentStatus || 'PENDING')}</p>
+              </div>
+              <div className="flex gap-2 justify-start md:justify-end">
+                <form action={`/api/v1/compliance/lgpd/health-consent`} method="post">
+                  <input type="hidden" name="datasetId" value={dataset.datasetId} />
+                  <input type="hidden" name="tenantId" value={String(tenantId)} />
+                  <input type="hidden" name="legalBasis" value="EXPLICIT_CONSENT" />
+                  <input type="hidden" name="purpose" value="health_data_governance" />
+                  <input type="hidden" name="version" value="v1" />
+                  <Button type="submit" className="bg-gray-900 hover:bg-gray-800">Grant Consent</Button>
+                </form>
+                <form action={`/api/v1/compliance/lgpd/health-consent`} method="post" onSubmit={(e)=>{e.preventDefault(); fetch('/api/v1/compliance/lgpd/health-consent',{method:'DELETE', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ datasetId: dataset.datasetId, reason: 'Revoked via Dataset Detail'})}).then(()=>location.reload())}}>
+                  <Button type="submit" variant="outline" className="border-gray-300 text-gray-800 hover:bg-gray-50">Revoke</Button>
+                </form>
+              </div>
+            </div>
           </div>
 
           {/* Dataset Details */}

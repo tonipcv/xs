@@ -37,3 +37,18 @@ def test_sidecar_dataset_iter(monkeypatch):
     it = iter(ds)
     chunks = list(it)
     assert chunks == [b"A", b"C"]
+
+
+def test_sidecar_dataset_transform_applied_getitem_and_iter(monkeypatch):
+    monkeypatch.setattr(sidecar_mod, "SidecarClient", DummyClient)
+
+    # simple transform: return length of bytes
+    t = lambda b: len(b)
+    ds = SidecarDataset(segment_ids=["seg_1", "seg_2", "seg_3"], num_connections=1, data_type="AUDIO", transform=t)
+
+    # __getitem__ applies transform
+    assert ds[0] == 1
+    assert ds[1] == 1
+
+    # __iter__ applies transform
+    assert list(iter(ds)) == [1, 1, 1]

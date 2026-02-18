@@ -18,6 +18,7 @@ export default function NewDatasetPage() {
   const [name, setName] = useState('')
   const [description, setDescription] = useState('')
   const [language, setLanguage] = useState('en-US')
+  const [dataType, setDataType] = useState<'AUDIO' | 'IMAGE' | 'TEXT' | 'TIMESERIES' | 'TABULAR'>('AUDIO')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -40,6 +41,7 @@ export default function NewDatasetPage() {
           name: name.trim(),
           description: description.trim() || undefined,
           language,
+          dataType,
           // Legacy fields for backward compatibility
           storageLocation: 'pending',
           region: 'global',
@@ -156,6 +158,28 @@ export default function NewDatasetPage() {
                 </select>
                 <p className="text-xs text-gray-500">
                   The predominant language of audio files in this dataset
+                </p>
+              </div>
+
+              {/* Data Type */}
+              <div className="space-y-2">
+                <Label htmlFor="dataType" className="text-sm font-medium text-gray-900">
+                  Data Type *
+                </Label>
+                <select
+                  id="dataType"
+                  value={dataType}
+                  onChange={(e) => setDataType(e.target.value as any)}
+                  className="w-full text-gray-900 rounded-md border border-gray-300 bg-white h-10 px-3"
+                >
+                  <option value="AUDIO">Audio</option>
+                  <option value="IMAGE">Medical Image</option>
+                  <option value="TEXT">Clinical Text</option>
+                  <option value="TIMESERIES">Time Series</option>
+                  <option value="TABULAR">Tabular</option>
+                </select>
+                <p className="text-xs text-gray-500">
+                  Select the primary modality for this dataset (can mix later via sources)
                 </p>
               </div>
 

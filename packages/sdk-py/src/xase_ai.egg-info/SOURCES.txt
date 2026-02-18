@@ -11,11 +11,11 @@ src/xase/training.py
 src/xase/types.py
 src/xase/integrations/__init__.py
 src/xase/integrations/huggingface.py
-src/xase_sdk.egg-info/PKG-INFO
-src/xase_sdk.egg-info/SOURCES.txt
-src/xase_sdk.egg-info/dependency_links.txt
-src/xase_sdk.egg-info/requires.txt
-src/xase_sdk.egg-info/top_level.txt
+src/xase_ai.egg-info/PKG-INFO
+src/xase_ai.egg-info/SOURCES.txt
+src/xase_ai.egg-info/dependency_links.txt
+src/xase_ai.egg-info/requires.txt
+src/xase_ai.egg-info/top_level.txt
 tests/test_client.py
 tests/test_http.py
 tests/test_sidecar.py

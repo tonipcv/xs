@@ -20,6 +20,8 @@ interface AccessOfferCardProps {
     useCases: string[]
     successfulAudits: number
     totalExecutions: number
+    dataType?: string
+    regulatoryFrameworks?: string[]
     supplier: {
       name: string
       organizationType: string
@@ -83,6 +85,11 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
           <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-gray-100 text-gray-700 border-0">
             {offer.language}
           </Badge>
+          {offer.dataType && (
+            <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-gray-700 border-gray-200">
+              {offer.dataType}
+            </Badge>
+          )}
         </div>
 
         {/* Trust Signals */}
@@ -108,6 +115,22 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
             {offer.useCases.length > 3 && (
               <Badge variant="outline" className="text-[9px] px-1.5 py-0 text-gray-600 border-gray-200">
                 +{offer.useCases.length - 3}
+              </Badge>
+            )}
+          </div>
+        )}
+
+        {/* Regulatory frameworks */}
+        {Array.isArray(offer.regulatoryFrameworks) && offer.regulatoryFrameworks.length > 0 && (
+          <div className="flex flex-wrap gap-1">
+            {offer.regulatoryFrameworks.slice(0, 3).map((rf) => (
+              <Badge key={rf} variant="secondary" className="text-[9px] px-1.5 py-0 bg-gray-100 text-gray-700 border-0">
+                {rf}
+              </Badge>
+            ))}
+            {offer.regulatoryFrameworks.length > 3 && (
+              <Badge variant="secondary" className="text-[9px] px-1.5 py-0 bg-gray-100 text-gray-700 border-0">
+                +{offer.regulatoryFrameworks.length - 3}
               </Badge>
             )}
           </div>

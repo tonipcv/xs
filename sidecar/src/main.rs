@@ -13,6 +13,13 @@ mod config;
 mod shuffle_buffer;
 mod requester_pays;
 mod network_resilience;
+mod pipeline;
+mod deidentify_dicom;
+mod deidentify_text;
+mod metrics;
+mod audio_advanced;
+mod dicom_advanced;
+mod fhir_advanced;
 
 use cache::SegmentCache;
 use s3_client::S3Client;
@@ -101,13 +108,17 @@ async fn main() -> Result<()> {
         shutdown_token.clone(),
     ));
 
-    // Prefetch loop now pre-watermarks segments in background
+    // Select data pipeline from env-config
+    let pipeline = pipeline::select_pipeline(&config);
+
+    // Prefetch loop now pre-processes segments in background via selected pipeline
     let prefetch_handle = tokio::spawn(prefetch::prefetch_loop(
         cache.clone(),
         s3_client.clone(),
         config.clone(),
+        pipeline.clone(),
     ));
-    info!("Prefetch engine started (adaptive window + pre-watermarking)");
+    info!("Prefetch engine started (adaptive window + pipeline: {})", pipeline.name());
 
     // Socket server: no Mutex, lock-free cache reads, watermark off critical path
     info!("Starting Unix socket server at {}", config.socket_path);
@@ -118,6 +129,7 @@ async fn main() -> Result<()> {
             cache.clone(),
             s3_client.clone(),
             config.clone(),
+            pipeline.clone(),
         ) => {
             if let Err(e) = result {
                 tracing::error!("Socket server error: {}", e);

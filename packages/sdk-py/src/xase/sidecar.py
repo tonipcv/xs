@@ -5,7 +5,7 @@ Provides Unix socket communication with Sidecar for high-performance data access
 """
 import socket
 import struct
-from typing import Optional, Iterator, List, Dict, Any
+from typing import Optional, Iterator, List, Dict, Any, Callable, TypeVar
 import os
 import time
 import threading
@@ -214,26 +214,26 @@ class TelemetrySender:
             return
         
         batch = self.logs[:]
-    self.logs.clear()
+        self.logs.clear()
         
-    try:
-        with httpx.Client() as client:
-            response = client.post(
-                f"{self.base_url}/api/v1/sidecar/telemetry",
-                json={"sessionId": self.session_id, "logs": batch},
-                headers={"X-API-Key": self.api_key},
-                timeout=5.0
-            )
-            response.raise_for_status()
-    except Exception as e:
-        logger.error(f"Telemetry flush failed: {e}")
+        try:
+            with httpx.Client() as client:
+                response = client.post(
+                    f"{self.base_url}/api/v1/sidecar/telemetry",
+                    json={"sessionId": self.session_id, "logs": batch},
+                    headers={"X-API-Key": self.api_key},
+                    timeout=5.0
+                )
+                response.raise_for_status()
+        except Exception as e:
+            logger.error(f"Telemetry flush failed: {e}")
     
 def _flush_loop(self) -> None:
     """Background loop to flush periodically."""
     while not self.stop_event.is_set():
         time.sleep(self.flush_interval)
-            with self.lock:
-                self._flush()
+        with self.lock:
+            self._flush()
     
     def stop(self) -> None:
         """Stop telemetry sender and flush remaining logs."""
@@ -262,16 +262,15 @@ class WatermarkDetector:
             Detection result with contract_id and confidence, or None if no watermark
         """
         try:
-            try:
             with httpx.Client() as client:
                 response = client.post(
                     f"{self.base_url}/api/v1/watermark/detect",
-                files={"audio": ("audio.wav", audio_data, "audio/wav")},
-                headers={"X-API-Key": self.api_key},
-                timeout=30.0,
-            )
-            response.raise_for_status()
-            result = response.json()
+                    files={"audio": ("audio.wav", audio_data, "audio/wav")},
+                    headers={"X-API-Key": self.api_key},
+                    timeout=30.0,
+                )
+                response.raise_for_status()
+                result = response.json()
             
             if result.get("detected"):
                 return {
@@ -283,6 +282,9 @@ class WatermarkDetector:
         except Exception as e:
             logger.error(f"Watermark detection failed: {e}")
             return None
+
+
+T = TypeVar("T")
 
 
 class SidecarDataset:
@@ -313,6 +315,8 @@ class SidecarDataset:
         num_connections: int = 1,
         max_retries: int = 3,
         backoff_base: float = 2.0,
+        data_type: Optional[str] = None,
+        transform: Optional[Callable[[bytes], T]] = None,
     ):
         """
         Initialize Sidecar dataset with multi-worker support.
@@ -331,6 +335,8 @@ class SidecarDataset:
         self.backoff_base = backoff_base
         self._pool: List[SidecarClient] = []
         self._pool_lock = threading.Lock()
+        self.data_type = data_type
+        self.transform = transform
     
     def _get_client(self) -> SidecarClient:
         """Get or create a client from the pool (thread-safe)."""
@@ -351,19 +357,26 @@ class SidecarDataset:
     def __len__(self) -> int:
         return len(self.segment_ids)
     
-    def __getitem__(self, idx: int) -> bytes:
-        """Get segment by index (thread-safe for DataLoader multi-worker)."""
+    def __getitem__(self, idx: int):
+        """Get segment by index, applying optional transform (thread-safe)."""
         segment_id = self.segment_ids[idx]
         client = self._get_client()
-        return client.get_segment(segment_id)
+        data = client.get_segment(segment_id)
+        if self.transform is not None:
+            return self.transform(data)
+        return data
     
-    def __iter__(self) -> Iterator[bytes]:
-        """Iterate over segments with auto-recovery."""
+    def __iter__(self) -> Iterator[Any]:
+        """Iterate over segments with auto-recovery and optional transform."""
         client = self._get_client()
         client.connect()
         try:
             for segment_id in self.segment_ids:
-                yield client.get_segment(segment_id)
+                data = client.get_segment(segment_id)
+                if self.transform is not None:
+                    yield self.transform(data)
+                else:
+                    yield data
         finally:
             # Don't close - keep in pool for reuse
             pass
@@ -374,3 +387,70 @@ class SidecarDataset:
             for client in self._pool:
                 client.close()
             self._pool.clear()
+
+
+# Example transforms (lazy imports to avoid hard deps)
+def dicom_to_tensor(data: bytes):
+    """Convert DICOM bytes to a PyTorch tensor (C,H,W) float32 normalized 0..1.
+    Requires: pydicom, numpy, torch.
+    """
+    try:
+        import io
+        import numpy as np
+        import torch
+        import pydicom
+        from pydicom.filebase import DicomBytesIO
+    except Exception as e:
+        raise ImportError("dicom_to_tensor requires pydicom, numpy, and torch to be installed") from e
+
+    ds = pydicom.dcmread(DicomBytesIO(data))
+    arr = ds.pixel_array.astype("float32")
+    if arr.max() > 0:
+        arr = arr / arr.max()
+    # Add channel dim if needed
+    if arr.ndim == 2:
+        arr = arr[None, :, :]
+    elif arr.ndim == 3 and arr.shape[-1] in (3, 4):
+        # HWC -> CHW
+        arr = np.transpose(arr, (2, 0, 1))
+    return torch.from_numpy(arr.copy())
+
+
+def fhir_to_tokens(data: bytes):
+    """Convert FHIR JSON bytes to tokens using a lightweight tokenizer.
+    Example uses tiktoken if available, else falls back to simple whitespace split.
+    """
+    try:
+        import json
+        text = json.dumps(json.loads(data.decode("utf-8")), ensure_ascii=False)
+    except Exception as e:
+        raise ValueError("Invalid FHIR JSON payload") from e
+
+    try:
+        import tiktoken  # optional
+        enc = tiktoken.get_encoding("cl100k_base")
+        return enc.encode(text)
+    except Exception:
+        # Fallback: naive tokenization
+        return text.split()
+
+
+def ecg_to_tensor(data: bytes):
+    """Convert ECG waveform bytes (e.g., CSV with a single channel) to a 1D tensor.
+    Tries to parse as CSV; if not, returns raw bytes as uint8 tensor.
+    Requires: numpy, torch for CSV path.
+    """
+    try:
+        import io
+        import numpy as np
+        import torch
+        try:
+            arr = np.loadtxt(io.BytesIO(data), delimiter=",", dtype="float32")
+            if arr.ndim > 1:
+                arr = arr[:, 0]
+            return torch.from_numpy(arr.copy())
+        except Exception:
+            # Fallback to byte tensor
+            return torch.tensor(list(data), dtype=torch.uint8)
+    except Exception as e:
+        raise ImportError("ecg_to_tensor requires numpy and torch for CSV parsing") from e

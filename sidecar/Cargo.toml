@@ -23,6 +23,33 @@ tracing-subscriber = "0.3"
 rand = "0.8"
 sha2 = "0.10"
 chrono = { version = "0.4", features = ["clock", "std"] }
+regex = "1"
+# Audio processing
+rubato = "0.5"  # pitch shifting
+pyannote-rs = { version = "0.1", optional = true }  # diarization
+whisper-rs = { version = "0.1", optional = true }  # transcription for redaction
+# Image processing
+image = "0.24"
+tesseract = { version = "0.14", optional = true }  # OCR
+nifti = { version = "0.2", optional = true }  # NIfTI medical imaging
+# NLP and text processing
+rust-bert = { version = "0.21", optional = true }  # NER for medical entities
+chrono-tz = "0.8"  # date shifting
+
+[features]
+default = []
+dicom = ["dicom-object", "dicom-core"]
+dicom-full = ["dicom", "tesseract", "nifti"]  # Full DICOM with OCR and NIfTI
+audio-full = ["pyannote-rs", "whisper-rs"]  # Full audio with diarization
+nlp-full = ["rust-bert"]  # Full NLP for medical text
+
+[dependencies.dicom-object]
+version = "0.6"
+optional = true
+
+[dependencies.dicom-core]
+version = "0.6"
+optional = true
 
 [profile.release]
 opt-level = 3

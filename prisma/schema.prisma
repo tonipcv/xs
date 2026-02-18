@@ -326,7 +326,7 @@ model Dataset {
   @@index([consentStatus])
   @@index([cloudIntegrationId])
   @@index([dataConnectorId])
-  @@map("xase_voice_datasets")
+  @@map("xase_datasets")
 }
 
 enum ConsentStatus {
@@ -420,6 +420,11 @@ model AudioSegment {
   emotionBand    String?
   intentCluster  String?
   callType       String?
+
+  // Multi-modal generalization
+  dataType       DataType?   @map("data_type")
+  dataFormat     DataFormat? @map("data_format")
+  metadata       Json?       @db.JsonB
   
   createdAt DateTime @default(now()) @map("created_at")
   dataset   Dataset     @relation(fields: [datasetId], references: [id], onDelete: Cascade)
@@ -428,7 +433,7 @@ model AudioSegment {
   @@index([datasetId])
   @@unique([datasetId, segmentId])
   @@index([datasetId, segmentId])
-  @@map("xase_audio_segments")
+  @@map("xase_data_assets")
 }
 
 model VoiceAccessPolicy {
@@ -455,6 +460,11 @@ model VoiceAccessPolicy {
   deniedColumns   String[]  @default([]) @map("denied_columns")
   rowFilters      Json?     @map("row_filters")
   maskingRules    Json?     @map("masking_rules")
+
+  // Clinical compliance
+  regulatoryFrameworks String[] @default([]) @map("regulatory_frameworks")
+  deIdentificationLevel String? @map("de_identification_level")
+  hipaaCategory          String? @map("hipaa_category")
   
   status          PolicyStatus @default(ACTIVE)
   revokedAt       DateTime? @map("revoked_at")
@@ -472,7 +482,7 @@ model VoiceAccessPolicy {
   @@index([clientTenantId])
   @@index([status])
   @@index([expiresAt])
-  @@map("xase_voice_access_policies")
+  @@map("xase_access_policies")
 }
 
 enum PolicyStatus {
@@ -510,7 +520,7 @@ model VoiceAccessLog {
   @@index([policyId])
   @@index([clientTenantId])
   @@index([timestamp])
-  @@map("xase_voice_access_logs")
+  @@map("xase_access_logs")
 }
 
 // ========================================
@@ -564,7 +574,7 @@ model VoiceAccessLease {
   @@index([status])
   @@index([expiresAt])
   @@index([deletedAt])
-  @@map("xase_voice_access_leases")
+  @@map("xase_access_leases")
 }
 
 enum VoiceAccessAction {
@@ -572,7 +582,29 @@ enum VoiceAccessAction {
   STREAM_ACCESS
   METADATA_VIEW
   POLICY_CHECK
-  @@map("voice_access_action")
+  @@map("access_action")
+}
+
+// New multi-modal enums (DB types created via SQL migration)
+enum DataType {
+  AUDIO
+  IMAGE
+  TEXT
+  TIMESERIES
+  TABULAR
+  @@map("data_type")
+}
+
+enum DataFormat {
+  WAV
+  MP3
+  DICOM
+  NIFTI
+  FHIR_JSON
+  HL7_V2
+  CSV
+  PARQUET
+  @@map("data_format")
 }
 
 model CreditLedger {
@@ -834,6 +866,7 @@ model AccessOffer {
   language        String
   useCases        String[] @default([]) @map("use_cases")
   riskClass       RiskClass @default(MEDIUM) @map("risk_class")
+  regulatoryFrameworks String[] @default([]) @map("regulatory_frameworks")
   
   // Sample metadata (NOT files, just metadata)
   sampleMetadata  Json?    @db.JsonB @map("sample_metadata")

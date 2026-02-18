@@ -30,6 +30,8 @@ export default function GovernedAccessCatalogPage() {
     maxPrice: '',
     useCase: '',
     search: '',
+    dataType: '',
+    regulatory: '',
   })
 
   // Auto-apply filters and sorting with debounce
@@ -50,6 +52,8 @@ export default function GovernedAccessCatalogPage() {
       // maxPrice removed from UI; do not include in params
       if (filters.useCase) params.set('useCase', filters.useCase)
       if (filters.search) params.set('q', filters.search)
+      if (filters.dataType) params.set('dataType', filters.dataType)
+      if (filters.regulatory) params.set('regulatory', filters.regulatory)
       if (sort && sort !== 'relevance') params.set('sort', sort)
 
       const res = await fetch(`/api/v1/access-offers?${params.toString()}`)
@@ -170,6 +174,36 @@ export default function GovernedAccessCatalogPage() {
                     className="h-7 w-[140px] text-[12px] border-gray-300"
                   />
 
+                  {/* Data Type */}
+                  <Select value={filters.dataType} onValueChange={(v) => handleFilterChange('dataType', v)}>
+                    <SelectTrigger className="h-7 w-[160px] text-[11px] border-gray-300">
+                      <SelectValue placeholder="Data Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="AUDIO">Audio</SelectItem>
+                      <SelectItem value="IMAGE">Medical Image</SelectItem>
+                      <SelectItem value="TEXT">Clinical Text</SelectItem>
+                      <SelectItem value="TIMESERIES">Time Series</SelectItem>
+                      <SelectItem value="TABULAR">Tabular</SelectItem>
+                    </SelectContent>
+                  </Select>
+
+                  {/* Regulatory */}
+                  <Select value={filters.regulatory} onValueChange={(v) => handleFilterChange('regulatory', v)}>
+                    <SelectTrigger className="h-7 w-[180px] text-[11px] border-gray-300">
+                      <SelectValue placeholder="Regulatory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="">All Frameworks</SelectItem>
+                      <SelectItem value="HIPAA">HIPAA</SelectItem>
+                      <SelectItem value="GDPR">GDPR</SelectItem>
+                      <SelectItem value="LGPD">LGPD</SelectItem>
+                      <SelectItem value="FDA_510K">FDA 510(k)</SelectItem>
+                      <SelectItem value="EU_MDR">EU MDR</SelectItem>
+                    </SelectContent>
+                  </Select>
+
                   {/* Search */}
                   <Input 
                     placeholder="Search datasets, providers…" 
@@ -188,13 +222,15 @@ export default function GovernedAccessCatalogPage() {
                 
 
                 {/* Active filters badges */}
-                {(filters.riskClass || filters.language || filters.jurisdiction || filters.search) && (
+                {(filters.riskClass || filters.language || filters.jurisdiction || filters.search || filters.dataType || filters.regulatory) && (
                   <div className="flex flex-wrap items-center gap-1.5 pt-2 border-t border-gray-100">
                     <span className="text-[10px] text-gray-500 font-medium">Active:</span>
                     {filters.riskClass && <Badge variant="secondary" className="h-5 text-[10px] bg-gray-100 text-gray-700">Risk: {filters.riskClass}</Badge>}
                     {filters.language && <Badge variant="secondary" className="h-5 text-[10px] bg-gray-100 text-gray-700">Lang: {filters.language}</Badge>}
                     {filters.jurisdiction && <Badge variant="secondary" className="h-5 text-[10px] bg-gray-100 text-gray-700">{filters.jurisdiction}</Badge>}
                     {filters.search && <Badge variant="secondary" className="h-5 text-[10px] bg-gray-100 text-gray-700">"{filters.search}"</Badge>}
+                    {filters.dataType && <Badge variant="secondary" className="h-5 text-[10px] bg-gray-100 text-gray-700">Type: {filters.dataType}</Badge>}
+                    {filters.regulatory && <Badge variant="secondary" className="h-5 text-[10px] bg-gray-100 text-gray-700">Reg: {filters.regulatory}</Badge>}
                   </div>
                 )}
               </div>

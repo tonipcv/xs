@@ -5,7 +5,7 @@ use tokio::time::{sleep, Duration};
 use tracing::{info, warn};
 use crate::cache::SegmentCache;
 use crate::s3_client::S3Client;
-use crate::watermark;
+use crate::pipeline::DataPipeline;
 use crate::config::Config;
 
 /// Adaptive prefetch loop that pre-downloads AND pre-watermarks segments.
@@ -20,6 +20,7 @@ pub async fn prefetch_loop(
     cache: Arc<SegmentCache>,
     s3_client: Arc<S3Client>,
     config: Config,
+    pipeline: Arc<dyn DataPipeline>,
 ) -> Result<()> {
     let counter = Arc::new(AtomicUsize::new(0));
     let window_size = Arc::new(AtomicUsize::new(100));
@@ -38,7 +39,7 @@ pub async fn prefetch_loop(
             .map(|i| format!("seg_{:05}", i))
             .collect();
 
-        // Download + watermark in parallel (16 concurrent workers)
+        // Download + process in parallel (16 concurrent workers)
         let mut handles = vec![];
 
         for seg_id in next_segments {
@@ -49,20 +50,17 @@ pub async fn prefetch_loop(
 
             let cache = cache.clone();
             let s3_client = s3_client.clone();
-            let contract_id = config.contract_id.clone();
+            let config = config.clone();
+            let pipeline = pipeline.clone();
 
             handles.push(tokio::spawn(async move {
                 match s3_client.download(&seg_id).await {
                     Ok(data) => {
-                        // Pre-watermark during prefetch (OFF the GPU serving path)
-                        let final_data = match watermark::watermark_audio_probabilistic(
-                            data,
-                            &contract_id,
-                            watermark::WATERMARK_PROBABILITY,
-                        ) {
-                            Ok(watermarked) => watermarked,
+                        // Pre-process during prefetch (OFF the GPU serving path)
+                        let final_data = match pipeline.process(data, &config) {
+                            Ok(processed) => processed,
                             Err(e) => {
-                                warn!("Prefetch watermark failed for {}: {}", seg_id, e);
+                                warn!("Prefetch processing failed for {}: {}", seg_id, e);
                                 return;
                             }
                         };

@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
       name: z.string().min(1),
       language: z.string().min(1),
       description: z.string().optional(),
+      // New: primary data type (not yet persisted on Dataset model)
+      dataType: z.enum(['AUDIO', 'IMAGE', 'TEXT', 'TIMESERIES', 'TABULAR']).optional(),
       // Legacy fields (deprecated but kept for backwards compatibility)
       storageLocation: z.string().min(1).optional(),
       region: z.string().optional(),

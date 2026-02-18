@@ -2,10 +2,10 @@ use anyhow::Result;
 use std::sync::Arc;
 use tokio::net::{UnixListener, UnixStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tracing::{info, warn, error};
+use tracing::{info, error};
 use crate::cache::SegmentCache;
 use crate::s3_client::S3Client;
-use crate::watermark;
+use crate::pipeline::DataPipeline;
 use crate::config::Config;
 
 /// Serve segments via Unix socket IPC.
@@ -20,6 +20,7 @@ pub async fn serve(
     cache: Arc<SegmentCache>,
     s3_client: Arc<S3Client>,
     config: Config,
+    pipeline: Arc<dyn DataPipeline>,
 ) -> Result<()> {
     let _ = std::fs::remove_file(&config.socket_path);
 
@@ -32,9 +33,10 @@ pub async fn serve(
                 let cache = cache.clone();
                 let s3_client = s3_client.clone();
                 let config = config.clone();
+                let pipeline = pipeline.clone();
 
                 tokio::spawn(async move {
-                    if let Err(e) = handle_connection(stream, cache, s3_client, config).await {
+                    if let Err(e) = handle_connection(stream, cache, s3_client, config, pipeline).await {
                         error!("Connection error: {}", e);
                     }
                 });
@@ -51,6 +53,7 @@ async fn handle_connection(
     cache: Arc<SegmentCache>,
     s3_client: Arc<S3Client>,
     config: Config,
+    pipeline: Arc<dyn DataPipeline>,
 ) -> Result<()> {
     // Read segment ID (length-prefixed)
     let mut len_buf = [0u8; 4];
@@ -66,21 +69,17 @@ async fn handle_connection(
         // Cache hit: zero-copy Arc<Vec<u8>>, no blocking
         cached
     } else {
-        // Cache miss: download from S3 and watermark BEFORE serving
+        // Cache miss: download from S3 and process BEFORE serving
         let raw_data = s3_client.download(&segment_id).await?;
 
-        // CRITICAL: Apply watermark synchronously to enforce "always watermarked" guarantee
-        let watermarked_data = watermark::watermark_audio_probabilistic(
-            raw_data,
-            &config.contract_id,
-            watermark::WATERMARK_PROBABILITY,
-        ).map_err(|e| {
-            error!("Watermarking failed for segment {}: {}", segment_id, e);
-            anyhow::anyhow!("Watermarking failed: {}", e)
+        // Apply pipeline synchronously to enforce runtime governance
+        let processed = pipeline.process(raw_data, &config).map_err(|e| {
+            error!("Processing failed for segment {}: {}", segment_id, e);
+            anyhow::anyhow!("Processing failed: {}", e)
         })?;
 
-        // Store watermarked data in cache
-        let arc_data = Arc::new(watermarked_data);
+        // Store processed data in cache
+        let arc_data = Arc::new(processed);
         cache.insert_arc(segment_id.clone(), Arc::clone(&arc_data));
 
         arc_data

@@ -13,8 +13,13 @@ import { Shield, FileText, RefreshCw } from 'lucide-react'
 
 const heading = Playfair_Display({ subsets: ['latin'], weight: ['600','700'] })
 
-type ComplianceModule = 'gdpr' | 'fca' | 'bafin'
-type ComplianceAction = 'dsar' | 'erasure' | 'portability' | 'model-risk' | 'consumer-duty' | 'marisk' | 'ai-risk'
+type ComplianceModule = 'gdpr' | 'fca' | 'bafin' | 'hipaa' | 'lgpd'
+type ComplianceAction =
+  | 'dsar' | 'erasure' | 'portability'
+  | 'model-risk' | 'consumer-duty'
+  | 'marisk' | 'ai-risk'
+  | 'safe-harbor'              // HIPAA Safe Harbor check
+  | 'grant-consent' | 'revoke-consent' // LGPD health consent
 
 export default function ComplianceConsolePage() {
   const [module, setModule] = useState<ComplianceModule>('gdpr')
@@ -22,6 +27,10 @@ export default function ComplianceConsolePage() {
   const [userId, setUserId] = useState('')
   const [datasetId, setDatasetId] = useState('')
   const [modelId, setModelId] = useState('')
+  const [hipaaPayload, setHipaaPayload] = useState('') // string or JSON
+  const [lgpdVersion, setLgpdVersion] = useState('v1')
+  const [lgpdProofUri, setLgpdProofUri] = useState('')
+  const [lgpdProofHash, setLgpdProofHash] = useState('')
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<any>(null)
   const [error, setError] = useState('')
@@ -34,6 +43,9 @@ export default function ComplianceConsolePage() {
     'consumer-duty': 'Consumer Duty Check',
     marisk: 'MaRisk Assessment',
     'ai-risk': 'AI Risk Classification',
+    'safe-harbor': 'HIPAA Safe Harbor Check',
+    'grant-consent': 'LGPD Health Consent (Grant)',
+    'revoke-consent': 'LGPD Health Consent (Revoke)',
   } as const), [])
 
   const canExecute = useMemo(() => {
@@ -48,11 +60,18 @@ export default function ComplianceConsolePage() {
       if (action === 'marisk') return !!datasetId.trim()
       if (action === 'ai-risk') return !!modelId.trim()
     }
+    if (module === 'hipaa') {
+      if (action === 'safe-harbor') return !!hipaaPayload.trim()
+    }
+    if (module === 'lgpd') {
+      if (action === 'grant-consent') return !!datasetId.trim() && !!lgpdVersion.trim()
+      if (action === 'revoke-consent') return !!datasetId.trim()
+    }
     return true
-  }, [module, action, userId, datasetId, modelId])
+  }, [module, action, userId, datasetId, modelId, hipaaPayload, lgpdVersion])
 
   const resetForm = () => {
-    setUserId(''); setDatasetId(''); setModelId(''); setResult(null); setError('')
+    setUserId(''); setDatasetId(''); setModelId(''); setHipaaPayload(''); setLgpdVersion('v1'); setLgpdProofUri(''); setLgpdProofHash(''); setResult(null); setError('')
   }
 
   const executeAction = async () => {
@@ -61,43 +80,67 @@ export default function ComplianceConsolePage() {
     setResult(null)
     try {
       let endpoint = ''
-      let payload: any = {}
+      let requestBody: any = {}
 
       if (module === 'gdpr') {
         if (action === 'dsar') {
           endpoint = '/api/v1/compliance/gdpr/dsar'
-          payload = { userId, requestType: 'full' }
+          requestBody = { userId, requestType: 'full' }
         } else if (action === 'erasure') {
           endpoint = '/api/v1/compliance/gdpr/erasure'
-          payload = { userId, reason: 'User requested via UI' }
+          requestBody = { userId, reason: 'User requested via UI' }
         } else if (action === 'portability') {
           endpoint = '/api/v1/compliance/gdpr/portability'
-          payload = { userId, format: 'json' }
+          requestBody = { userId, format: 'json' }
         }
       } else if (module === 'fca') {
         if (action === 'model-risk') {
           endpoint = '/api/v1/compliance/fca/model-risk'
-          payload = { modelId, modelType: 'classification', useCases: ['underwriting'] }
+          requestBody = { modelId, modelType: 'classification', useCases: ['underwriting'] }
         } else if (action === 'consumer-duty') {
           endpoint = '/api/v1/compliance/fca/consumer-duty'
-          payload = { datasetId, productType: 'insurance' }
+          requestBody = { datasetId, productType: 'insurance' }
         }
       } else if (module === 'bafin') {
         if (action === 'marisk') {
           endpoint = '/api/v1/compliance/bafin/marisk'
-          payload = { datasetId, riskCategory: 'operational' }
+          requestBody = { datasetId, riskCategory: 'operational' }
         } else if (action === 'ai-risk') {
           endpoint = '/api/v1/compliance/bafin/ai-risk'
-          payload = { modelId, aiSystemType: 'decision-support' }
+          requestBody = { modelId, aiSystemType: 'decision-support' }
+        }
+      } else if (module === 'hipaa') {
+        if (action === 'safe-harbor') {
+          endpoint = '/api/v1/compliance/hipaa/safe-harbor'
+          let parsed: any = hipaaPayload
+          try { parsed = JSON.parse(hipaaPayload) } catch {}
+          requestBody = { payload: parsed }
+        }
+      } else if (module === 'lgpd') {
+        if (action === 'grant-consent') {
+          endpoint = '/api/v1/compliance/lgpd/health-consent'
+          requestBody = {
+            datasetId,
+            tenantId: 'self',
+            legalBasis: 'EXPLICIT_CONSENT',
+            purpose: 'health_data_governance',
+            version: lgpdVersion,
+            proofUri: lgpdProofUri || undefined,
+            proofHash: lgpdProofHash || undefined,
+          }
+        } else if (action === 'revoke-consent') {
+          endpoint = '/api/v1/compliance/lgpd/health-consent'
+          requestBody = { datasetId, reason: 'Revoked via Compliance Console' }
         }
       }
 
       if (!endpoint) throw new Error('Invalid action')
 
+      const method = module === 'lgpd' && action === 'revoke-consent' ? 'DELETE' : 'POST'
       const res = await fetch(endpoint, {
-        method: 'POST',
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify(requestBody)
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Request failed')
@@ -128,10 +171,22 @@ export default function ComplianceConsolePage() {
               { key: 'gdpr', label: 'GDPR' },
               { key: 'fca', label: 'FCA' },
               { key: 'bafin', label: 'BaFin' },
+              { key: 'hipaa', label: 'HIPAA' },
+              { key: 'lgpd', label: 'LGPD (Saúde)' },
             ] as {key: ComplianceModule, label: string}[]).map((m) => (
               <button
                 key={m.key}
-                onClick={() => { setModule(m.key); resetForm(); setAction(m.key === 'gdpr' ? 'dsar' : m.key === 'fca' ? 'model-risk' : 'marisk') }}
+                onClick={() => {
+                  setModule(m.key)
+                  resetForm()
+                  setAction(
+                    m.key === 'gdpr' ? 'dsar'
+                    : m.key === 'fca' ? 'model-risk'
+                    : m.key === 'bafin' ? 'marisk'
+                    : m.key === 'hipaa' ? 'safe-harbor'
+                    : 'grant-consent'
+                  )
+                }}
                 className={`px-3 py-1.5 rounded-full text-[12px] font-medium border transition-colors ${
                   module === m.key ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
                 }`}
@@ -176,6 +231,24 @@ export default function ComplianceConsolePage() {
                     ))}
                   </div>
                 )}
+                {(module === 'hipaa') && (
+                  <div className="grid gap-2">
+                    {(['safe-harbor'] as ComplianceAction[]).map((a) => (
+                      <Button key={a} variant={action === a ? 'default' : 'outline'} size="sm" className={action===a? 'bg-gray-900 hover:bg-gray-800' : 'border-gray-300 text-gray-800 hover:bg-gray-50'} onClick={()=>{ setAction(a); setResult(null); setError('') }}>
+                        {actionLabel[a]}
+                      </Button>
+                    ))}
+                  </div>
+                )}
+                {(module === 'lgpd') && (
+                  <div className="grid gap-2">
+                    {(['grant-consent','revoke-consent'] as ComplianceAction[]).map((a) => (
+                      <Button key={a} variant={action === a ? 'default' : 'outline'} size="sm" className={action===a? 'bg-gray-900 hover:bg-gray-800' : 'border-gray-300 text-gray-800 hover:bg-gray-50'} onClick={()=>{ setAction(a); setResult(null); setError('') }}>
+                        {actionLabel[a]}
+                      </Button>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -209,6 +282,36 @@ export default function ComplianceConsolePage() {
                     <Input value={modelId} onChange={(e)=>setModelId(e.target.value)} placeholder="e.g., mdl_456" className="mt-1" />
                   </div>
                 )}
+                {(module === 'hipaa' && action === 'safe-harbor') && (
+                  <div>
+                    <label className="text-xs font-medium text-gray-700">Sample Clinical Text / JSON</label>
+                    <Textarea value={hipaaPayload} onChange={(e)=>setHipaaPayload(e.target.value)} placeholder='{"note":"Patient John Doe with zip 94110"}' className="mt-1" rows={6} />
+                  </div>
+                )}
+                {(module === 'lgpd') && (
+                  <>
+                    <div>
+                      <label className="text-xs font-medium text-gray-700">Dataset ID</label>
+                      <Input value={datasetId} onChange={(e)=>setDatasetId(e.target.value)} placeholder="e.g., ds_abc" className="mt-1" />
+                    </div>
+                    {action === 'grant-consent' && (
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div>
+                          <label className="text-xs font-medium text-gray-700">Version</label>
+                          <Input value={lgpdVersion} onChange={(e)=>setLgpdVersion(e.target.value)} placeholder="v1" className="mt-1" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-gray-700">Proof URI (optional)</label>
+                          <Input value={lgpdProofUri} onChange={(e)=>setLgpdProofUri(e.target.value)} placeholder="https://..." className="mt-1" />
+                        </div>
+                        <div>
+                          <label className="text-xs font-medium text-gray-700">Proof Hash (optional)</label>
+                          <Input value={lgpdProofHash} onChange={(e)=>setLgpdProofHash(e.target.value)} placeholder="sha256:..." className="mt-1" />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
 
                 <div className="flex flex-wrap gap-2 pt-2">
                   <Button onClick={executeAction} disabled={!canExecute || loading} className="bg-gray-900 hover:bg-gray-800">
@@ -238,7 +341,9 @@ export default function ComplianceConsolePage() {
                   <span className="font-medium">References:</span>{' '}
                   <a href="https://gdpr.eu/" target="_blank" rel="noreferrer" className="underline hover:text-gray-800">GDPR</a>{' '}
                   • <a href="https://www.fca.org.uk/" target="_blank" rel="noreferrer" className="underline hover:text-gray-800">FCA</a>{' '}
-                  • <a href="https://www.bafin.de/" target="_blank" rel="noreferrer" className="underline hover:text-gray-800">BaFin</a>
+                  • <a href="https://www.bafin.de/" target="_blank" rel="noreferrer" className="underline hover:text-gray-800">BaFin</a>{' '}
+                  • <a href="https://www.hhs.gov/hipaa/" target="_blank" rel="noreferrer" className="underline hover:text-gray-800">HIPAA</a>{' '}
+                  • <a href="https://www.gov.br/anpd/pt-br" target="_blank" rel="noreferrer" className="underline hover:text-gray-800">LGPD</a>
                 </div>
               </CardContent>
             </Card>

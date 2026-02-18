@@ -57,13 +57,15 @@ pub async fn telemetry_loop(
         };
 
         // Build logs compatible with API schema
+        let (processed_bytes, redactions) = crate::metrics::snapshot();
+
         let logs = vec![
             // Aggregate serve event for the window
             serde_json::json!({
                 "segmentId": "aggregate",
                 "timestamp": now,
                 "eventType": "serve",
-                "bytesProcessed": 0, // not tracked at this layer
+                "bytesProcessed": processed_bytes,
                 "latencyMs": 0,      // not tracked at this layer
                 "metadata": {
                     "cache_hit_rate": cache_hit_rate,
@@ -72,6 +74,7 @@ pub async fn telemetry_loop(
                     "cache_max_bytes": cache.max_bytes(),
                     "request_count": request_count,
                     "error_count": error_count,
+                    "redactions": redactions,
                 }
             }),
             // Cache hit aggregate event
