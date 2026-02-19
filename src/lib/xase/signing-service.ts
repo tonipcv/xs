@@ -193,7 +193,8 @@ export async function getPublicKeyPem(): Promise<string> {
         KeyId: process.env.XASE_KMS_KEY_ID!,
       })
 
-      const response = await (kms as any).kmsClient.send(command)
+      const kmsWithClient = kms as unknown as { kmsClient: { send: (cmd: any) => Promise<any> } };
+      const response = await kmsWithClient.kmsClient.send(command)
       
       // Converter DER para PEM
       const publicKeyDer = Buffer.from(response.PublicKey)
@@ -215,12 +216,13 @@ export async function getPublicKeyPem(): Promise<string> {
   }
 
   // Mock KMS: gerar par e exportar
-  if ((kms as any).publicKey) {
+  const kmsWithKey = kms as { publicKey?: { export: (opts: any) => string } };
+  if (kmsWithKey.publicKey) {
     const crypto = require('crypto')
-    const publicKeyPem = (kms as any).publicKey.export({
+    const publicKeyPem = kmsWithKey.publicKey.export({
       type: 'spki',
       format: 'pem',
-    }) as string
+    })
     cachedPublicKeyPem = publicKeyPem
     return publicKeyPem
   }

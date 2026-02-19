@@ -58,7 +58,7 @@ export function CostEstimator({ datasetSizeHours, pricePerHour, onEstimateChange
 
           <div className="space-y-2">
             <Label htmlFor="gpu">GPU Type</Label>
-            <Select value={gpuType} onValueChange={(v) => setGpuType(v as any)}>
+            <Select value={gpuType} onValueChange={(v) => setGpuType(v as 'A100' | 'H100' | 'V100')}>
               <SelectTrigger id="gpu">
                 <SelectValue />
               </SelectTrigger>

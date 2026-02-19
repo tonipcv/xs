@@ -119,11 +119,11 @@ export function TrustDashboard({ period = '24h' }: { period?: string }) {
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">Active Alerts</h3>
           {alerts.map((alert) => (
-            <Alert key={alert.id} variant={getSeverityColor(alert.severity) as any}>
+            <Alert key={alert.id} variant={getSeverityColor(alert.severity) as "default" | "destructive"}>
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle className="flex items-center gap-2">
                 {alert.title}
-                <Badge variant={getSeverityColor(alert.severity) as any}>{alert.severity}</Badge>
+                <Badge variant={getSeverityColor(alert.severity) as "default" | "destructive" | "outline" | "secondary"}>{alert.severity}</Badge>
               </AlertTitle>
               <AlertDescription>
                 {alert.message}

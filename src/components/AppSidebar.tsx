@@ -121,8 +121,8 @@ export function AppSidebar() {
     setOpen(true);
   }, [setOpen]);
 
-  const user = (session?.user as any) || {};
-  const displayName: string = user.name || (user.email ? String(user.email).split('@')[0] : 'Account');
+  const user = session?.user as { name?: string | null; email?: string | null } | undefined;
+  const displayName: string = user?.name || (user?.email ? String(user.email).split('@')[0] : 'Account');
   const initial: string = (displayName?.[0] || 'U').toUpperCase();
 
   const handleLogout = async () => {

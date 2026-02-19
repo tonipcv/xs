@@ -5,15 +5,25 @@ Provides Unix socket communication with Sidecar for high-performance data access
 """
 import socket
 import struct
-from typing import Optional, Iterator, List, Dict, Any, Callable, TypeVar
+from typing import Optional, Iterator, List, Dict, Any, Callable, TypeVar, Union
 import os
 import time
 import threading
 import httpx
 import logging
 from datetime import datetime
+from enum import Enum
 
 logger = logging.getLogger(__name__)
+
+
+class DataType(str, Enum):
+    """Primary modality types supported by Sidecar and Xase platform."""
+    AUDIO = "AUDIO"
+    IMAGE = "IMAGE"
+    TEXT = "TEXT"
+    TIMESERIES = "TIMESERIES"
+    TABULAR = "TABULAR"
 
 
 class SidecarClient:
@@ -315,7 +325,7 @@ class SidecarDataset:
         num_connections: int = 1,
         max_retries: int = 3,
         backoff_base: float = 2.0,
-        data_type: Optional[str] = None,
+        data_type: Optional[Union[str, DataType]] = None,
         transform: Optional[Callable[[bytes], T]] = None,
     ):
         """
@@ -335,7 +345,14 @@ class SidecarDataset:
         self.backoff_base = backoff_base
         self._pool: List[SidecarClient] = []
         self._pool_lock = threading.Lock()
-        self.data_type = data_type
+        # Normalize data type to enum string (uppercased)
+        if isinstance(data_type, DataType):
+            self.data_type = data_type.value
+        elif isinstance(data_type, str):
+            dt_upper = data_type.strip().upper()
+            self.data_type = DataType(dt_upper).value if dt_upper in DataType.__members__ else dt_upper
+        else:
+            self.data_type = None
         self.transform = transform
     
     def _get_client(self) -> SidecarClient:
@@ -454,3 +471,83 @@ def ecg_to_tensor(data: bytes):
             return torch.tensor(list(data), dtype=torch.uint8)
     except Exception as e:
         raise ImportError("ecg_to_tensor requires numpy and torch for CSV parsing") from e
+
+
+def audio_bytes_to_tensor(data: bytes, target_sample_rate: int = 16000):
+    """Convert compressed/PCM audio bytes (wav, flac, mp3, ogg) to mono float32 tensor and sample_rate.
+    Tries python-soundfile first, then torchaudio as a fallback. Returns (tensor, sample_rate).
+    """
+    # Try soundfile
+    try:
+        import io
+        import numpy as np
+        import soundfile as sf  # type: ignore
+
+        with io.BytesIO(data) as bio:
+            wav, sr = sf.read(bio, dtype="float32", always_2d=True)
+        # Downmix to mono if needed
+        if wav.ndim == 2 and wav.shape[1] > 1:
+            wav = wav.mean(axis=1, dtype="float32")
+        else:
+            wav = wav.reshape(-1)
+
+        # Optional resample with numpy (simple) if rate differs
+        if sr != target_sample_rate:
+            # Simple linear resample
+            import numpy as _np
+            ratio = float(target_sample_rate) / float(sr)
+            new_len = int(round(len(wav) * ratio))
+            x_old = _np.linspace(0.0, 1.0, num=len(wav), endpoint=False, dtype="float32")
+            x_new = _np.linspace(0.0, 1.0, num=new_len, endpoint=False, dtype="float32")
+            wav = _np.interp(x_new, x_old, wav).astype("float32")
+            sr = target_sample_rate
+
+        import torch  # type: ignore
+        return torch.from_numpy(wav.copy()), sr
+    except Exception:
+        pass
+
+    # Fallback: torchaudio
+    try:
+        import io
+        import torch  # type: ignore
+        import torchaudio  # type: ignore
+
+        with io.BytesIO(data) as bio:
+            wav, sr = torchaudio.load(bio)  # shape: (channels, time)
+        if wav.size(0) > 1:
+            wav = wav.mean(dim=0, keepdim=True)
+        wav = wav.squeeze(0)
+
+        if sr != target_sample_rate:
+            resampler = torchaudio.transforms.Resample(sr, target_sample_rate)
+            wav = resampler(wav.unsqueeze(0)).squeeze(0)
+            sr = target_sample_rate
+        return wav.float().contiguous(), sr
+    except Exception as e:
+        raise ImportError(
+            "audio_bytes_to_tensor requires 'soundfile' or 'torchaudio' to load non-WAV formats"
+        ) from e
+
+
+class SidecarControl:
+    """HTTP control-plane client to query Sidecar/Brain pipeline config and controls."""
+
+    def __init__(self, api_key: str, base_url: str = "https://xase.ai") -> None:
+        self.api_key = api_key
+        self.base_url = base_url.rstrip("/")
+
+    def get_pipeline_config(self, timeout: float = 10.0) -> Dict[str, Any]:
+        """Fetch current pipeline configuration (modalities, transforms, versions)."""
+        try:
+            with httpx.Client() as client:
+                resp = client.get(
+                    f"{self.base_url}/api/v1/sidecar/pipeline/config",
+                    headers={"X-API-Key": self.api_key},
+                    timeout=timeout,
+                )
+                resp.raise_for_status()
+                return resp.json()
+        except Exception as e:
+            logger.error(f"Failed to fetch pipeline config: {e}")
+            raise

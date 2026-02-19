@@ -27,6 +27,7 @@ pub fn ocr_pixel_scrub(dicom_data: Vec<u8>, _config: &Config) -> Result<Vec<u8>>
         }
         
         // For now, return unchanged
+        tracing::warn!("dicom-full feature enabled but OCR pipeline is stubbed: returning unchanged DICOM");
         let mut out = Vec::new();
         obj.write_to(&mut out)?;
         Ok(out)
@@ -34,6 +35,7 @@ pub fn ocr_pixel_scrub(dicom_data: Vec<u8>, _config: &Config) -> Result<Vec<u8>>
     
     #[cfg(not(feature = "dicom-full"))]
     {
+        tracing::warn!("dicom-full feature disabled: OCR pixel scrub is a no-op");
         Ok(dicom_data)
     }
 }
@@ -57,18 +59,21 @@ pub fn convert_to_nifti(dicom_data: Vec<u8>) -> Result<Vec<u8>> {
             // TODO: Preserve essential metadata (spacing, orientation)
             
             // Stub: return empty NIfTI header for now
+            tracing::warn!("nifti feature enabled but conversion is stubbed: returning minimal NIfTI header");
             let nifti_stub = vec![0u8; 352]; // NIfTI-1 header size
             Ok(nifti_stub)
         }
         
         #[cfg(not(feature = "nifti"))]
         {
+            tracing::warn!("nifti feature disabled: returning original DICOM bytes (no conversion)");
             Ok(dicom_data)
         }
     }
     
     #[cfg(not(feature = "dicom-full"))]
     {
+        tracing::warn!("dicom-full feature disabled: NIfTI conversion is a no-op");
         Ok(dicom_data)
     }
 }

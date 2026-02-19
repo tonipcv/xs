@@ -160,7 +160,8 @@ export class PolicyEnforcementPoint {
 
     for (const mask of plan.masks) {
       // Verificar se o principal está na exceção
-      if (exceptPrincipal && (mask as any).except_principals?.includes(exceptPrincipal)) {
+      const maskWithExceptions = mask as { except_principals?: string[] };
+      if (exceptPrincipal && maskWithExceptions.except_principals?.includes(exceptPrincipal)) {
         continue
       }
 

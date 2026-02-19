@@ -142,17 +142,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dat
         _sum: { amount: true },
         where: { tenantId: auth.tenantId },
       })
-      const currentBalance = Number((currentBalanceAgg._sum?.amount as any) ?? 0)
+      const currentBalance = Number(currentBalanceAgg._sum?.amount ?? 0)
       const balanceAfter = currentBalance + amount
       await tx.creditLedger.create({
         data: {
-          tenantId: auth.tenantId,
+          tenantId: auth.tenantId!,
           amount,
           eventType: 'USAGE_DEBIT',
           description: `Dataset ${dataset.datasetId} access: ${hoursToDebit}h`,
           balanceAfter,
-          metadata: { datasetId: dataset.datasetId, files: safeKeys } as any,
-        } as any,
+          metadata: { datasetId: dataset.datasetId, files: safeKeys },
+        },
       })
 
       // Access log (imutável)

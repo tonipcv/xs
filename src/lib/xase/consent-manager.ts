@@ -157,7 +157,7 @@ export class ConsentManager {
       if (!dataset) return null
 
       const status: ConsentStatus = {
-        status: (dataset.consentStatus as any) || 'PENDING',
+        status: (dataset.consentStatus ?? 'PENDING') as ConsentStatus['status'],
         version: dataset.consentVersion || undefined,
         hasProof: !!dataset.consentProofHash,
         lastUpdated: dataset.updatedAt,

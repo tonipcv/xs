@@ -13,7 +13,7 @@ except ImportError:
     HF_AVAILABLE = False
     HFIterableDataset = object
 
-from ..sidecar import SidecarDataset
+from ..sidecar import SidecarDataset, audio_bytes_to_tensor
 
 logger = logging.getLogger(__name__)
 
@@ -139,28 +139,19 @@ class XaseAudioDataset(HFIterableDataset if HF_AVAILABLE else object):
         Returns:
             Audio array (numpy or torch tensor based on return_tensors)
         """
-        import io
-        import wave
-        import numpy as np
-        
-        # Parse WAV file
-        with wave.open(io.BytesIO(audio_bytes), 'rb') as wav:
-            frames = wav.readframes(wav.getnframes())
-            audio_array = np.frombuffer(frames, dtype=np.int16)
-            
-            # Normalize to [-1, 1]
-            audio_array = audio_array.astype(np.float32) / 32768.0
-        
-        # Convert to tensor if requested
+        # Use SDK's multi-format loader which supports WAV/FLAC/MP3/OGG via optional deps
+        wav, _sr = audio_bytes_to_tensor(audio_bytes, target_sample_rate=self.sampling_rate)
+
         if self.return_tensors == "pt":
-            try:
-                import torch
-                return torch.from_numpy(audio_array)
-            except ImportError:
-                logger.warning("PyTorch not available, returning numpy array")
-                return audio_array
-        
-        return audio_array
+            return wav
+
+        # Convert to numpy if requested
+        try:
+            import numpy as np  # noqa: F401
+            return wav.detach().cpu().numpy()
+        except Exception:
+            logger.warning("Failed to convert torch tensor to numpy; returning tensor")
+            return wav
     
     def __len__(self) -> int:
         """Return number of samples."""

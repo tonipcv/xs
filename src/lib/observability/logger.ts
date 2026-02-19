@@ -20,10 +20,11 @@ function log(level: LogLevel, message: string, ctx?: LogContext, err?: unknown) 
     ...ctx,
   };
   if (err) {
+    const error = err as Error;
     payload.error = {
-      message: (err as any)?.message || String(err),
-      stack: (err as any)?.stack,
-      name: (err as any)?.name,
+      message: error?.message || String(err),
+      stack: error?.stack,
+      name: error?.name,
     };
   }
   // Structured JSON log

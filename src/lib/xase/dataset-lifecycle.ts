@@ -7,6 +7,7 @@
  */
 
 import { prisma } from '@/lib/prisma'
+import { checkSafeHarbor } from '@/lib/compliance/hipaa'
 
 export type DatasetStatus = 'DRAFT' | 'ACTIVE' | 'ARCHIVED'
 export type ProcessingStatus = 'PENDING' | 'PROCESSING' | 'COMPLETED' | 'FAILED'
@@ -159,6 +160,13 @@ export async function updateDatasetState(
         processingStatus: true,
         totalDurationHours: true,
         consentStatus: true,
+        jurisdiction: true,
+        dataAssets: {
+          select: {
+            metadata: true,
+          },
+          take: 100,
+        },
       },
     })
 
@@ -210,6 +218,30 @@ export async function updateDatasetState(
           allowed: false,
           reason: 'Cannot publish dataset: consent status is MISSING',
           currentState: validation.currentState
+        }
+      }
+
+      // HIPAA Safe Harbor enforcement (US jurisdiction)
+      if (dataset.jurisdiction === 'US' || dataset.jurisdiction === 'USA') {
+        const maxFindings = parseInt(process.env.SAFE_HARBOR_MAX_FINDINGS || '0', 10)
+        const blockOnPHI = process.env.HIPAA_BLOCK_ON_PHI !== 'false'
+
+        if (blockOnPHI) {
+          // Aggregate metadata from all dataAssets
+          const metadataPayload = dataset.dataAssets
+            .map(asset => asset.metadata)
+            .filter(Boolean)
+            .join(' ')
+
+          const safeHarborResult = checkSafeHarbor(metadataPayload)
+
+          if (safeHarborResult.totalFindings > maxFindings) {
+            return {
+              allowed: false,
+              reason: `Cannot publish dataset: HIPAA Safe Harbor violation detected. Found ${safeHarborResult.totalFindings} PHI elements (max allowed: ${maxFindings}). Identifiers: ${safeHarborResult.findings.slice(0, 5).map(f => f.identifier).join(', ')}${safeHarborResult.findings.length > 5 ? '...' : ''}`,
+              currentState: validation.currentState
+            }
+          }
         }
       }
     }

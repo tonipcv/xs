@@ -12,7 +12,7 @@
 **Success Metric:** 3 design partners signed by Q2 2026
 
 **CRITICAL UPDATE (Feb 5, 2026 - 21:00 UTC) - FINAL:**
-- System has 2 products: Voice Data Governance (100% done) + Trust Layer for AI (100% done)
+- System has 2 products: Multi-Modal Data Governance (100% done) + Trust Layer for AI (100% done)
 - ✅ **COMPLETED**: Integration between Dataholder (SUPPLIER) and AI Labs (CLIENT)
 - ✅ **COMPLETED**: Regulatory compliance templates (GDPR, FCA, BaFin) with API endpoints
 - ✅ **COMPLETED**: 63 API endpoints operational (8 new: Connectors, Quality, Retention, Erasure, PII, Usage, Webhooks, RBAC)
@@ -48,7 +48,7 @@
 | 10 | S3 connector não funciona com voice data | 🟢 NICE TO HAVE | 3 dias | P2 | 4 |
 
 **Status Atual por Componente (Atualizado Feb 5, 2026 - 21:00 UTC) - FINAL:**
-- Voice Data Governance: **100%** ✅ (modelos, APIs, UI, rewrite rules, bulk ops, all tests passing)
+- Multi-Modal Data Governance: **100%** ✅ (modelos, APIs, UI, rewrite rules, bulk ops, all tests passing)
 - Federated Query Agent: **100%** ✅ (compiled, integrado com VoiceAccessPolicy, k-anonymity enforced)
 - Privacy & DP: **100%** ✅ (epsilon budget aplicado, reset endpoint, DP funcional, validated)
 - Consent Management: **100%** ✅ (revogação automática de leases implementada e testada)

@@ -69,7 +69,7 @@ export async function uploadAndProcessAudio(
       headers: {
         'Content-Type': 'audio/wav',
       },
-      body: fileBuffer as any, // Buffer é compatível com BodyInit no runtime
+      body: fileBuffer as unknown as BodyInit, // Buffer é compatível com BodyInit no runtime
     })
 
     if (!uploadFileResponse.ok) {

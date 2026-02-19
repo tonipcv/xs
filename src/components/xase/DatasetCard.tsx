@@ -35,7 +35,7 @@ export function DatasetCard({ ds }: { ds: Dataset }) {
         method: "DELETE",
       });
       if (!resp.ok) {
-        const data = await resp.json().catch(() => ({} as any));
+        const data = await resp.json().catch(() => ({ error: 'Unknown error' }));
         throw new Error(data?.error || "Failed to delete dataset");
       }
       window.location.reload();

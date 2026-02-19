@@ -1,5 +1,6 @@
-import { NextAuthOptions, User } from "next-auth"
+import { NextAuthOptions, User, Account } from "next-auth"
 import { JWT } from "next-auth/jwt"
+import { Session } from "next-auth"
 import { prisma } from "@/lib/prisma"
 import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
@@ -56,7 +57,7 @@ export const authOptions: NextAuthOptions = {
 
         // If 2FA is enabled, require TOTP code
         if (user.twoFactorEnabled && user.totpSecret) {
-          const totp = (credentials as any)?.totp as string | undefined
+          const totp = credentials.totp
           if (!totp) {
             // Special marker to tell the client to ask for TOTP
             throw new Error('__2FA_REQUIRED__')
@@ -89,19 +90,19 @@ export const authOptions: NextAuthOptions = {
     maxAge: 2 * 60 * 60, // 2 hours
   },
   callbacks: {
-    async jwt({ token, user, account }: { token: JWT; user?: User; account?: any }) {
+    async jwt({ token, user, account }: { token: JWT; user?: User & { tenantId?: string | null; xaseRole?: string | null }; account?: Account | null }) {
       if (user) {
         token.id = user.id;
-        token.tenantId = (user as any).tenantId;
-        token.xaseRole = (user as any).xaseRole;
+        token.tenantId = user.tenantId;
+        token.xaseRole = user.xaseRole;
       }
       return token;
     },
-    async session({ session, token }: { session: any; token: JWT }) {
+    async session({ session, token }: { session: Session & { user: { id?: string; tenantId?: string | null; xaseRole?: string | null } }; token: JWT & { tenantId?: string | null; xaseRole?: string | null } }) {
       if (session.user) {
         session.user.id = token.id as string;
-        (session.user as any).tenantId = token.tenantId;
-        (session.user as any).xaseRole = token.xaseRole;
+        session.user.tenantId = token.tenantId;
+        session.user.xaseRole = token.xaseRole;
       }
       return session;
     },

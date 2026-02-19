@@ -15,9 +15,9 @@ export async function checkAndIncrementUsage(userId: string, cost: number = 1) {
   const FREE_LIMIT = Number(process.env.DEFAULT_FREE_TOKENS_LIMIT || '1000000');
   const ENFORCE = process.env.ENFORCE_TOKEN_LIMIT === 'true';
   if (ENFORCE && cost > FREE_LIMIT) {
-    const error = new Error('Token limit exceeded for your plan tier');
-    (error as any).code = 'LIMIT_EXCEEDED';
-    (error as any).usage = {
+    const error = new Error('Token limit exceeded for your plan tier') as Error & { code?: string; usage?: any };
+    error.code = 'LIMIT_EXCEEDED';
+    error.usage = {
       used: 0,
       limit: FREE_LIMIT,
       tier: 'free',
@@ -43,5 +43,5 @@ export async function getUserUsage(userId: string) {
     retentionYears: 1,
     lastTokenReset: new Date(),
     daysUntilReset: 30,
-  } as any;
+  };
 }

@@ -30,14 +30,14 @@ export async function POST(req: NextRequest) {
         action: 'HIPAA_BAA_SIGNED',
         resourceType: 'TENANT',
         resourceId: auth.tenantId,
-        details: {
+        metadata: JSON.stringify({
           partner,
           effectiveAt: effectiveAt.toISOString(),
           expiresAt: expiresAt ? expiresAt.toISOString() : null,
           agreementUri,
           agreementHash,
-        } as any,
-      } as any,
+        }),
+      },
     })
 
     return NextResponse.json({ id: rec.id, status: 'RECORDED', tenantId: auth.tenantId, partner })

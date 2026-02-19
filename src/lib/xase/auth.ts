@@ -43,7 +43,8 @@ export async function checkApiRateLimit(
     };
   } catch (e) {
     // Fail-closed: deny requests when Redis is unavailable for security
-    console.error('[XASE][Auth] Rate limit check failed - denying request:', (e as any)?.message || e);
+    const error = e as Error;
+    console.error('[XASE][Auth] Rate limit check failed - denying request:', error?.message || e);
     return { allowed: false, remaining: 0, resetAt: Date.now() + windowSeconds * 1000 };
   }
 }
@@ -110,7 +111,8 @@ export async function validateApiKey(request: Request | NextRequest): Promise<Au
       }
     } catch (redisErr) {
       // Redis unavailable - fall through to DB lookup
-      console.warn('[XASE][Auth] Redis cache unavailable:', (redisErr as any)?.message);
+      const error = redisErr as Error;
+      console.warn('[XASE][Auth] Redis cache unavailable:', error?.message);
     }
     
     // DB lookup with indexed query using keyPrefix
@@ -190,7 +192,8 @@ export async function validateApiKey(request: Request | NextRequest): Promise<Au
     
   } catch (error) {
     // Evitar erro de logger por objeto inesperado
-    const msg = (error as any)?.message || String(error);
+    const err = error as Error;
+    const msg = err?.message || String(error);
     console.error('Error validating API key:', msg);
     return { 
       valid: false, 

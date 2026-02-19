@@ -140,7 +140,7 @@ export function CloudIntegrationSetup({ tenantId }: { tenantId: string }) {
         body: JSON.stringify({ name: newName.trim() }),
       });
       if (!res.ok) {
-        const data = await res.json().catch(() => ({} as any));
+        const data = await res.json().catch(() => ({ error: 'Unknown error' }));
         throw new Error(data?.error || 'Failed to rename integration');
       }
       await fetchIntegrations();
@@ -191,7 +191,7 @@ export function CloudIntegrationSetup({ tenantId }: { tenantId: string }) {
           }),
         });
         if (!res.ok) {
-          const body = await res.json().catch(() => ({} as any));
+          const body = await res.json().catch(() => ({ error: 'Unknown error' }));
           throw new Error(body.error || 'Failed to create AWS integration');
         }
         await fetchIntegrations();

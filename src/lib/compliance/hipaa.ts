@@ -91,14 +91,14 @@ export async function trackBAA(tenantId: string, partner: string, opts?: {
       action: 'HIPAA_BAA_SIGNED',
       resourceType: 'TENANT',
       resourceId: tenantId,
-      details: {
+      metadata: JSON.stringify({
         partner,
         effectiveAt: (opts?.effectiveAt || new Date()).toISOString(),
         expiresAt: opts?.expiresAt ? opts.expiresAt.toISOString() : null,
         agreementUri: opts?.agreementUri || null,
         agreementHash: opts?.agreementHash || null,
-      } as any,
-    } as any,
+      }),
+    },
   })
   return { id: record.id, tenantId, partner, status: 'RECORDED' as const }
 }

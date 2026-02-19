@@ -1,6 +1,6 @@
 Metadata-Version: 2.4
 Name: xase-ai
-Version: 0.1.2
+Version: 0.1.3
 Summary: Official Xase SDK for Python - Evidence Layer for AI Agents
 Author-email: Xase <support@xase.ai>
 License: MIT
@@ -611,3 +611,51 @@ Contributions welcome! Please read our [Contributing Guide](CONTRIBUTING.md).
 ---
 
 **Built with ❤️ by the Xase team**
+
+---
+
+# Multi‑modal SDK
+
+## DataType enum
+
+`DataType` define os tipos primários compatíveis com o Sidecar e a plataforma Xase:
+
+```python
+from xase.sidecar import SidecarDataset, DataType
+
+ds = SidecarDataset(
+    segment_ids=["seg_0001","seg_0002"],
+    data_type=DataType.AUDIO,   # ou "AUDIO"
+)
+```
+
+## Áudio além de WAV
+
+Carregue bytes de áudio (WAV/FLAC/OGG/MP3) para tensor float32 mono e faça reamostragem para 16kHz (opcional):
+
+```python
+from xase.sidecar import audio_bytes_to_tensor
+
+# data = open("sample.flac", "rb").read()
+wav, sr = audio_bytes_to_tensor(data, target_sample_rate=16000)
+```
+
+Dependências opcionais:
+
+- `soundfile` (libsndfile) – caminho preferencial
+- `torchaudio` – fallback
+
+Se nenhuma estiver instalada, uma exceção informativa será lançada.
+
+## Pipeline config do Sidecar
+
+Descubra dinamicamente as modalidades e transforms ativos no pipeline:
+
+```python
+from xase.sidecar import SidecarControl
+
+ctl = SidecarControl(api_key="xase_live_...", base_url="https://xase.ai")
+cfg = ctl.get_pipeline_config()
+print(cfg["modalities"])     # ["AUDIO", "IMAGE", ...]
+print(cfg.get("transforms")) # {"AUDIO": ["wm_detect", ...], ...}
+```

@@ -32,12 +32,10 @@ fn should_watermark_probabilistic(audio_data: &[u8], probability: f32) -> bool {
 /// Apenas 20% dos arquivos são marcados (determinístico por hash).
 /// Economia: 80% CPU, ainda detecta leaks (200 arquivos em 1000).
 pub fn watermark_audio_probabilistic(audio_data: Vec<u8>, contract_id: &str, probability: f32) -> Result<Vec<u8>> {
-    // With probability set to 1.0 in production, this always watermarks.
     if should_watermark_probabilistic(&audio_data, probability) {
         watermark_audio(audio_data, contract_id)
     } else {
-        // This branch will not be taken in production configuration.
-        Ok(watermark_audio(audio_data, contract_id)?)
+        Ok(audio_data)
     }
 }
 

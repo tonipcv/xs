@@ -75,6 +75,7 @@ pub fn nlp_redact_medical_text(fhir_json: Vec<u8>, _config: &Config) -> Result<V
     #[cfg(not(feature = "nlp-full"))]
     {
         // Without NLP feature, use simple regex-based redaction
+        tracing::warn!("nlp-full feature disabled: using regex-based narrative redaction as fallback");
         let txt = String::from_utf8_lossy(&fhir_json).to_string();
         let mut v: Value = match serde_json::from_str(&txt) {
             Ok(v) => v,
@@ -189,6 +190,7 @@ pub fn process_fhir_advanced(data: Vec<u8>, config: &Config) -> Result<Vec<u8>> 
         result = deidentify_hl7v2(result, config)?;
         // HL7 redaction count (estimate: 2 fields redacted per PID line)
         crate::metrics::add_redactions(2);
+        tracing::info!("Processed HL7 v2.x message with rule-based redaction");
     } else {
         // FHIR JSON processing
         

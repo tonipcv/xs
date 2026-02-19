@@ -94,7 +94,7 @@ export async function POST(
         if (s.codec) codecFreq[s.codec] = (codecFreq[s.codec] || 0) + 1
         if (s.language) langFreq[s.language] = (langFreq[s.language] || 0) + 1
       }
-      if (Object.keys(srFreq).length) primarySampleRate = parseInt(Object.keys(srFreq).reduce((a,b)=> srFreq[a as any] > srFreq[b as any] ? a : b))
+      if (Object.keys(srFreq).length) primarySampleRate = parseInt(Object.keys(srFreq).reduce((a,b)=> srFreq[parseInt(a)] > srFreq[parseInt(b)] ? a : b))
       if (Object.keys(codecFreq).length) primaryCodec = Object.keys(codecFreq).reduce((a,b)=> codecFreq[a] > codecFreq[b] ? a : b)
       if (Object.keys(langFreq).length) primaryLanguage = Object.keys(langFreq).reduce((a,b)=> langFreq[a] > langFreq[b] ? a : b)
     }

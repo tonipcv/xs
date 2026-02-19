@@ -77,8 +77,8 @@ export async function POST(req: NextRequest) {
       let auth = await validateApiKey(req)
       // Development-only: allow UI session fallback without X-API-Key
       if ((!auth.valid || !auth.tenantId) && process.env.NODE_ENV !== 'production') {
-        const session = await getServerSession(authOptions as any)
-        const userEmail = (session as any)?.user?.email
+        const session = await getServerSession(authOptions)
+        const userEmail = session?.user?.email
         if (userEmail) {
           const user = await prisma.user.findUnique({ where: { email: userEmail }, select: { tenantId: true } })
           if (user?.tenantId) {
@@ -120,13 +120,13 @@ export async function POST(req: NextRequest) {
         status: 'ACTIVE',
         OR: [{ expiresAt: null }, { expiresAt: { gte: now } }],
       },
-      select: { id: true, canStream: true },
+      select: { id: true, canStream: true, maxConcurrentLeases: true },
     })
     if (!policy) return NextResponse.json({ error: 'No active policy' }, { status: 403 })
     if (!policy.canStream) return NextResponse.json({ error: 'Streaming not allowed by policy' }, { status: 403 })
 
     // Enforce concurrent lease limit if configured
-    const maxConc = (policy as any).maxConcurrentLeases as number | null | undefined
+    const maxConc = policy.maxConcurrentLeases
     if (maxConc && maxConc > 0) {
       const activeLeases = await prisma.accessLease.count({
         where: {

@@ -161,6 +161,7 @@ model Tenant {
   supplierOffers    AccessOffer[] @relation("SupplierOffers")
   buyerExecutions   PolicyExecution[] @relation("BuyerExecutions")
   buyerReviews      AccessReview[] @relation("BuyerReviews")
+  ropaRecords       ROPARecord[]
   
   @@map("xase_tenants")
 }
@@ -357,6 +358,33 @@ enum DatasetStatus {
   ARCHIVED
   DELETED
   @@map("dataset_status")
+}
+
+model ROPARecord {
+  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId          String   @map("tenant_id") @db.Uuid
+  datasetId         String   @map("dataset_id")
+  
+  controller        String
+  processingPurpose String   @map("processing_purpose")
+  legalBasis        String   @map("legal_basis")
+  dataCategories    String[] @map("data_categories")
+  recipients        String[]
+  dpoContact        String?  @map("dpo_contact")
+  retentionPeriod   String?  @map("retention_period")
+  
+  recordData        Json?    @map("record_data")
+  
+  createdAt         DateTime @default(now()) @map("created_at")
+  updatedAt         DateTime @updatedAt @map("updated_at")
+  
+  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId])
+  @@index([datasetId])
+  @@index([legalBasis])
+  @@index([createdAt])
+  @@map("xase_ropa_records")
 }
 
 enum DataSourceStatus {

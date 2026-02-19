@@ -26,7 +26,7 @@ These are **non-negotiable rules** that must be maintained across the entire sys
 
 ### Enforcement
 - All buyer-facing routes under `/xase/governed-access` and `/xase/executions`
-- Dataset routes under `/xase/voice/datasets` are supplier-only
+- Dataset routes under `/xase/datasets` are supplier-only
 - API endpoints use `offerId` in paths, not `datasetId`
 
 ---
@@ -34,11 +34,11 @@ These are **non-negotiable rules** that must be maintained across the entire sys
 ## 2. Pricing Separation
 
 ### Rule
-**Pricing belongs to `AccessOffer`. `VoiceAccessPolicy` is pure enforcement.**
+**Pricing belongs to `AccessOffer`. `AccessPolicy` is pure enforcement.**
 
 ### Implications
 - ✅ `AccessOffer.pricePerHour` is the source of truth for pricing
-- ❌ `VoiceAccessPolicy` has NO `pricePerHour` or `currency` fields
+- ❌ `AccessPolicy` has NO `pricePerHour` or `currency` fields
 - ✅ `PolicyExecution.totalCost` is derived from `AccessOffer.pricePerHour × hoursUsed`
 - ✅ Streaming API uses offer pricing to calculate costs
 
@@ -49,7 +49,7 @@ These are **non-negotiable rules** that must be maintained across the entire sys
 - **No hidden costs**: Buyers see pricing before requesting access
 
 ### Enforcement
-- Prisma schema: `VoiceAccessPolicy` has no pricing fields
+- Prisma schema: `AccessPolicy` has no pricing fields
 - Migration: `20260209_p1_policy_pricing_and_sample_guardrails.sql` drops pricing columns
 - API: `/api/v1/access-offers/[offerId]/execute` uses offer pricing when creating execution
 - Streaming: `/api/v1/datasets/[datasetId]/stream` uses `AccessOffer.pricePerHour` for cost calculation

@@ -59,6 +59,8 @@ pub async fn telemetry_loop(
         // Build logs compatible with API schema
         let (processed_bytes, redactions) = crate::metrics::snapshot();
 
+        let (fb_diar, fb_audio_noop, fb_ocr_stub, fb_nifti_stub, fb_nlp_regex) = crate::metrics::snapshot_fallbacks();
+
         let logs = vec![
             // Aggregate serve event for the window
             serde_json::json!({
@@ -75,6 +77,13 @@ pub async fn telemetry_loop(
                     "request_count": request_count,
                     "error_count": error_count,
                     "redactions": redactions,
+                    "fallbacks": {
+                        "audio_diarization_mock": fb_diar,
+                        "audio_redaction_noop": fb_audio_noop,
+                        "dicom_ocr_stub": fb_ocr_stub,
+                        "dicom_nifti_stub": fb_nifti_stub,
+                        "nlp_regex_fallback": fb_nlp_regex,
+                    }
                 }
             }),
             // Cache hit aggregate event

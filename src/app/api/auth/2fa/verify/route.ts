@@ -6,12 +6,12 @@ import { verifyTotp } from '@/lib/otp'
 
 export async function POST(request: Request) {
   try {
-    const session = (await getServerSession(authOptions as any)) as any
+    const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json().catch(() => null as any)
+    const body = await request.json().catch(() => null)
     const token = body?.token as string | undefined
     if (!token) {
       return NextResponse.json({ error: 'Token é obrigatório' }, { status: 400 })

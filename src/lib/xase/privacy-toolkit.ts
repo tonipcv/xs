@@ -287,7 +287,7 @@ export class PIIDetector {
         if (confidence > 0.5) {
           detectedFields.push({
             field,
-            type: type as any,
+            type: type.toLowerCase() as 'email' | 'phone' | 'ssn' | 'credit_card' | 'ip_address' | 'name',
             confidence,
             samples,
           })

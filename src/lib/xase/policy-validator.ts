@@ -35,7 +35,7 @@ export function parsePolicyYAML(yamlContent: string): PolicyValidationResult {
   if (!valid) {
     const errs = (validate.errors || []).map((e: ErrorObject) => ({
       message: e.message || 'schema error',
-      path: (e as any).instancePath || (e as any).dataPath || undefined,
+      path: e.instancePath || undefined,
     }))
     return { valid: false, errors: errs }
   }

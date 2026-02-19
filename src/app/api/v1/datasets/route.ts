@@ -5,7 +5,7 @@ import { authOptions } from '@/lib/auth'
 import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
 import crypto from 'crypto'
 import { z } from 'zod'
-import { DataType as PrismaDataType } from '@prisma/client'
+import { DataType as PrismaDataType, ConsentStatus, DatasetStatus } from '@prisma/client'
 
 function genDatasetId() {
   return 'ds_' + crypto.randomBytes(12).toString('hex')
@@ -341,8 +341,8 @@ export async function GET(req: NextRequest) {
       where: {
         tenantId: tenantId!,
         primaryLanguage: language || undefined,
-        consentStatus: consentStatus as any || undefined,
-        status: status as any || undefined,
+        consentStatus: consentStatus ? (consentStatus as ConsentStatus) : undefined,
+        status: status ? (status as DatasetStatus) : undefined,
         dataType: dataType ? (dataType as unknown as PrismaDataType) : undefined,
       },
       orderBy: { createdAt: 'desc' },

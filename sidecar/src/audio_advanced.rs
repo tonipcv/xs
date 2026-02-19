@@ -1,5 +1,5 @@
 use anyhow::{Result, Context};
-use hound::{WavReader, WavWriter};
+use hound::{WavReader, WavWriter, WavSpec};
 use std::io::Cursor;
 use crate::config::Config;
 
@@ -60,6 +60,8 @@ pub fn diarize(_audio_data: &[u8]) -> Result<Vec<SpeakerSegment>> {
     #[cfg(not(feature = "audio-full"))]
     {
         // Without feature, return single speaker
+        tracing::warn!("audio-full feature disabled: returning mock diarization segments");
+        crate::metrics::inc_audio_diarization_fallback();
         Ok(vec![SpeakerSegment { speaker_id: "SPEAKER_00".into(), start_sec: 0.0, end_sec: 999.0 }])
     }
 }
@@ -85,6 +87,8 @@ pub fn redact_phi(audio_data: Vec<u8>, _config: &Config) -> Result<Vec<u8>> {
     #[cfg(not(feature = "audio-full"))]
     {
         // Without feature, return unchanged
+        tracing::warn!("audio-full feature disabled: PHI redaction is a no-op");
+        crate::metrics::inc_audio_redaction_noop();
         Ok(audio_data)
     }
 }

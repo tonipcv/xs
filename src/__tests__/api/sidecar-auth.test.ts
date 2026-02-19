@@ -6,7 +6,7 @@ vi.mock('@/lib/prisma', () => ({
     apiKey: {
       findUnique: vi.fn(),
     },
-    voiceAccessLease: {
+    accessLease: {
       findUnique: vi.fn(),
     },
     sidecarSession: {

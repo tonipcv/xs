@@ -52,7 +52,7 @@ export async function captureMessage(message: string, ctx?: SentryContext) {
       level: 'info',
       tags: ctx?.tags,
       extra: { requestId: ctx?.requestId, ...(ctx?.extra || {}) },
-    } as any);
+    });
   } catch {
     // no-op
   }

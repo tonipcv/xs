@@ -29,7 +29,8 @@ export type ROPARecord = {
   retention?: string
 }
 
-export function buildRopaRecord(input: {
+export async function buildRopaRecord(input: {
+  tenantId: string
   controller: string
   datasetId: string
   purpose: string
@@ -38,8 +39,8 @@ export function buildRopaRecord(input: {
   recipients?: string[]
   dpo?: string
   retention?: string
-}): ROPARecord {
-  return {
+}): Promise<ROPARecord> {
+  const record: ROPARecord = {
     controller: input.controller,
     datasetId: input.datasetId,
     processingPurpose: input.purpose,
@@ -49,6 +50,24 @@ export function buildRopaRecord(input: {
     dpo: input.dpo,
     retention: input.retention,
   }
+
+  // Persist to database
+  await prisma.rOPARecord.create({
+    data: {
+      tenantId: input.tenantId,
+      datasetId: input.datasetId,
+      controller: input.controller,
+      processingPurpose: input.purpose,
+      legalBasis: input.legalBasis,
+      dataCategories: input.dataCategories,
+      recipients: input.recipients || [],
+      dpoContact: input.dpo || null,
+      retentionPeriod: input.retention || null,
+      recordData: record,
+    },
+  })
+
+  return record
 }
 
 export function isHealthLegalBasisAllowed(legalBasis: HealthConsentPayload['legalBasis']): boolean {
@@ -81,13 +100,13 @@ export async function registerHealthConsent(payload: HealthConsentPayload) {
       action: 'LGPD_HEALTH_CONSENT_REGISTERED',
       resourceType: 'DATASET',
       resourceId: payload.datasetId,
-      details: {
+      metadata: JSON.stringify({
         legalBasis: payload.legalBasis,
         purpose: payload.purpose,
         version: payload.version,
         proofUri: payload.proofUri || null,
-      } as any,
-    } as any,
+      }),
+    },
   })
 
   return { updated: updated.count }
@@ -119,8 +138,8 @@ export async function revokeHealthConsent(args: { datasetId: string; tenantId: s
         action: 'LGPD_HEALTH_CONSENT_REVOKED',
         resourceType: 'DATASET',
         resourceId: args.datasetId,
-        details: { reason: args.reason || null, revokedBy: args.revokedBy, leasesRevoked: leases.count } as any,
-      } as any,
+        metadata: JSON.stringify({ reason: args.reason || null, revokedBy: args.revokedBy, leasesRevoked: leases.count }),
+      },
     })
 
     return { datasetId: args.datasetId, leasesRevoked: leases.count, status: upd.consentStatus }

@@ -49,7 +49,7 @@ export async function enforceAccess(request: AccessRequest): Promise<AccessResul
     apiKeyId: request.apiKeyId,
     ipAddress: request.ipAddress,
     userAgent: request.userAgent,
-    environment: process.env.NODE_ENV as any || 'development',
+    environment: process.env.NODE_ENV || 'development',
     action: request.action,
   }
 
@@ -188,7 +188,7 @@ export async function enforceAccess(request: AccessRequest): Promise<AccessResul
               policyId: request.policyId,
               hoursAccessed: hoursToConsume,
               action: request.action,
-            } as any,
+            },
           },
         })
       }
