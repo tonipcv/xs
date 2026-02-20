@@ -10,7 +10,7 @@ export interface UsageMetrics {
   tenantId: string
   leaseId?: string
   datasetId?: string
-  metric: 'hours' | 'requests' | 'bytes' | 'queries' | 'epsilon'
+  metric: 'hours' | 'requests' | 'bytes' | 'queries' | 'epsilon' | 'storage_gb_hours'
   value: number
   timestamp: Date
   metadata?: Record<string, any>
@@ -25,6 +25,7 @@ export interface UsageSummary {
     totalBytes: number
     totalQueries: number
     totalEpsilon: number
+    totalStorageGbHours: number
   }
   breakdown: {
     byDataset: Record<string, any>
@@ -135,6 +136,7 @@ export class MeteringService {
       totalBytes: 0,
       totalQueries: 0,
       totalEpsilon: 0,
+      totalStorageGbHours: 0,
     }
 
     const breakdown = {
@@ -143,7 +145,7 @@ export class MeteringService {
     }
 
     // Fetch from Redis for recent data
-    for (const metric of ['hours', 'requests', 'bytes', 'queries', 'epsilon']) {
+    for (const metric of ['hours', 'requests', 'bytes', 'queries', 'epsilon', 'storage_gb_hours']) {
       const key = `${this.REDIS_PREFIX}${tenantId}:${metric}`
       const data = await redis.zrangebyscore(
         key,
@@ -194,7 +196,7 @@ export class MeteringService {
 
     const usage: Record<string, number> = {}
 
-    for (const metric of ['hours', 'requests', 'bytes', 'queries', 'epsilon']) {
+    for (const metric of ['hours', 'requests', 'bytes', 'queries', 'epsilon', 'storage_gb_hours']) {
       const key = `${this.REDIS_PREFIX}${tenantId}:${metric}`
       const data = await redis.zrangebyscore(key, hourAgo, now)
       
@@ -368,7 +370,7 @@ export class MeteringService {
     tenantId: string,
     start: Date,
     end: Date,
-    rates: { hours: number; requests: number; bytes: number }
+    rates: { hours: number; requests: number; bytes: number; storage_gb_hours?: number }
   ): Promise<{
     total: number
     breakdown: Record<string, number>
@@ -380,6 +382,7 @@ export class MeteringService {
       hours: usage.metrics.totalHours * rates.hours,
       requests: usage.metrics.totalRequests * rates.requests,
       bytes: usage.metrics.totalBytes * rates.bytes,
+      storage: usage.metrics.totalStorageGbHours * (rates.storage_gb_hours || 0.000032), // ~$0.023/GB-month
     }
 
     const total = Object.values(breakdown).reduce((sum, val) => sum + val, 0)

@@ -11,6 +11,17 @@ pub struct Config {
     pub cache_size_gb: usize,
     pub bucket_name: String,
     pub bucket_prefix: String,
+    
+    // Hospital adaptation configuration
+    pub ingestion_mode: String,             // s3|dicomweb|fhir|hybrid
+    pub dicomweb_url: Option<String>,       // DICOMweb PACS URL (e.g., http://pacs.hospital.local:8080/dcm4chee-arc)
+    pub dicomweb_auth_token: Option<String>, // Optional auth token for DICOMweb
+    pub fhir_url: Option<String>,           // FHIR server URL (e.g., http://fhir.hospital.local:8080/fhir)
+    pub fhir_auth_token: Option<String>,    // Optional auth token for FHIR
+    pub hybrid_fallback_to_s3: bool,        // If true, fallback to S3 when PACS/FHIR fails
+    pub resilience_grace_period_seconds: u64, // Grace period before entering cache-only mode
+    pub metrics_bind_addr: String,          // Prometheus metrics server bind address
+    
     // Pipeline configuration
     pub data_pipeline: String,              // audio|dicom|fhir|text|timeseries|passthrough
     pub dicom_strip_tags: Vec<String>,      // e.g., ["PatientName","PatientID"]
@@ -51,6 +62,21 @@ impl Config {
                 .context("BUCKET_NAME not set")?,
             bucket_prefix: env::var("BUCKET_PREFIX")
                 .unwrap_or_else(|_| "".to_string()),
+            
+            // Hospital adaptation
+            ingestion_mode: env::var("INGESTION_MODE")
+                .unwrap_or_else(|_| "s3".to_string()),
+            dicomweb_url: env::var("DICOMWEB_URL").ok(),
+            dicomweb_auth_token: env::var("DICOMWEB_AUTH_TOKEN").ok(),
+            fhir_url: env::var("FHIR_URL").ok(),
+            fhir_auth_token: env::var("FHIR_AUTH_TOKEN").ok(),
+            hybrid_fallback_to_s3: env::var("HYBRID_FALLBACK_TO_S3")
+                .ok().map(|s| s == "true" || s == "1").unwrap_or(true),
+            resilience_grace_period_seconds: env::var("RESILIENCE_GRACE_PERIOD_SECONDS")
+                .ok().and_then(|s| s.parse().ok()).unwrap_or(300),
+            metrics_bind_addr: env::var("METRICS_BIND_ADDR")
+                .unwrap_or_else(|_| "0.0.0.0:9090".to_string()),
+            
             data_pipeline: env::var("DATA_PIPELINE").unwrap_or_else(|_| "audio".to_string()),
             dicom_strip_tags: env::var("DICOM_STRIP_TAGS").ok()
                 .map(|s| s.split(',').map(|v| v.trim().to_string()).filter(|v| !v.is_empty()).collect())

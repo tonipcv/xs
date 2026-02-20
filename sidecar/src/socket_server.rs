@@ -4,7 +4,7 @@ use tokio::net::{UnixListener, UnixStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tracing::{info, error};
 use crate::cache::SegmentCache;
-use crate::s3_client::S3Client;
+use crate::data_provider::DataProvider;
 use crate::pipeline::DataPipeline;
 use crate::config::Config;
 
@@ -18,7 +18,7 @@ use crate::config::Config;
 ///   and watermark in background task. GPU never waits for FFT.
 pub async fn serve(
     cache: Arc<SegmentCache>,
-    s3_client: Arc<S3Client>,
+    data_provider: Arc<dyn DataProvider>,
     config: Config,
     pipeline: Arc<dyn DataPipeline>,
 ) -> Result<()> {
@@ -31,12 +31,12 @@ pub async fn serve(
         match listener.accept().await {
             Ok((stream, _)) => {
                 let cache = cache.clone();
-                let s3_client = s3_client.clone();
+                let data_provider = data_provider.clone();
                 let config = config.clone();
                 let pipeline = pipeline.clone();
 
                 tokio::spawn(async move {
-                    if let Err(e) = handle_connection(stream, cache, s3_client, config, pipeline).await {
+                    if let Err(e) = handle_connection(stream, cache, data_provider, config, pipeline).await {
                         error!("Connection error: {}", e);
                     }
                 });
@@ -51,7 +51,7 @@ pub async fn serve(
 async fn handle_connection(
     mut stream: UnixStream,
     cache: Arc<SegmentCache>,
-    s3_client: Arc<S3Client>,
+    data_provider: Arc<dyn DataProvider>,
     config: Config,
     pipeline: Arc<dyn DataPipeline>,
 ) -> Result<()> {
@@ -69,8 +69,8 @@ async fn handle_connection(
         // Cache hit: zero-copy Arc<Vec<u8>>, no blocking
         cached
     } else {
-        // Cache miss: download from S3 and process BEFORE serving
-        let raw_data = s3_client.download(&segment_id).await?;
+        // Cache miss: download from data provider and process BEFORE serving
+        let raw_data = data_provider.download(&segment_id).await?;
 
         // Apply pipeline synchronously to enforce runtime governance
         let processed = pipeline.process(raw_data, &config).map_err(|e| {

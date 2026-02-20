@@ -4,7 +4,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use tokio::time::{sleep, Duration};
 use tracing::{info, warn};
 use crate::cache::SegmentCache;
-use crate::s3_client::S3Client;
+use crate::data_provider::DataProvider;
 use crate::pipeline::DataPipeline;
 use crate::config::Config;
 
@@ -18,7 +18,7 @@ use crate::config::Config;
 /// - Parallel downloads with configurable concurrency (16 workers)
 pub async fn prefetch_loop(
     cache: Arc<SegmentCache>,
-    s3_client: Arc<S3Client>,
+    data_provider: Arc<dyn DataProvider>,
     config: Config,
     pipeline: Arc<dyn DataPipeline>,
 ) -> Result<()> {
@@ -49,12 +49,12 @@ pub async fn prefetch_loop(
             }
 
             let cache = cache.clone();
-            let s3_client = s3_client.clone();
+            let data_provider = data_provider.clone();
             let config = config.clone();
             let pipeline = pipeline.clone();
 
             handles.push(tokio::spawn(async move {
-                match s3_client.download(&seg_id).await {
+                match data_provider.download(&seg_id).await {
                     Ok(data) => {
                         // Pre-process during prefetch (OFF the GPU serving path)
                         let final_data = match pipeline.process(data, &config) {

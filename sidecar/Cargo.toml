@@ -24,6 +24,10 @@ rand = "0.8"
 sha2 = "0.10"
 chrono = { version = "0.4", features = ["clock", "std"] }
 regex = "1"
+async-trait = "0.1"
+prometheus = "0.13"
+axum = "0.7"
+lazy_static = "1.4"
 # Audio processing
 rubato = "0.5"  # pitch shifting
 pyannote-rs = { version = "0.1", optional = true }  # diarization

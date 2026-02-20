@@ -93,27 +93,141 @@ pub fn redact_phi(audio_data: Vec<u8>, _config: &Config) -> Result<Vec<u8>> {
     }
 }
 
-/// Combined audio processing pipeline
-pub fn process_audio_advanced(data: Vec<u8>, config: &Config) -> Result<Vec<u8>> {
+/// Combined audio processing pipeline with metadata persistence
+pub async fn process_audio_advanced(
+    data: Vec<u8>,
+    config: &Config,
+    session_id: &str,
+    dataset_id: &str,
+    lease_id: &str,
+    tenant_id: &str,
+    metadata_store: Option<&crate::metadata_store::MetadataStore>,
+) -> Result<(Vec<u8>, AudioProcessingResult)> {
+    use std::time::Instant;
+    let start_time = Instant::now();
+    
     let mut result = data;
+    let mut speaker_segments = Vec::new();
+    let mut redacted_regions = Vec::new();
+    
+    // Parse WAV to get audio info
+    let audio_info = get_audio_info(&result)?;
     
     // 1. F0 shift for voice biometrics masking
-    if config.audio_f0_shift_semitones.abs() > 0.01 {
+    let f0_shift_applied = config.audio_f0_shift_semitones.abs() > 0.01;
+    if f0_shift_applied {
         result = f0_shift(result, config.audio_f0_shift_semitones)?;
     }
     
     // 2. Diarization (for metadata, doesn't modify audio)
     if config.audio_enable_diarization {
-        let _segments = diarize(&result)?;
-        // Store segments in metadata if needed
+        speaker_segments = diarize(&result)?;
+        tracing::info!(
+            session_id = %session_id,
+            segments = speaker_segments.len(),
+            "Diarization completed"
+        );
     }
     
     // 3. PHI redaction (silence detected PHI)
     if config.audio_enable_redaction {
-        result = redact_phi(result, config)?;
+        let (redacted_audio, regions) = redact_phi_with_metadata(result, config)?;
+        result = redacted_audio;
+        redacted_regions = regions;
+        tracing::info!(
+            session_id = %session_id,
+            redactions = redacted_regions.len(),
+            "PHI redaction completed"
+        );
     }
     
-    Ok(result)
+    let processing_time = start_time.elapsed().as_millis() as u64;
+    
+    // Store metadata if store is provided
+    if let Some(store) = metadata_store {
+        let metadata = crate::metadata_store::AudioMetadata {
+            session_id: session_id.to_string(),
+            dataset_id: dataset_id.to_string(),
+            lease_id: lease_id.to_string(),
+            tenant_id: tenant_id.to_string(),
+            speaker_segments: speaker_segments.iter().map(|s| s.clone().into()).collect(),
+            redacted_regions: redacted_regions.clone(),
+            processing_stats: crate::metadata_store::ProcessingStats {
+                duration_sec: audio_info.duration_sec,
+                sample_rate: audio_info.sample_rate,
+                channels: audio_info.channels,
+                f0_shift_applied,
+                f0_shift_semitones: config.audio_f0_shift_semitones,
+                diarization_enabled: config.audio_enable_diarization,
+                redaction_enabled: config.audio_enable_redaction,
+                processing_time_ms: processing_time,
+            },
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
+        };
+        
+        store.store(&metadata).await?;
+    }
+    
+    let processing_result = AudioProcessingResult {
+        speaker_segments,
+        redacted_regions,
+        processing_time_ms: processing_time,
+        f0_shift_applied,
+    };
+    
+    Ok((result, processing_result))
+}
+
+#[derive(Debug, Clone)]
+pub struct AudioProcessingResult {
+    pub speaker_segments: Vec<SpeakerSegment>,
+    pub redacted_regions: Vec<crate::metadata_store::RedactedRegion>,
+    pub processing_time_ms: u64,
+    pub f0_shift_applied: bool,
+}
+
+#[derive(Debug, Clone)]
+struct AudioInfo {
+    duration_sec: f32,
+    sample_rate: u32,
+    channels: u16,
+}
+
+fn get_audio_info(audio_data: &[u8]) -> Result<AudioInfo> {
+    let reader = WavReader::new(Cursor::new(audio_data))
+        .context("Failed to parse WAV for audio info")?;
+    let spec = reader.spec();
+    
+    let sample_count = reader.len() as f32;
+    let duration_sec = sample_count / (spec.sample_rate as f32 * spec.channels as f32);
+    
+    Ok(AudioInfo {
+        duration_sec,
+        sample_rate: spec.sample_rate,
+        channels: spec.channels,
+    })
+}
+
+fn redact_phi_with_metadata(
+    audio_data: Vec<u8>,
+    config: &Config,
+) -> Result<(Vec<u8>, Vec<crate::metadata_store::RedactedRegion>)> {
+    #[cfg(feature = "audio-full")]
+    {
+        // TODO: integrate whisper-rs for transcription
+        // TODO: run NER on transcript to find PHI spans
+        // TODO: silence corresponding audio regions
+        Ok((audio_data, Vec::new()))
+    }
+    
+    #[cfg(not(feature = "audio-full"))]
+    {
+        // Without feature, return unchanged
+        tracing::warn!("audio-full feature disabled: PHI redaction is a no-op");
+        crate::metrics::inc_audio_redaction_noop();
+        Ok((audio_data, Vec::new()))
+    }
 }
 
 #[cfg(test)]

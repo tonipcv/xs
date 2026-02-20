@@ -2,7 +2,9 @@ import { AppLayout } from '@/components/AppSidebar'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/rbac'
 import { Playfair_Display } from 'next/font/google'
-import { DollarSign, Activity, Clock } from 'lucide-react'
+import { DollarSign, Activity, Clock, TrendingUp } from 'lucide-react'
+import { BillingDashboard } from '@/components/xase/BillingDashboard'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const heading = Playfair_Display({ subsets: ['latin'], weight: ['600', '700'] })
 
@@ -41,10 +43,29 @@ export default async function BillingPage() {
               <p className="text-sm text-gray-600">
                 {isSupplier
                   ? 'Revenue credits and platform movements for this tenant'
-                  : 'Account ledger and usage-based movements for this tenant'}
+                  : 'Comprehensive billing dashboard with storage, compute, and data processing metrics'}
               </p>
             </div>
           </div>
+
+          {/* Tabs for Dashboard and Ledger */}
+          <Tabs defaultValue="dashboard" className="space-y-6">
+            <TabsList>
+              <TabsTrigger value="dashboard" className="flex items-center gap-2">
+                <TrendingUp className="h-4 w-4" />
+                Dashboard
+              </TabsTrigger>
+              <TabsTrigger value="ledger" className="flex items-center gap-2">
+                <Activity className="h-4 w-4" />
+                Ledger
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="dashboard" className="space-y-6">
+              <BillingDashboard tenantId={context.tenantId!} />
+            </TabsContent>
+
+            <TabsContent value="ledger" className="space-y-6">
 
           {/* Summary cards */}
           <div className="grid gap-3 md:grid-cols-3">
@@ -78,61 +99,63 @@ export default async function BillingPage() {
             </div>
           </div>
 
-          {/* Ledger table */}
-          <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-200">
-                  <tr>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">When</th>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Type</th>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Amount</th>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Policy / Dataset</th>
-                    <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Description</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {entries.length > 0 ? (
-                    entries.map((entry) => (
-                      <tr
-                        key={entry.id}
-                        className="border-b border-gray-200 hover:bg-white transition-colors"
-                      >
-                        <td className="px-4 py-2 text-xs text-gray-600 tabular-nums">
-                          <Clock className="h-3 w-3 inline mr-1 text-gray-500" />
-                          {new Date(entry.createdAt).toLocaleString()}
-                        </td>
-                        <td className="px-4 py-2 text-xs">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-medium text-gray-700 border border-gray-300 bg-white`}
-                          >
-                            {entry.eventType}
-                          </span>
-                        </td>
-                        <td className="px-4 py-2 text-xs tabular-nums text-gray-800">
-                          {Number(entry.amount).toFixed(2)}
-                        </td>
-                        <td className="px-4 py-2 text-xs text-gray-600 max-w-[220px] truncate">
-                          {(entry.metadata as any)?.policyId || '-'}
-                          {(entry.metadata as any)?.datasetName ? ` • ${(entry.metadata as any).datasetName}` : ''}
-                        </td>
-                        <td className="px-4 py-2 text-xs text-gray-600 max-w-[260px] truncate">
-                          {entry.description || entry.eventType}
-                        </td>
+              {/* Ledger table */}
+              <div className="bg-white border border-gray-200 rounded-xl overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-gray-50 border-b border-gray-200">
+                      <tr>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">When</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Type</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Amount</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Policy / Dataset</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Description</th>
                       </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={5} className="px-4 py-6 text-center text-xs text-gray-600">
-                        <Activity className="h-4 w-4 inline mr-2 text-gray-400" />
-                        No billing activity yet for this account.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                    </thead>
+                    <tbody>
+                      {entries.length > 0 ? (
+                        entries.map((entry) => (
+                          <tr
+                            key={entry.id}
+                            className="border-b border-gray-200 hover:bg-white transition-colors"
+                          >
+                            <td className="px-4 py-2 text-xs text-gray-600 tabular-nums">
+                              <Clock className="h-3 w-3 inline mr-1 text-gray-500" />
+                              {new Date(entry.createdAt).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-2 text-xs">
+                              <span
+                                className={`px-2 py-0.5 rounded text-[10px] font-medium text-gray-700 border border-gray-300 bg-white`}
+                              >
+                                {entry.eventType}
+                              </span>
+                            </td>
+                            <td className="px-4 py-2 text-xs tabular-nums text-gray-800">
+                              {Number(entry.amount).toFixed(2)}
+                            </td>
+                            <td className="px-4 py-2 text-xs text-gray-600 max-w-[220px] truncate">
+                              {(entry.metadata as any)?.policyId || '-'}
+                              {(entry.metadata as any)?.datasetName ? ` • ${(entry.metadata as any).datasetName}` : ''}
+                            </td>
+                            <td className="px-4 py-2 text-xs text-gray-600 max-w-[260px] truncate">
+                              {entry.description || entry.eventType}
+                            </td>
+                          </tr>
+                        ))
+                      ) : (
+                        <tr>
+                          <td colSpan={5} className="px-4 py-6 text-center text-xs text-gray-600">
+                            <Activity className="h-4 w-4 inline mr-2 text-gray-400" />
+                            No billing activity yet for this account.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </div>
     </AppLayout>

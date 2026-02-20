@@ -30,12 +30,67 @@ sidecar:
     bucketName: ""  # S3 bucket name
     bucketPrefix: ""  # Optional prefix
   
+  # Hospital adaptation configuration
+  ingestion:
+    mode: "s3"  # s3|dicomweb|fhir|hybrid
+    
+    # DICOMweb PACS configuration (for mode: dicomweb or hybrid)
+    dicomweb:
+      enabled: false
+      url: ""  # e.g., http://pacs.hospital.local:8080/dcm4chee-arc
+      authToken: ""  # Optional: Bearer token or Basic auth
+    
+    # FHIR EHR configuration (for mode: fhir or hybrid)
+    fhir:
+      enabled: false
+      url: ""  # e.g., http://fhir.hospital.local:8080/fhir
+      authToken: ""  # Optional: Bearer token
+    
+    # Hybrid mode configuration
+    hybrid:
+      fallbackToS3: true  # Fallback to S3 if PACS/FHIR fails
+  
+  # Resilience configuration
+  resilience:
+    gracePeriodSeconds: 300  # 5 minutes before entering cache-only mode
+  
+  # Observability configuration
+  metrics:
+    enabled: true
+    bindAddr: "0.0.0.0:9090"  # Prometheus metrics endpoint
+    service:
+      enabled: true
+      port: 9090
+      type: ClusterIP
+  
   # Cache configuration
   cache:
     sizeGb: 100
   
   # Socket path
   socketPath: "/var/run/xase/sidecar.sock"
+  
+  # Data pipeline configuration
+  pipeline:
+    type: "audio"  # audio|dicom|fhir|text|timeseries|passthrough
+    
+    # DICOM pipeline settings
+    dicom:
+      stripTags: "PatientName,PatientID,InstitutionName"
+      enableOCR: false
+      enableNIfTI: false
+    
+    # FHIR pipeline settings
+    fhir:
+      redactPaths: ""  # Comma-separated JSONPath expressions
+      dateShiftDays: 0
+      enableNLP: false
+    
+    # Audio pipeline settings
+    audio:
+      f0ShiftSemitones: 0.0
+      enableDiarization: false
+      enableRedaction: false
 
 # Training pod configuration
 training:

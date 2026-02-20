@@ -1,6 +1,6 @@
 use anyhow::Result;
 use std::sync::Arc;
-use tracing::info;
+use tracing::{info, error};
 use tokio_util::sync::CancellationToken;
 
 mod cache;
@@ -17,10 +17,20 @@ mod metrics;
 mod audio_advanced;
 mod dicom_advanced;
 mod fhir_advanced;
+mod data_provider;
+mod providers;
+mod auth;
+mod resilience;
+mod observability;
 
 use cache::SegmentCache;
 use s3_client::S3Client;
 use config::Config;
+use data_provider::DataProvider;
+use providers::{S3Provider, DICOMwebProvider, HybridProvider};
+use auth::TokenRefresher;
+use resilience::ResilienceManager;
+use observability::start_metrics_server;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -78,8 +88,16 @@ async fn main() -> Result<()> {
     info!("  API Key: {}...", &config.api_key[..std::cmp::min(10, config.api_key.len())]);
     info!("  Cache size: {} GB", config.cache_size_gb);
 
+    // Initialize data provider based on configuration
+    // For now, use S3Provider (backward compatible)
+    // TODO: Add config options to enable DICOMweb/FHIR providers
+    let s3_provider = Arc::new(S3Provider::new(&config).await?);
+    let data_provider: Arc<dyn DataProvider> = s3_provider.clone();
+    info!("Data provider initialized: {}", data_provider.name());
+    
+    // Legacy S3Client for backward compatibility (will be removed)
     let s3_client = Arc::new(S3Client::new(&config).await?);
-    info!("S3 client initialized");
+    info!("S3 client initialized (legacy)");
 
     // Initialize cache - NO Mutex wrapper, DashMap handles concurrency internally
     let cache = Arc::new(SegmentCache::new(
@@ -90,20 +108,77 @@ async fn main() -> Result<()> {
     let auth = telemetry::authenticate(&config).await?;
     info!("Authenticated with Xase Brain (session: {})", auth.session_id);
 
+    // Create TokenRefresher for automatic token renewal
+    let token_refresher = Arc::new(TokenRefresher::new(config.clone(), auth));
+    info!("TokenRefresher initialized - will auto-refresh at 80% of token lifetime");
+
+    // Create ResilienceManager for cache-only mode
+    let resilience_manager = Arc::new(ResilienceManager::new(config.resilience_grace_period_seconds));
+    resilience_manager.mark_auth_success(); // Initial auth was successful
+    info!(
+        "ResilienceManager initialized - grace period: {}s ({}m)",
+        config.resilience_grace_period_seconds,
+        config.resilience_grace_period_seconds / 60
+    );
+
     // Create shutdown token for graceful shutdown coordination
     let shutdown_token = CancellationToken::new();
 
-    let telemetry_handle = tokio::spawn(telemetry::telemetry_loop(
-        config.clone(),
-        auth.session_id.clone(),
-        cache.clone(),
-    ));
+    // Start token refresh loop in background
+    let token_refresh_handle = {
+        let refresher = token_refresher.clone();
+        tokio::spawn(async move {
+            if let Err(e) = refresher.start_refresh_loop().await {
+                error!("Token refresh loop failed: {}", e);
+            }
+        })
+    };
 
-    let kill_switch_handle = tokio::spawn(telemetry::kill_switch_loop(
-        config.clone(),
-        auth.session_id.clone(),
-        shutdown_token.clone(),
-    ));
+    // Start resilience monitoring loop
+    let resilience_monitor_handle = {
+        let manager = resilience_manager.clone();
+        tokio::spawn(async move {
+            manager.start_monitoring_loop().await;
+        })
+    };
+
+    // Start Prometheus metrics server (HTTP endpoint for hospital Grafana)
+    let metrics_server_handle = {
+        let bind_addr = config.metrics_bind_addr.clone();
+        tokio::spawn(async move {
+            if let Err(e) = start_metrics_server(bind_addr).await {
+                error!("Metrics server failed: {}", e);
+            }
+        })
+    };
+
+    let telemetry_handle = {
+        let refresher = token_refresher.clone();
+        let config_clone = config.clone();
+        let cache_clone = cache.clone();
+        tokio::spawn(async move {
+            let session_id = refresher.get_session_id().await;
+            telemetry::telemetry_loop(
+                config_clone,
+                session_id,
+                cache_clone,
+            ).await
+        })
+    };
+
+    let kill_switch_handle = {
+        let refresher = token_refresher.clone();
+        let config_clone = config.clone();
+        let shutdown_token_clone = shutdown_token.clone();
+        tokio::spawn(async move {
+            let session_id = refresher.get_session_id().await;
+            telemetry::kill_switch_loop(
+                config_clone,
+                session_id,
+                shutdown_token_clone,
+            ).await
+        })
+    };
 
     // Select data pipeline from env-config
     let pipeline = pipeline::select_pipeline(&config);
@@ -111,7 +186,7 @@ async fn main() -> Result<()> {
     // Prefetch loop now pre-processes segments in background via selected pipeline
     let prefetch_handle = tokio::spawn(prefetch::prefetch_loop(
         cache.clone(),
-        s3_client.clone(),
+        data_provider.clone(),
         config.clone(),
         pipeline.clone(),
     ));
@@ -124,7 +199,7 @@ async fn main() -> Result<()> {
     tokio::select! {
         result = socket_server::serve(
             cache.clone(),
-            s3_client.clone(),
+            data_provider.clone(),
             config.clone(),
             pipeline.clone(),
         ) => {
@@ -153,6 +228,9 @@ async fn main() -> Result<()> {
             let _ = telemetry_handle.await;
             let _ = kill_switch_handle.await;
             let _ = prefetch_handle.await;
+            let _ = token_refresh_handle.await;
+            let _ = resilience_monitor_handle.await;
+            let _ = metrics_server_handle.await;
         }
     ).await;
     

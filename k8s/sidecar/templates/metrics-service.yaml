@@ -1,0 +1,22 @@
+{{- if .Values.sidecar.metrics.service.enabled }}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "sidecar.fullname" . }}-metrics
+  labels:
+    {{- include "sidecar.labels" . | nindent 4 }}
+    app.kubernetes.io/component: metrics
+  annotations:
+    prometheus.io/scrape: "true"
+    prometheus.io/port: "{{ .Values.sidecar.metrics.service.port }}"
+    prometheus.io/path: "/metrics"
+spec:
+  type: {{ .Values.sidecar.metrics.service.type }}
+  ports:
+    - port: {{ .Values.sidecar.metrics.service.port }}
+      targetPort: metrics
+      protocol: TCP
+      name: metrics
+  selector:
+    {{- include "sidecar.selectorLabels" . | nindent 4 }}
+{{- end }}

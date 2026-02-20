@@ -1,0 +1,151 @@
+/**
+ * Billing Dashboard API
+ * Comprehensive billing summary with storage, compute, and cost metrics
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { BillingService } from '@/lib/billing/billing-service'
+
+export async function GET(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const url = new URL(req.url)
+    const tenantId = url.searchParams.get('tenantId')
+    const action = url.searchParams.get('action')
+
+    if (!tenantId) {
+      return NextResponse.json({ error: 'tenantId required' }, { status: 400 })
+    }
+
+    // Get comprehensive billing summary
+    if (action === 'summary' || !action) {
+      const summary = await BillingService.getBillingSummary(tenantId)
+      return NextResponse.json(summary)
+    }
+
+    // Get current month usage
+    if (action === 'current-month') {
+      const usage = await BillingService.getCurrentMonthUsage(tenantId)
+      return NextResponse.json(usage)
+    }
+
+    // Get monthly usage for specific month
+    if (action === 'monthly-usage') {
+      const monthStr = url.searchParams.get('month')
+      if (!monthStr) {
+        return NextResponse.json({ error: 'month parameter required (YYYY-MM)' }, { status: 400 })
+      }
+
+      const [year, month] = monthStr.split('-').map(Number)
+      const monthDate = new Date(year, month - 1, 1)
+      const usage = await BillingService.getMonthlyUsage(tenantId, monthDate)
+      return NextResponse.json(usage)
+    }
+
+    // Get invoices
+    if (action === 'invoices') {
+      const limit = parseInt(url.searchParams.get('limit') || '12')
+      const invoices = await BillingService.getInvoices(tenantId, limit)
+      return NextResponse.json({ invoices, count: invoices.length })
+    }
+
+    // Get balance
+    if (action === 'balance') {
+      const balance = await BillingService.getBalance(tenantId)
+      return NextResponse.json({ balance, tenantId })
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+  } catch (error: any) {
+    console.error('[API] GET /api/v1/billing/dashboard error:', error)
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
+  }
+}
+
+export async function POST(req: NextRequest) {
+  try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const body = await req.json()
+    const { action, tenantId, month, rates } = body
+
+    if (!tenantId) {
+      return NextResponse.json({ error: 'tenantId required' }, { status: 400 })
+    }
+
+    // Generate invoice
+    if (action === 'generate-invoice') {
+      if (!month) {
+        return NextResponse.json({ error: 'month parameter required (YYYY-MM)' }, { status: 400 })
+      }
+
+      const [year, monthNum] = month.split('-').map(Number)
+      const monthDate = new Date(year, monthNum - 1, 1)
+      const invoice = await BillingService.generateInvoice(tenantId, monthDate, rates)
+      return NextResponse.json(invoice)
+    }
+
+    // Record usage
+    if (action === 'record-usage') {
+      const { executionId, bytesProcessed, computeHours, storageGbHours, cost } = body
+      
+      if (!executionId || bytesProcessed === undefined || computeHours === undefined || cost === undefined) {
+        return NextResponse.json({ 
+          error: 'executionId, bytesProcessed, computeHours, and cost required' 
+        }, { status: 400 })
+      }
+
+      await BillingService.recordUsage(tenantId, {
+        executionId,
+        bytesProcessed: BigInt(bytesProcessed),
+        computeHours,
+        storageGbHours: storageGbHours || 0,
+        cost,
+      })
+
+      return NextResponse.json({ success: true })
+    }
+
+    // Calculate cost
+    if (action === 'calculate-cost') {
+      const { bytesProcessed, computeHours, storageGbHours } = body
+      
+      if (bytesProcessed === undefined || computeHours === undefined || storageGbHours === undefined) {
+        return NextResponse.json({ 
+          error: 'bytesProcessed, computeHours, and storageGbHours required' 
+        }, { status: 400 })
+      }
+
+      const cost = BillingService.calculateCost(
+        BigInt(bytesProcessed),
+        computeHours,
+        storageGbHours,
+        rates
+      )
+
+      return NextResponse.json({ cost, bytesProcessed, computeHours, storageGbHours })
+    }
+
+    return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
+  } catch (error: any) {
+    console.error('[API] POST /api/v1/billing/dashboard error:', error)
+    const isDev = process.env.NODE_ENV !== 'production'
+    return NextResponse.json(
+      { error: 'Internal Server Error', ...(isDev ? { debug: String(error?.message ?? error) } : {}) },
+      { status: 500 }
+    )
+  }
+}
