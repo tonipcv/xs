@@ -327,26 +327,7 @@ mod tests {
     
     #[tokio::test]
     async fn test_hybrid_provider_name() {
-        let config = Config {
-            contract_id: "test".into(),
-            api_key: "key".into(),
-            base_url: "http://localhost".into(),
-            lease_id: "lease".into(),
-            socket_path: "/tmp/test.sock".into(),
-            cache_size_gb: 1,
-            bucket_name: "test-bucket".into(),
-            bucket_prefix: "".into(),
-            data_pipeline: "audio".into(),
-            dicom_strip_tags: vec![],
-            fhir_redact_paths: vec![],
-            audio_f0_shift_semitones: 0.0,
-            audio_enable_diarization: false,
-            audio_enable_redaction: false,
-            dicom_enable_ocr: false,
-            dicom_enable_nifti: false,
-            fhir_date_shift_days: 0,
-            fhir_enable_nlp: false,
-        };
+        let config = Config::test_default();
         
         let s3_provider = S3Provider::new(&config).await.unwrap();
         let hybrid = HybridProvider::new(Arc::new(s3_provider), None);

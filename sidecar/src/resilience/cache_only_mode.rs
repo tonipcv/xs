@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use tokio::time::{sleep, Duration};
-use tracing::{info, warn, error};
+use tracing::{info, warn, error, debug};
 
 /// ResilienceManager handles graceful degradation when Xase Brain is unavailable
 /// This solves the critical problem: if Brain goes down, $5k/hour GPU training shouldn't stop
@@ -14,7 +14,10 @@ use tracing::{info, warn, error};
 pub struct ResilienceManager {
     cache_only_mode: Arc<AtomicBool>,
     last_successful_auth: Arc<AtomicU64>,
+    last_successful_download: Arc<AtomicU64>,
     grace_period_seconds: u64,
+    download_failures: Arc<AtomicU64>,
+    download_successes: Arc<AtomicU64>,
 }
 
 impl ResilienceManager {
@@ -25,12 +28,15 @@ impl ResilienceManager {
             grace_period_seconds / 60
         );
         
+        let now = chrono::Utc::now().timestamp() as u64;
+        
         Self {
             cache_only_mode: Arc::new(AtomicBool::new(false)),
-            last_successful_auth: Arc::new(AtomicU64::new(
-                chrono::Utc::now().timestamp() as u64
-            )),
+            last_successful_auth: Arc::new(AtomicU64::new(now)),
+            last_successful_download: Arc::new(AtomicU64::new(now)),
             grace_period_seconds,
+            download_failures: Arc::new(AtomicU64::new(0)),
+            download_successes: Arc::new(AtomicU64::new(0)),
         }
     }
     
@@ -88,6 +94,67 @@ impl ResilienceManager {
         now - last_success
     }
     
+    /// Mark download as successful
+    /// This indicates that data provider is accessible
+    pub fn mark_download_success(&self) {
+        let now = chrono::Utc::now().timestamp() as u64;
+        self.last_successful_download.store(now, Ordering::Relaxed);
+        self.download_successes.fetch_add(1, Ordering::Relaxed);
+        
+        // If we were in cache-only mode due to download failures, exit it
+        let was_cache_only = self.cache_only_mode.load(Ordering::Relaxed);
+        if was_cache_only {
+            let last_auth = self.last_successful_auth.load(Ordering::Relaxed);
+            let elapsed_since_auth = now - last_auth;
+            
+            // Only exit cache-only if auth is also recent
+            if elapsed_since_auth < self.grace_period_seconds {
+                self.cache_only_mode.store(false, Ordering::Relaxed);
+                info!("✓ Downloads successful - exiting CACHE-ONLY MODE");
+            }
+        }
+        
+        debug!("Download successful (total: {})", self.download_successes.load(Ordering::Relaxed));
+    }
+    
+    /// Mark download as failed
+    /// If grace period has elapsed, enters cache-only mode
+    pub fn mark_download_failure(&self) {
+        self.download_failures.fetch_add(1, Ordering::Relaxed);
+        
+        let last_success = self.last_successful_download.load(Ordering::Relaxed);
+        let now = chrono::Utc::now().timestamp() as u64;
+        let elapsed = now - last_success;
+        
+        if elapsed > self.grace_period_seconds {
+            let was_cache_only = self.cache_only_mode.swap(true, Ordering::Relaxed);
+            
+            if !was_cache_only {
+                warn!(
+                    "⚠️  Downloads failed for {}s (grace period: {}s) - entering CACHE-ONLY MODE",
+                    elapsed,
+                    self.grace_period_seconds
+                );
+                warn!("Training will continue with cached data only");
+            }
+        } else {
+            let remaining = self.grace_period_seconds - elapsed;
+            debug!(
+                "Download failed (elapsed: {}s) - grace period remaining: {}s (failures: {})",
+                elapsed,
+                remaining,
+                self.download_failures.load(Ordering::Relaxed)
+            );
+        }
+    }
+    
+    /// Get download statistics
+    pub fn download_stats(&self) -> (u64, u64) {
+        let successes = self.download_successes.load(Ordering::Relaxed);
+        let failures = self.download_failures.load(Ordering::Relaxed);
+        (successes, failures)
+    }
+    
     /// Start monitoring loop for visibility
     /// This should be spawned as a background task
     pub async fn start_monitoring_loop(self: Arc<Self>) {
@@ -96,6 +163,8 @@ impl ResilienceManager {
         loop {
             sleep(Duration::from_secs(30)).await;
             
+            let (successes, failures) = self.download_stats();
+            
             if self.is_cache_only_mode() {
                 let elapsed = self.seconds_since_last_auth();
                 warn!(
@@ -103,6 +172,9 @@ impl ResilienceManager {
                     elapsed
                 );
                 warn!("Training continues with cached data only");
+                warn!("Download stats - successes: {}, failures: {}", successes, failures);
+            } else {
+                debug!("Resilience OK - download stats: successes={}, failures={}", successes, failures);
             }
         }
     }

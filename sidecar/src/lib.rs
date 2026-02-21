@@ -20,3 +20,6 @@ pub mod observability;
 pub mod metadata_store;
 pub mod redis_client;
 pub mod task_queue;
+pub mod ocr_scrubber;
+pub mod clinical_nlp;
+pub mod audio_redaction;

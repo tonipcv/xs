@@ -1,9 +1,11 @@
 use anyhow::Result;
 use serde::{Deserialize, Serialize};
 use std::time::Duration;
+use std::sync::Arc;
 use tokio::time::sleep;
 use tokio_util::sync::CancellationToken;
 use crate::config::Config;
+use crate::auth::TokenRefresher;
 
 #[derive(Serialize, Deserialize)]
 pub struct AuthResponse {
@@ -35,8 +37,8 @@ pub async fn authenticate(config: &Config) -> Result<AuthResponse> {
 
 pub async fn telemetry_loop(
     config: Config, 
-    session_id: String,
-    cache: std::sync::Arc<crate::cache::SegmentCache>
+    token_refresher: Arc<TokenRefresher>,
+    cache: Arc<crate::cache::SegmentCache>
 ) -> Result<()> {
     let client = reqwest::Client::new();
     let mut request_count: u64 = 0;
@@ -102,11 +104,14 @@ pub async fn telemetry_loop(
             }),
         ];
         
+        // Get current session_id from token refresher (may have been refreshed)
+        let current_session_id = token_refresher.get_session_id().await;
+        
         match client
             .post(format!("{}/api/v1/sidecar/telemetry", config.base_url))
             .header("X-API-Key", &config.api_key)
             .json(&serde_json::json!({
-                "sessionId": session_id,
+                "sessionId": current_session_id,
                 "logs": logs,
             }))
             .send()
@@ -125,7 +130,7 @@ pub async fn telemetry_loop(
 
 pub async fn kill_switch_loop(
     config: Config,
-    session_id: String,
+    token_refresher: Arc<TokenRefresher>,
     shutdown_token: CancellationToken,
 ) -> Result<()> {
     let client = reqwest::Client::new();
@@ -133,9 +138,12 @@ pub async fn kill_switch_loop(
     loop {
         tokio::select! {
             _ = sleep(Duration::from_secs(10)) => {
+                // Get current session_id from token refresher (may have been refreshed)
+                let current_session_id = token_refresher.get_session_id().await;
+                
                 match client
                     .get(format!("{}/api/v1/sidecar/kill-switch", config.base_url))
-                    .query(&[("sessionId", &session_id)])
+                    .query(&[("sessionId", &current_session_id)])
                     .send()
                     .await
                 {

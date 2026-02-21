@@ -14,8 +14,8 @@ pub struct AudioPipeline;
 impl DataPipeline for AudioPipeline {
     fn name(&self) -> &'static str { "audio" }
     fn process(&self, data: Vec<u8>, config: &Config) -> Result<Vec<u8>> {
-        // Step 1: Advanced audio processing (F0 shift, diarization, redaction)
-        let mut out = crate::audio_advanced::process_audio_advanced(data, config)?;
+        // Step 1: Advanced audio processing (F0 shift, redaction)
+        let mut out = crate::audio_advanced::process_audio_simple(data, config)?;
         
         // Step 2: Watermarking (always applied for provenance)
         out = watermark::watermark_audio_probabilistic(out, &config.contract_id, watermark::WATERMARK_PROBABILITY)?;

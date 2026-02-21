@@ -2,11 +2,12 @@ use anyhow::Result;
 use std::sync::Arc;
 use tokio::net::{UnixListener, UnixStream};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tracing::{info, error};
+use tracing::{info, error, warn};
 use crate::cache::SegmentCache;
 use crate::data_provider::DataProvider;
 use crate::pipeline::DataPipeline;
 use crate::config::Config;
+use crate::resilience::ResilienceManager;
 
 /// Serve segments via Unix socket IPC.
 ///
@@ -21,6 +22,7 @@ pub async fn serve(
     data_provider: Arc<dyn DataProvider>,
     config: Config,
     pipeline: Arc<dyn DataPipeline>,
+    resilience_manager: Arc<ResilienceManager>,
 ) -> Result<()> {
     let _ = std::fs::remove_file(&config.socket_path);
 
@@ -34,9 +36,10 @@ pub async fn serve(
                 let data_provider = data_provider.clone();
                 let config = config.clone();
                 let pipeline = pipeline.clone();
+                let resilience_manager = resilience_manager.clone();
 
                 tokio::spawn(async move {
-                    if let Err(e) = handle_connection(stream, cache, data_provider, config, pipeline).await {
+                    if let Err(e) = handle_connection(stream, cache, data_provider, config, pipeline, resilience_manager).await {
                         error!("Connection error: {}", e);
                     }
                 });
@@ -54,6 +57,7 @@ async fn handle_connection(
     data_provider: Arc<dyn DataProvider>,
     config: Config,
     pipeline: Arc<dyn DataPipeline>,
+    resilience_manager: Arc<ResilienceManager>,
 ) -> Result<()> {
     // Read segment ID (length-prefixed)
     let mut len_buf = [0u8; 4];
@@ -69,8 +73,37 @@ async fn handle_connection(
         // Cache hit: zero-copy Arc<Vec<u8>>, no blocking
         cached
     } else {
-        // Cache miss: download from data provider and process BEFORE serving
-        let raw_data = data_provider.download(&segment_id).await?;
+        // Cache miss: check if we're in cache-only mode
+        if resilience_manager.is_cache_only_mode() {
+            warn!(
+                segment_id = %segment_id,
+                "Cache miss in cache-only mode - rejecting request"
+            );
+            anyhow::bail!(
+                "Segment '{}' not in cache and system is in cache-only mode (Brain unreachable). \
+                 Training must use only cached data until connectivity is restored.",
+                segment_id
+            );
+        }
+        
+        // Not in cache-only mode: download from data provider
+        let raw_data = match data_provider.download(&segment_id).await {
+            Ok(data) => {
+                // Download successful - mark as success in resilience manager
+                resilience_manager.mark_download_success();
+                data
+            }
+            Err(e) => {
+                // Download failed - mark as failure in resilience manager
+                resilience_manager.mark_download_failure();
+                error!(
+                    segment_id = %segment_id,
+                    error = %e,
+                    "Download failed from data provider"
+                );
+                return Err(e);
+            }
+        };
 
         // Apply pipeline synchronously to enforce runtime governance
         let processed = pipeline.process(raw_data, &config).map_err(|e| {

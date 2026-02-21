@@ -22,12 +22,18 @@ mod providers;
 mod auth;
 mod resilience;
 mod observability;
+mod metadata_store;
+mod redis_client;
+mod task_queue;
+mod ocr_scrubber;
+mod clinical_nlp;
+mod audio_redaction;
 
 use cache::SegmentCache;
 use s3_client::S3Client;
 use config::Config;
 use data_provider::DataProvider;
-use providers::{S3Provider, DICOMwebProvider, HybridProvider};
+use providers::{S3Provider, DICOMwebProvider, HybridProvider, FHIRProvider};
 use auth::TokenRefresher;
 use resilience::ResilienceManager;
 use observability::start_metrics_server;
@@ -88,12 +94,49 @@ async fn main() -> Result<()> {
     info!("  API Key: {}...", &config.api_key[..std::cmp::min(10, config.api_key.len())]);
     info!("  Cache size: {} GB", config.cache_size_gb);
 
-    // Initialize data provider based on configuration
-    // For now, use S3Provider (backward compatible)
-    // TODO: Add config options to enable DICOMweb/FHIR providers
-    let s3_provider = Arc::new(S3Provider::new(&config).await?);
-    let data_provider: Arc<dyn DataProvider> = s3_provider.clone();
-    info!("Data provider initialized: {}", data_provider.name());
+    // Initialize data provider based on INGESTION_MODE
+    let data_provider: Arc<dyn DataProvider> = match config.ingestion_mode.to_lowercase().as_str() {
+        "s3" => {
+            info!("Initializing S3 provider (mode: s3)");
+            Arc::new(S3Provider::new(&config).await?)
+        }
+        "dicomweb" => {
+            Arc::new(DICOMwebProvider::from_config(&config).await?)
+        }
+        "fhir" => {
+            Arc::new(FHIRProvider::from_config(&config).await?)
+        }
+        "hybrid" => {
+            info!("Initializing Hybrid provider with intelligent fallback (mode: hybrid)");
+            
+            // Primary provider based on available configuration
+            let primary: Arc<dyn DataProvider> = if config.dicomweb_url.is_some() {
+                info!("  Primary: DICOMweb");
+                Arc::new(DICOMwebProvider::from_config(&config).await?)
+            } else if config.fhir_url.is_some() {
+                info!("  Primary: FHIR");
+                Arc::new(FHIRProvider::from_config(&config).await?)
+            } else {
+                anyhow::bail!("Hybrid mode requires DICOMWEB_URL or FHIR_URL for primary provider");
+            };
+            
+            // Fallback to S3 if enabled
+            let fallback: Option<Arc<dyn DataProvider>> = if config.hybrid_fallback_to_s3 {
+                info!("  Fallback: S3 (enabled)");
+                Some(Arc::new(S3Provider::new(&config).await?) as Arc<dyn DataProvider>)
+            } else {
+                info!("  Fallback: None (disabled)");
+                None
+            };
+            
+            Arc::new(HybridProvider::new(primary, fallback))
+        }
+        mode => {
+            anyhow::bail!("Invalid INGESTION_MODE: '{}'. Valid options: s3, dicomweb, fhir, hybrid", mode);
+        }
+    };
+    
+    info!("Data provider initialized: {} (mode: {})", data_provider.name(), config.ingestion_mode);
     
     // Legacy S3Client for backward compatibility (will be removed)
     let s3_client = Arc::new(S3Client::new(&config).await?);
@@ -157,10 +200,9 @@ async fn main() -> Result<()> {
         let config_clone = config.clone();
         let cache_clone = cache.clone();
         tokio::spawn(async move {
-            let session_id = refresher.get_session_id().await;
             telemetry::telemetry_loop(
                 config_clone,
-                session_id,
+                refresher,
                 cache_clone,
             ).await
         })
@@ -171,10 +213,9 @@ async fn main() -> Result<()> {
         let config_clone = config.clone();
         let shutdown_token_clone = shutdown_token.clone();
         tokio::spawn(async move {
-            let session_id = refresher.get_session_id().await;
             telemetry::kill_switch_loop(
                 config_clone,
-                session_id,
+                refresher,
                 shutdown_token_clone,
             ).await
         })
@@ -189,6 +230,7 @@ async fn main() -> Result<()> {
         data_provider.clone(),
         config.clone(),
         pipeline.clone(),
+        resilience_manager.clone(),
     ));
     info!("Prefetch engine started (adaptive window + pipeline: {})", pipeline.name());
 
@@ -202,6 +244,7 @@ async fn main() -> Result<()> {
             data_provider.clone(),
             config.clone(),
             pipeline.clone(),
+            resilience_manager.clone(),
         ) => {
             if let Err(e) = result {
                 tracing::error!("Socket server error: {}", e);

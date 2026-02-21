@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::Value;
 use crate::data_provider::DataProvider;
+use crate::config::Config;
 
 /// DICOMwebProvider implements DataProvider for hospital PACS via DICOMweb (WADO-RS/QIDO-RS)
 /// This allows the sidecar to fetch DICOM images directly from hospital infrastructure
@@ -30,6 +31,20 @@ impl DICOMwebProvider {
             auth_token,
             study_uid_prefix: study_uid_prefix.unwrap_or_default(),
         })
+    }
+    
+    /// Create DICOMwebProvider from Config
+    pub async fn from_config(config: &Config) -> Result<Self> {
+        let base_url = config.dicomweb_url.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("DICOMWEB_URL is required for DICOMweb provider"))?;
+        
+        tracing::info!("Initializing DICOMweb provider: {}", base_url);
+        
+        Self::new(
+            base_url.clone(),
+            config.dicomweb_auth_token.clone(),
+            None, // Study prefix can be added to Config if needed
+        )
     }
     
     fn parse_dicom_key(&self, key: &str) -> Result<(String, String, String)> {

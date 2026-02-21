@@ -42,6 +42,38 @@ pub struct Config {
 }
 
 impl Config {
+    #[cfg(test)]
+    pub fn test_default() -> Self {
+        Self {
+            contract_id: "test".into(),
+            api_key: "test_key".into(),
+            base_url: "http://localhost".into(),
+            lease_id: "test_lease".into(),
+            socket_path: "/tmp/test.sock".into(),
+            cache_size_gb: 1,
+            bucket_name: "test_bucket".into(),
+            bucket_prefix: "test_prefix".into(),
+            ingestion_mode: "s3".into(),
+            dicomweb_url: None,
+            dicomweb_auth_token: None,
+            fhir_url: None,
+            fhir_auth_token: None,
+            hybrid_fallback_to_s3: false,
+            resilience_grace_period_seconds: 300,
+            metrics_bind_addr: "0.0.0.0:9090".into(),
+            data_pipeline: "passthrough".into(),
+            dicom_strip_tags: vec![],
+            fhir_redact_paths: vec![],
+            audio_f0_shift_semitones: 0.0,
+            audio_enable_diarization: false,
+            audio_enable_redaction: false,
+            dicom_enable_ocr: false,
+            dicom_enable_nifti: false,
+            fhir_date_shift_days: 0,
+            fhir_enable_nlp: false,
+        }
+    }
+    
     pub fn from_env() -> Result<Self> {
         Ok(Self {
             contract_id: env::var("CONTRACT_ID")

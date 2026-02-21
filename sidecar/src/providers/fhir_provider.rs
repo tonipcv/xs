@@ -3,6 +3,7 @@ use async_trait::async_trait;
 use reqwest::Client;
 use serde_json::Value;
 use crate::data_provider::DataProvider;
+use crate::config::Config;
 
 /// FHIRProvider implements DataProvider for hospital EHR via FHIR R4 API
 /// This allows the sidecar to fetch patient records directly from hospital systems
@@ -24,6 +25,19 @@ impl FHIRProvider {
             base_url: base_url.trim_end_matches('/').to_string(),
             auth_token,
         })
+    }
+    
+    /// Create FHIRProvider from Config
+    pub async fn from_config(config: &Config) -> Result<Self> {
+        let base_url = config.fhir_url.as_ref()
+            .ok_or_else(|| anyhow::anyhow!("FHIR_URL is required for FHIR provider"))?;
+        
+        tracing::info!("Initializing FHIR provider: {}", base_url);
+        
+        Self::new(
+            base_url.clone(),
+            config.fhir_auth_token.clone(),
+        )
     }
     
     fn add_auth_header(&self, req: reqwest::RequestBuilder) -> reqwest::RequestBuilder {

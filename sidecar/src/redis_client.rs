@@ -1,5 +1,5 @@
 use anyhow::{Result, Context};
-use redis::{Client, Commands, AsyncCommands};
+use redis::{Client, AsyncCommands};
 use serde::{Serialize, Deserialize};
 use std::time::Duration;
 
@@ -39,10 +39,10 @@ impl RedisClient {
             .context("Failed to serialize value")?;
         
         if let Some(ttl) = ttl {
-            conn.set_ex(&full_key, serialized, ttl.as_secs() as usize).await
+            conn.set_ex::<_, _, ()>(&full_key, serialized, ttl.as_secs()).await
                 .context("Failed to set value with TTL")?;
         } else {
-            conn.set(&full_key, serialized).await
+            conn.set::<_, _, ()>(&full_key, serialized).await
                 .context("Failed to set value")?;
         }
         
@@ -74,7 +74,7 @@ impl RedisClient {
             .context("Failed to get Redis connection")?;
         
         let full_key = self.build_key(key);
-        conn.del(&full_key).await
+        conn.del::<_, ()>(&full_key).await
             .context("Failed to delete key")?;
         
         Ok(())
@@ -113,7 +113,7 @@ impl RedisClient {
         let serialized = serde_json::to_string(value)
             .context("Failed to serialize value")?;
         
-        conn.rpush(&full_key, serialized).await
+        conn.rpush::<_, _, ()>(&full_key, serialized).await
             .context("Failed to push to list")?;
         
         Ok(())
@@ -156,7 +156,7 @@ impl RedisClient {
             .context("Failed to get Redis connection")?;
         
         let full_key = self.build_key(key);
-        conn.zadd(&full_key, member, score).await
+        conn.zadd::<_, _, _, ()>(&full_key, member, score).await
             .context("Failed to add to sorted set")?;
         
         Ok(())
@@ -205,7 +205,7 @@ impl RedisClient {
         
         let count = keys.len();
         for key in keys {
-            conn.del(&key).await
+            conn.del::<_, ()>(&key).await
                 .context("Failed to delete key")?;
         }
         

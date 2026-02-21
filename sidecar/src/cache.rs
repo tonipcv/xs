@@ -2,6 +2,8 @@ use dashmap::DashMap;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicUsize, AtomicU64, Ordering};
 use std::time::{SystemTime, UNIX_EPOCH};
+use std::collections::BTreeMap;
+use std::sync::Mutex;
 
 /// Cache entry with LRU tracking
 struct CacheEntry {
@@ -9,18 +11,22 @@ struct CacheEntry {
     last_access: AtomicU64, // Unix timestamp in milliseconds
 }
 
-/// High-performance segment cache using lock-free concurrent hashmap with LRU eviction.
+/// High-performance segment cache using lock-free concurrent hashmap with O(log n) LRU eviction.
 ///
 /// Key features:
 /// - `Arc<Vec<u8>>` instead of `Vec<u8>`: eliminates expensive .clone() on every cache hit
 ///   (cloning an Arc is 8 bytes / atomic increment vs copying megabytes of audio data)
 /// - `DashMap` instead of `Mutex<LruCache>`: lock-free concurrent reads, no serialization
-/// - LRU eviction: tracks access time per entry, evicts least recently used
+/// - O(log n) LRU eviction: BTreeMap tracks access times for efficient LRU lookup
 /// - Atomic metrics for real-time performance monitoring
 ///
 /// Performance impact: 3-10x throughput improvement for concurrent GPU workers.
+/// Eviction performance: O(log n) vs O(n) for large caches (10,000+ entries).
 pub struct SegmentCache {
     cache: DashMap<String, CacheEntry>,
+    // BTreeMap for O(log n) LRU tracking: (timestamp, key) -> ()
+    // Mutex is acceptable here since eviction is rare compared to reads
+    lru_index: Mutex<BTreeMap<(u64, String), ()>>,
     max_bytes: usize,
     current_bytes: AtomicUsize,
     hits: AtomicU64,
@@ -38,6 +44,7 @@ impl SegmentCache {
     pub fn new(max_bytes: usize) -> Self {
         Self {
             cache: DashMap::with_capacity(100_000),
+            lru_index: Mutex::new(BTreeMap::new()),
             max_bytes,
             current_bytes: AtomicUsize::new(0),
             hits: AtomicU64::new(0),
@@ -52,8 +59,18 @@ impl SegmentCache {
         match self.cache.get(key) {
             Some(entry) => {
                 self.hits.fetch_add(1, Ordering::Relaxed);
+                
                 // Update last access time for LRU
-                entry.last_access.store(current_timestamp_ms(), Ordering::Relaxed);
+                let old_time = entry.last_access.load(Ordering::Relaxed);
+                let new_time = current_timestamp_ms();
+                entry.last_access.store(new_time, Ordering::Relaxed);
+                
+                // Update LRU index (O(log n) operations)
+                if let Ok(mut lru) = self.lru_index.lock() {
+                    lru.remove(&(old_time, key.to_string()));
+                    lru.insert((new_time, key.to_string()), ());
+                }
+                
                 Some(Arc::clone(&entry.data))
             }
             None => {
@@ -64,30 +81,31 @@ impl SegmentCache {
     }
 
     /// Insert a segment into cache. Evicts LRU entries if over capacity.
+    /// Eviction is O(log n) using BTreeMap index.
     pub fn insert(&self, key: String, data: Vec<u8>) {
         let size = data.len();
+        let timestamp = current_timestamp_ms();
 
-        // Evict LRU entries if needed
+        // Evict LRU entries if needed (O(log n) per eviction)
         while self.current_bytes.load(Ordering::Relaxed) + size > self.max_bytes
             && !self.cache.is_empty()
         {
-            // Find least recently used entry
-            let mut lru_key: Option<String> = None;
-            let mut lru_time = u64::MAX;
+            // Get least recently used entry from BTreeMap (O(log n))
+            let lru_entry = {
+                let lru = self.lru_index.lock().unwrap();
+                lru.iter().next().map(|((time, key), _)| (*time, key.clone()))
+            };
             
-            for entry in self.cache.iter() {
-                let access_time = entry.value().last_access.load(Ordering::Relaxed);
-                if access_time < lru_time {
-                    lru_time = access_time;
-                    lru_key = Some(entry.key().clone());
-                }
-            }
-            
-            // Evict LRU entry
-            if let Some(evict_key) = lru_key {
+            if let Some((evict_time, evict_key)) = lru_entry {
+                // Remove from cache
                 if let Some((_, evicted)) = self.cache.remove(&evict_key) {
                     let evict_size = evicted.data.len();
                     self.current_bytes.fetch_sub(evict_size, Ordering::Relaxed);
+                }
+                
+                // Remove from LRU index
+                if let Ok(mut lru) = self.lru_index.lock() {
+                    lru.remove(&(evict_time, evict_key));
                 }
             } else {
                 break;
@@ -97,37 +115,44 @@ impl SegmentCache {
         let arc_data = Arc::new(data);
         let entry = CacheEntry {
             data: arc_data,
-            last_access: AtomicU64::new(current_timestamp_ms()),
+            last_access: AtomicU64::new(timestamp),
         };
-        self.cache.insert(key, entry);
+        
+        self.cache.insert(key.clone(), entry);
         self.current_bytes.fetch_add(size, Ordering::Relaxed);
+        
+        // Add to LRU index
+        if let Ok(mut lru) = self.lru_index.lock() {
+            lru.insert((timestamp, key), ());
+        }
     }
 
     /// Insert pre-built Arc data (avoids extra allocation when data already in Arc).
+    /// Eviction is O(log n) using BTreeMap index.
     pub fn insert_arc(&self, key: String, data: Arc<Vec<u8>>) {
         let size = data.len();
+        let timestamp = current_timestamp_ms();
 
-        // Evict LRU entries if needed
+        // Evict LRU entries if needed (O(log n) per eviction)
         while self.current_bytes.load(Ordering::Relaxed) + size > self.max_bytes
             && !self.cache.is_empty()
         {
-            // Find least recently used entry
-            let mut lru_key: Option<String> = None;
-            let mut lru_time = u64::MAX;
+            // Get least recently used entry from BTreeMap (O(log n))
+            let lru_entry = {
+                let lru = self.lru_index.lock().unwrap();
+                lru.iter().next().map(|((time, key), _)| (*time, key.clone()))
+            };
             
-            for entry in self.cache.iter() {
-                let access_time = entry.value().last_access.load(Ordering::Relaxed);
-                if access_time < lru_time {
-                    lru_time = access_time;
-                    lru_key = Some(entry.key().clone());
-                }
-            }
-            
-            // Evict LRU entry
-            if let Some(evict_key) = lru_key {
+            if let Some((evict_time, evict_key)) = lru_entry {
+                // Remove from cache
                 if let Some((_, evicted)) = self.cache.remove(&evict_key) {
                     let evict_size = evicted.data.len();
                     self.current_bytes.fetch_sub(evict_size, Ordering::Relaxed);
+                }
+                
+                // Remove from LRU index
+                if let Ok(mut lru) = self.lru_index.lock() {
+                    lru.remove(&(evict_time, evict_key));
                 }
             } else {
                 break;
@@ -136,10 +161,16 @@ impl SegmentCache {
 
         let entry = CacheEntry {
             data,
-            last_access: AtomicU64::new(current_timestamp_ms()),
+            last_access: AtomicU64::new(timestamp),
         };
-        self.cache.insert(key, entry);
+        
+        self.cache.insert(key.clone(), entry);
         self.current_bytes.fetch_add(size, Ordering::Relaxed);
+        
+        // Add to LRU index
+        if let Ok(mut lru) = self.lru_index.lock() {
+            lru.insert((timestamp, key), ());
+        }
     }
 
     pub fn contains(&self, key: &str) -> bool {

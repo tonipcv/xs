@@ -7,6 +7,7 @@ use crate::cache::SegmentCache;
 use crate::data_provider::DataProvider;
 use crate::pipeline::DataPipeline;
 use crate::config::Config;
+use crate::resilience::ResilienceManager;
 
 /// Adaptive prefetch loop that pre-downloads AND pre-watermarks segments.
 ///
@@ -16,27 +17,65 @@ use crate::config::Config;
 /// - Adaptive window: adjusts prefetch batch size based on cache hit rate
 /// - 200ms poll interval (5Hz) instead of 1s (1Hz) for faster response to GPU demand
 /// - Parallel downloads with configurable concurrency (16 workers)
+/// - Uses DataProvider::list_segments for real segment discovery (PACS/FHIR/S3)
 pub async fn prefetch_loop(
     cache: Arc<SegmentCache>,
     data_provider: Arc<dyn DataProvider>,
     config: Config,
     pipeline: Arc<dyn DataPipeline>,
+    resilience_manager: Arc<ResilienceManager>,
 ) -> Result<()> {
-    let counter = Arc::new(AtomicUsize::new(0));
     let window_size = Arc::new(AtomicUsize::new(100));
+    let mut last_prefix = String::new();
+    let mut segment_queue: Vec<String> = Vec::new();
 
     info!(
-        "Prefetch engine started (adaptive window, pre-watermarking enabled)"
+        "Prefetch engine started (adaptive window, pre-watermarking enabled, provider: {})",
+        data_provider.name()
     );
 
     loop {
         sleep(Duration::from_millis(200)).await;
 
-        let current = counter.load(Ordering::Relaxed);
         let window = window_size.load(Ordering::Relaxed);
 
-        let next_segments: Vec<String> = (current..current + window)
-            .map(|i| format!("seg_{:05}", i))
+        // Refill segment queue if running low
+        if segment_queue.len() < window / 2 {
+            // List segments from data provider
+            match data_provider.list_segments(&last_prefix, window * 2).await {
+                Ok(segments) => {
+                    if !segments.is_empty() {
+                        info!(
+                            "Discovered {} segments from provider (prefix: '{}')",
+                            segments.len(),
+                            last_prefix
+                        );
+                        
+                        // Update last prefix for pagination
+                        if let Some(last_seg) = segments.last() {
+                            last_prefix = last_seg.clone();
+                        }
+                        
+                        segment_queue.extend(segments);
+                    } else {
+                        // No more segments, wait before retrying
+                        sleep(Duration::from_secs(5)).await;
+                        continue;
+                    }
+                }
+                Err(e) => {
+                    warn!("Failed to list segments from provider: {}", e);
+                    // Fallback to sequential naming for backward compatibility
+                    segment_queue = (0..window)
+                        .map(|i| format!("seg_{:05}", i))
+                        .collect();
+                }
+            }
+        }
+
+        // Take next batch of segments to prefetch
+        let next_segments: Vec<String> = segment_queue
+            .drain(..window.min(segment_queue.len()))
             .collect();
 
         // Download + process in parallel (16 concurrent workers)
@@ -52,10 +91,19 @@ pub async fn prefetch_loop(
             let data_provider = data_provider.clone();
             let config = config.clone();
             let pipeline = pipeline.clone();
+            let resilience_manager = resilience_manager.clone();
 
             handles.push(tokio::spawn(async move {
+                // Skip prefetch if in cache-only mode
+                if resilience_manager.is_cache_only_mode() {
+                    return;
+                }
+                
                 match data_provider.download(&seg_id).await {
                     Ok(data) => {
+                        // Download successful - mark in resilience manager
+                        resilience_manager.mark_download_success();
+                        
                         // Pre-process during prefetch (OFF the GPU serving path)
                         let final_data = match pipeline.process(data, &config) {
                             Ok(processed) => processed,
@@ -68,8 +116,10 @@ pub async fn prefetch_loop(
                         // Insert pre-watermarked data into cache
                         cache.insert(seg_id, final_data);
                     }
-                    Err(_) => {
-                        // Segment doesn't exist or S3 error, skip silently
+                    Err(e) => {
+                        // Download failed - mark in resilience manager
+                        resilience_manager.mark_download_failure();
+                        warn!("Prefetch download failed for {}: {}", seg_id, e);
                     }
                 }
             }));
@@ -87,7 +137,7 @@ pub async fn prefetch_loop(
             let _ = handle.await;
         }
 
-        counter.fetch_add(window, Ordering::Relaxed);
+        // No counter increment - we're using real segment discovery
 
         // Adaptive window: increase if cache hit rate is high, decrease if low
         let hit_rate = cache.hit_rate();

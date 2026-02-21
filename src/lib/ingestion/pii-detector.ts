@@ -243,15 +243,19 @@ export class PIIDetector {
   }
 
   private encrypt(value: string): string {
-    // Simple XOR encryption for demonstration
-    const key = 'xase-encryption-key'
-    let encrypted = ''
-    for (let i = 0; i < value.length; i++) {
-      encrypted += String.fromCharCode(
-        value.charCodeAt(i) ^ key.charCodeAt(i % key.length)
-      )
+    // Use AES-256-GCM encryption via encryption service
+    // Import is done lazily to avoid circular dependencies
+    try {
+      const { encrypt } = require('@/lib/services/encryption')
+      const encrypted = encrypt(value)
+      return `[ENC:${encrypted}]`
+    } catch (error) {
+      // Fallback to secure hash if encryption service unavailable
+      console.warn('Encryption service unavailable, using secure hash fallback')
+      const crypto = require('crypto')
+      const hash = crypto.createHash('sha256').update(value).digest('hex')
+      return `[HASH:${hash.substring(0, 16)}]`
     }
-    return `[ENC:${Buffer.from(encrypted).toString('base64')}]`
   }
 
   private calculateRiskScore(detections: PIIDetectionResult[], totalFields: number): number {
