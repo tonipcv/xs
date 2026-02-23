@@ -90,15 +90,36 @@ impl Config {
     }
     
     pub fn from_env() -> Result<Self> {
+        let skip_auth = env::var("XASE_SKIP_AUTH").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false);
+
+        // Helper getters with optional defaults under skip_auth
+        let contract_id = match env::var("CONTRACT_ID") {
+            Ok(v) => v,
+            Err(_) if skip_auth => "boot_contract".to_string(),
+            Err(e) => return Err(e).context("CONTRACT_ID not set"),
+        };
+        let api_key = match env::var("XASE_API_KEY") {
+            Ok(v) => v,
+            Err(_) if skip_auth => "dummy_key".to_string(),
+            Err(e) => return Err(e).context("XASE_API_KEY not set"),
+        };
+        let lease_id = match env::var("LEASE_ID") {
+            Ok(v) => v,
+            Err(_) if skip_auth => "boot_lease".to_string(),
+            Err(e) => return Err(e).context("LEASE_ID not set"),
+        };
+        let bucket_name = match env::var("BUCKET_NAME") {
+            Ok(v) => v,
+            Err(_) if skip_auth => "boot_bucket".to_string(),
+            Err(e) => return Err(e).context("BUCKET_NAME not set"),
+        };
+
         Ok(Self {
-            contract_id: env::var("CONTRACT_ID")
-                .context("CONTRACT_ID not set")?,
-            api_key: env::var("XASE_API_KEY")
-                .context("XASE_API_KEY not set")?,
+            contract_id,
+            api_key,
             base_url: env::var("XASE_BASE_URL")
                 .unwrap_or_else(|_| "https://xase.ai".to_string()),
-            lease_id: env::var("LEASE_ID")
-                .context("LEASE_ID not set")?,
+            lease_id,
             session_id: env::var("SESSION_ID")
                 .ok()
                 .unwrap_or_else(|| env::var("CONTRACT_ID").unwrap_or_else(|_| "session_unknown".to_string())),
@@ -108,8 +129,7 @@ impl Config {
                 .unwrap_or_else(|_| "100".to_string())
                 .parse()
                 .context("Invalid CACHE_SIZE_GB")?,
-            bucket_name: env::var("BUCKET_NAME")
-                .context("BUCKET_NAME not set")?,
+            bucket_name,
             bucket_prefix: env::var("BUCKET_PREFIX")
                 .unwrap_or_else(|_| "".to_string()),
             
