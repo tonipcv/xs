@@ -206,17 +206,21 @@ async fn main() -> Result<()> {
         })
     };
 
-    let kill_switch_handle = {
+    let kill_switch_handle = if !config.disable_kill_switch {
         let refresher = token_refresher.clone();
         let config_clone = config.clone();
         let shutdown_token_clone = shutdown_token.clone();
-        tokio::spawn(async move {
+        info!("Kill switch enabled - starting monitor loop");
+        Some(tokio::spawn(async move {
             telemetry::kill_switch_loop(
                 config_clone,
                 refresher,
                 shutdown_token_clone,
             ).await
-        })
+        }))
+    } else {
+        info!("Kill switch disabled by configuration (DISABLE_KILL_SWITCH=1 or XASE_SKIP_AUTH)");
+        None
     };
 
     // Select data pipeline from env-config
@@ -271,7 +275,7 @@ async fn main() -> Result<()> {
         std::time::Duration::from_secs(5),
         async {
             let _ = telemetry_handle.await;
-            let _ = kill_switch_handle.await;
+            if let Some(h) = kill_switch_handle { let _ = h.await; }
             if let Some(h) = prefetch_handle { let _ = h.await; }
             let _ = token_refresh_handle.await;
             let _ = resilience_monitor_handle.await;

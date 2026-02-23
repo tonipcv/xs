@@ -57,6 +57,7 @@ pub struct Config {
 
     // Operational toggles
     pub disable_prefetch: bool,             // Disable background prefetch loop
+    pub disable_kill_switch: bool,          // Disable kill-switch polling loop
 }
 
 impl Config {
@@ -89,6 +90,9 @@ impl Config {
             dicom_enable_nifti: false,
             fhir_date_shift_days: 0,
             fhir_enable_nlp: false,
+            // Operational toggles (tests)
+            disable_prefetch: false,
+            disable_kill_switch: false,
         }
     }
     
@@ -192,6 +196,8 @@ impl Config {
 
             // Operational toggles
             disable_prefetch: env::var("DISABLE_PREFETCH")
+                .ok().map(|s| s == "true" || s == "1").unwrap_or(skip_auth),
+            disable_kill_switch: env::var("DISABLE_KILL_SWITCH")
                 .ok().map(|s| s == "true" || s == "1").unwrap_or(skip_auth),
         })
     }
