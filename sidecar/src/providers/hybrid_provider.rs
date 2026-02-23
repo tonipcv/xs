@@ -1,7 +1,8 @@
+#![allow(dead_code)]
 use anyhow::Result;
 use async_trait::async_trait;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, AtomicBool, Ordering};
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use crate::data_provider::DataProvider;
@@ -23,6 +24,7 @@ pub struct HybridProvider {
 }
 
 /// Circuit breaker to prevent overwhelming a failing provider
+#[allow(dead_code)]
 struct CircuitBreaker {
     state: RwLock<CircuitState>,
     failure_threshold: u32,

@@ -4,7 +4,6 @@ use tracing::{info, error};
 use tokio_util::sync::CancellationToken;
 
 mod cache;
-mod s3_client;
 mod socket_server;
 mod telemetry;
 mod watermark;
@@ -30,13 +29,13 @@ mod clinical_nlp;
 mod audio_redaction;
 
 use cache::SegmentCache;
-use s3_client::S3Client;
 use config::Config;
 use data_provider::DataProvider;
 use providers::{S3Provider, DICOMwebProvider, HybridProvider, FHIRProvider};
 use auth::TokenRefresher;
 use resilience::ResilienceManager;
 use observability::start_metrics_server;
+use metadata_store::MetadataStore;
 
 #[tokio::main]
 async fn main() -> Result<()> {
@@ -45,7 +44,7 @@ async fn main() -> Result<()> {
     // CLI subcommand: detect-watermark --audio <path> --candidates <path>
     // This enables Node integration via child_process for watermark detection.
     {
-        let mut args = std::env::args().skip(1).collect::<Vec<String>>();
+        let args = std::env::args().skip(1).collect::<Vec<String>>();
         if args.get(0).map(|s| s.as_str()) == Some("detect-watermark") {
             // Simple arg parser
             let mut audio_path: Option<String> = None;
@@ -138,9 +137,8 @@ async fn main() -> Result<()> {
     
     info!("Data provider initialized: {} (mode: {})", data_provider.name(), config.ingestion_mode);
     
-    // Legacy S3Client for backward compatibility (will be removed)
-    let s3_client = Arc::new(S3Client::new(&config).await?);
-    info!("S3 client initialized (legacy)");
+    // Optional metadata store for audio processing
+    let metadata_store = MetadataStore::from_config(&config).await.ok();
 
     // Initialize cache - NO Mutex wrapper, DashMap handles concurrency internally
     let cache = Arc::new(SegmentCache::new(
@@ -222,7 +220,7 @@ async fn main() -> Result<()> {
     };
 
     // Select data pipeline from env-config
-    let pipeline = pipeline::select_pipeline(&config);
+    let pipeline = pipeline::select_pipeline(&config, metadata_store);
 
     // Prefetch loop now pre-processes segments in background via selected pipeline
     let prefetch_handle = tokio::spawn(prefetch::prefetch_loop(
@@ -262,7 +260,6 @@ async fn main() -> Result<()> {
     // Graceful shutdown: flush cache, close connections
     info!("Flushing cache and closing connections...");
     drop(cache);
-    drop(s3_client);
     
     // Wait for background tasks to complete
     let _ = tokio::time::timeout(

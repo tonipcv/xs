@@ -31,13 +31,11 @@ pub fn ocr_pixel_scrub(dicom_data: Vec<u8>, config: &Config) -> Result<Vec<u8>> 
 
 /// Extract image from DICOM, scrub text, and re-encode
 fn extract_and_scrub_dicom_image(dicom_data: &[u8]) -> Result<Vec<u8>> {
-    // Parse DICOM file
-    let mut cursor = std::io::Cursor::new(dicom_data);
-    
-    // Try to read as DICOM - if it fails, might not be DICOM format
     #[cfg(feature = "dicom-full")]
     {
         use dicom_object::from_reader;
+        // Parse DICOM file
+        let mut cursor = std::io::Cursor::new(dicom_data);
         
         let mut obj = from_reader(&mut cursor)
             .map_err(|e| anyhow::anyhow!("Failed to parse DICOM: {}", e))?;
@@ -112,6 +110,7 @@ fn extract_and_scrub_dicom_image(dicom_data: &[u8]) -> Result<Vec<u8>> {
 }
 
 /// Convert raw pixel bytes to image
+#[allow(dead_code)]
 fn bytes_to_image(bytes: &[u8], width: u32, height: u32) -> Result<DynamicImage> {
     // Simplified: assumes 8-bit grayscale
     let expected_size = (width * height) as usize;
@@ -127,6 +126,7 @@ fn bytes_to_image(bytes: &[u8], width: u32, height: u32) -> Result<DynamicImage>
 }
 
 /// Convert image back to raw pixel bytes
+#[allow(dead_code)]
 fn image_to_bytes(img: &DynamicImage) -> Vec<u8> {
     // Convert to grayscale and extract bytes
     let gray = img.to_luma8();

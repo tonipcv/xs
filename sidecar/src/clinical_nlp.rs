@@ -1,11 +1,13 @@
-use anyhow::Result;
 use regex::Regex;
 use std::collections::HashSet;
+#[cfg(feature = "nlp-full")]
+use rust_bert::pipelines::ner::NERModel;
 
 /// Clinical NLP for PHI detection and redaction in medical narratives
 /// Implements HIPAA-compliant entity recognition for clinical text
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct PhiEntity {
     pub entity_type: PhiEntityType,
     pub text: String,
@@ -15,6 +17,7 @@ pub struct PhiEntity {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum PhiEntityType {
     PersonName,
     MedicalRecordNumber,
@@ -64,6 +67,8 @@ pub struct ClinicalNlpEngine {
     patterns: Vec<PhiPattern>,
     common_names: HashSet<String>,
     medical_terms: HashSet<String>,
+    #[cfg(feature = "nlp-full")]
+    ner_model: Option<NERModel>,
 }
 
 struct PhiPattern {
@@ -78,9 +83,12 @@ impl ClinicalNlpEngine {
             patterns: Vec::new(),
             common_names: Self::load_common_names(),
             medical_terms: Self::load_medical_terms(),
+            #[cfg(feature = "nlp-full")]
+            ner_model: None,
         };
         
         engine.initialize_patterns();
+        engine.initialize_ner_model();
         engine
     }
     
@@ -182,6 +190,31 @@ impl ClinicalNlpEngine {
         .map(|s| s.to_string())
         .collect()
     }
+
+    #[cfg(feature = "nlp-full")]
+    fn initialize_ner_model(&mut self) {
+        let enable = std::env::var("CLINICAL_NLP_USE_RUSTBERT")
+            .ok()
+            .map(|v| v == "true" || v == "1")
+            .unwrap_or(false);
+        if !enable {
+            return;
+        }
+
+        match NERModel::new(Default::default()) {
+            Ok(model) => {
+                self.ner_model = Some(model);
+                tracing::info!("ClinicalNLP: rust-bert NER enabled");
+            }
+            Err(e) => {
+                tracing::warn!("ClinicalNLP: failed to initialize rust-bert NER: {}", e);
+                self.ner_model = None;
+            }
+        }
+    }
+
+    #[cfg(not(feature = "nlp-full"))]
+    fn initialize_ner_model(&mut self) {}
     
     /// Detect PHI entities in clinical text
     pub fn detect_phi(&self, text: &str) -> Vec<PhiEntity> {
@@ -203,11 +236,47 @@ impl ClinicalNlpEngine {
         // Name detection (rule-based)
         entities.extend(self.detect_names(text));
         
+        // Optional model-based detection
+        #[cfg(feature = "nlp-full")]
+        {
+            if let Some(model_entities) = self.detect_phi_with_ner(text) {
+                entities.extend(model_entities);
+            }
+        }
+        
         // Sort by position
         entities.sort_by_key(|e| e.start);
         
         // Merge overlapping entities
         self.merge_overlapping_entities(entities)
+    }
+
+    #[cfg(feature = "nlp-full")]
+    fn detect_phi_with_ner(&self, text: &str) -> Option<Vec<PhiEntity>> {
+        let model = self.ner_model.as_ref()?;
+        let ner_output = model.predict(&[text]);
+        let mut out = Vec::new();
+        
+        for entity in ner_output.get(0).into_iter().flatten() {
+            let entity_type = match entity.label.as_str() {
+                "PER" | "PERSON" => Some(PhiEntityType::PersonName),
+                "LOC" | "LOCATION" => Some(PhiEntityType::Address),
+                "DATE" => Some(PhiEntityType::DateOfBirth),
+                _ => None,
+            };
+            
+            if let Some(kind) = entity_type {
+                out.push(PhiEntity {
+                    entity_type: kind,
+                    text: entity.word.clone(),
+                    start: entity.start as usize,
+                    end: entity.end as usize,
+                    confidence: entity.score,
+                });
+            }
+        }
+        
+        if out.is_empty() { None } else { Some(out) }
     }
     
     fn detect_names(&self, text: &str) -> Vec<PhiEntity> {

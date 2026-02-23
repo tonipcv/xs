@@ -1,10 +1,10 @@
 use anyhow::Result;
-use std::collections::HashMap;
 
 /// Audio redaction module for removing PHI from audio recordings
 /// Implements silence-based redaction and beep replacement for sensitive content
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AudioSegment {
     pub start_sec: f32,
     pub end_sec: f32,
@@ -24,6 +24,7 @@ pub struct RedactionRegion {
 }
 
 #[derive(Debug, Clone, PartialEq)]
+#[allow(dead_code)]
 pub enum RedactionType {
     Silence,      // Replace with silence
     Beep,         // Replace with beep tone
@@ -37,6 +38,7 @@ pub struct AudioRedactionEngine {
     phi_patterns: Vec<PhiAudioPattern>,
 }
 
+#[allow(dead_code)]
 struct PhiAudioPattern {
     keywords: Vec<String>,
     context_window_sec: f32,

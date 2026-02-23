@@ -1,6 +1,9 @@
 use anyhow::{Result, Context};
 use hound::{WavReader, WavWriter};
 use std::io::Cursor;
+use std::process::Command;
+use std::fs;
+use rand::Rng;
 use crate::config::Config;
 use crate::audio_redaction::{AudioRedactionEngine, AudioSegment as RedactionSegment};
 
@@ -81,6 +84,7 @@ pub struct SpeakerSegment {
 /// - Detects PHI keywords and patterns in speech
 /// - Applies beep/silence redaction to sensitive regions
 /// - Merges overlapping redaction regions
+#[allow(dead_code)]
 pub fn redact_phi(audio_data: Vec<u8>, config: &Config) -> Result<Vec<u8>> {
     if !config.audio_enable_redaction {
         return Ok(audio_data);
@@ -108,14 +112,14 @@ pub fn redact_phi_with_metadata(
     // Initialize redaction engine
     let redaction_engine = AudioRedactionEngine::new(sample_rate);
     
-    // For production: integrate with Whisper for transcription
-    // For now: use mock transcript segments
-    let mock_segments = create_mock_transcript_segments();
+    // Attempt Whisper transcription if configured, fallback to mock
+    let transcript_segments = transcribe_audio_segments(&audio_data)
+        .unwrap_or_else(create_mock_transcript_segments);
     
     // Process audio with transcript
     let (redacted_audio, regions) = redaction_engine.process_audio_with_transcript(
         audio_data,
-        &mock_segments,
+        &transcript_segments,
     )?;
     
     // Convert RedactionRegion to RedactedRegion
@@ -177,7 +181,61 @@ fn create_mock_transcript_segments() -> Vec<RedactionSegment> {
     ]
 }
 
+/// Transcribe audio using Whisper CLI if configured.
+/// Requires: `WHISPER_CLI` pointing to the whisper binary, and optional `WHISPER_MODEL`.
+fn transcribe_audio_segments(audio_data: &[u8]) -> Option<Vec<RedactionSegment>> {
+    let whisper_cli = std::env::var("WHISPER_CLI").ok()?;
+    let model = std::env::var("WHISPER_MODEL").ok();
+    
+    let mut rng = rand::thread_rng();
+    let tmp_dir = std::env::temp_dir();
+    let input_path = tmp_dir.join(format!("xase_audio_{}.wav", rng.gen::<u64>()));
+    let output_dir = tmp_dir.join(format!("xase_whisper_out_{}", rng.gen::<u64>()));
+    
+    if fs::create_dir_all(&output_dir).is_err() {
+        return None;
+    }
+    if fs::write(&input_path, audio_data).is_err() {
+        return None;
+    }
+    
+    let mut cmd = Command::new(&whisper_cli);
+    cmd.arg(&input_path)
+        .arg("--output_dir").arg(&output_dir)
+        .arg("--output_format").arg("txt")
+        .arg("--language").arg("en");
+    
+    if let Some(model_path) = model {
+        cmd.arg("--model").arg(model_path);
+    }
+    
+    let status = cmd.status().ok()?;
+    if !status.success() {
+        let _ = fs::remove_file(&input_path);
+        return None;
+    }
+    
+    let txt_path = output_dir.join(
+        input_path.file_stem().unwrap_or_default().to_string_lossy().to_string() + ".txt"
+    );
+    
+    let transcript = fs::read_to_string(&txt_path).ok()?;
+    
+    let _ = fs::remove_file(&input_path);
+    let _ = fs::remove_file(&txt_path);
+    
+    Some(vec![RedactionSegment {
+        start_sec: 0.0,
+        end_sec: get_audio_info(audio_data).ok()?.duration_sec,
+        speaker_id: None,
+        transcript: Some(transcript.trim().to_string()),
+        contains_phi: false,
+        phi_types: vec![],
+    }])
+}
+
 /// Sync version for pipeline compatibility
+#[allow(dead_code)]
 pub fn process_audio_simple(data: Vec<u8>, config: &Config) -> Result<Vec<u8>> {
     let mut result = data;
     
@@ -282,6 +340,7 @@ pub async fn process_audio_advanced(
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct AudioProcessingResult {
     pub speaker_segments: Vec<SpeakerSegment>,
     pub redacted_regions: Vec<crate::metadata_store::RedactedRegion>,

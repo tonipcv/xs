@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use anyhow::{Result, Context};
 use redis::{Client, AsyncCommands};
 use serde::{Serialize, Deserialize};

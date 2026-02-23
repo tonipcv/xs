@@ -1,7 +1,7 @@
 use std::sync::Arc;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use tokio::time::{sleep, Duration};
-use tracing::{info, warn, error, debug};
+use tracing::{info, warn, debug};
 
 /// ResilienceManager handles graceful degradation when Xase Brain is unavailable
 /// This solves the critical problem: if Brain goes down, $5k/hour GPU training shouldn't stop
@@ -60,6 +60,7 @@ impl ResilienceManager {
     
     /// Mark authentication as failed
     /// If grace period has elapsed, enters cache-only mode
+    #[allow(dead_code)]
     pub fn mark_auth_failure(&self) {
         let last_success = self.last_successful_auth.load(Ordering::Relaxed);
         let now = chrono::Utc::now().timestamp() as u64;

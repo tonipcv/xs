@@ -149,6 +149,7 @@ fn redact_narrative_fields_nlp(
 }
 
 /// Legacy simple redaction (kept for backward compatibility)
+#[allow(dead_code)]
 fn redact_narrative_fields(v: &mut Value) {
     match v {
         Value::Object(map) => {
@@ -179,6 +180,7 @@ fn redact_narrative_fields(v: &mut Value) {
     }
 }
 
+#[allow(dead_code)]
 fn simple_text_redaction(text: &str) -> String {
     // Simple regex-based redaction for common patterns
     let email_re = regex::Regex::new(r"(?i)[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}").unwrap();

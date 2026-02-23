@@ -21,6 +21,7 @@ pub trait DataProvider: Send + Sync {
     fn name(&self) -> &str;
     
     /// Check if provider is healthy and ready to serve data
+    #[allow(dead_code)]
     async fn health_check(&self) -> Result<bool> {
         // Default implementation: try to list with limit 1
         match self.list_segments("", 1).await {

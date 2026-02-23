@@ -1,6 +1,5 @@
 use axum::{Router, routing::get, response::IntoResponse, Json};
 use prometheus::{Encoder, TextEncoder, Registry, Counter, Gauge, Histogram, HistogramOpts};
-use std::sync::Arc;
 use lazy_static::lazy_static;
 use tracing::{info, error};
 

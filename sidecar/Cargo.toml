@@ -28,7 +28,7 @@ async-trait = "0.1"
 prometheus = "0.13"
 axum = "0.7"
 lazy_static = "1.4"
-redis = { version = "0.24", features = ["tokio-comp", "connection-manager"] }
+redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
 # Audio processing
 rubato = "0.5"  # pitch shifting

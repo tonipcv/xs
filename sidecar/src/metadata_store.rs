@@ -1,15 +1,27 @@
+#![allow(dead_code)]
+#![allow(dead_code)]
 use anyhow::{Result, Context};
 use serde::{Serialize, Deserialize};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use tokio::fs;
 use crate::audio_advanced::SpeakerSegment;
+use crate::config::Config;
+use aws_sdk_s3::Client as S3Client;
+use aws_config::BehaviorVersion;
+use reqwest::Client as HttpClient;
 
 /// Metadata store for audio processing results
 /// Persists diarization segments, PHI redaction info, and processing metadata
 #[derive(Debug, Clone)]
 pub struct MetadataStore {
-    base_path: PathBuf,
+    backend: MetadataBackend,
+}
+
+enum MetadataBackend {
+    Fs { base_path: PathBuf },
+    S3 { client: S3Client, bucket: String, prefix: String },
+    ClickHouse { client: HttpClient, url: String, database: String, table: String, user: Option<String>, password: Option<String> },
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -64,29 +76,89 @@ pub struct ProcessingStats {
 
 impl MetadataStore {
     pub fn new(base_path: PathBuf) -> Self {
-        Self { base_path }
+        Self { backend: MetadataBackend::Fs { base_path } }
+    }
+    
+    pub async fn from_config(config: &Config) -> Result<Self> {
+        match config.metadata_backend.to_lowercase().as_str() {
+            "fs" => {
+                let base = config.metadata_store_path
+                    .as_ref()
+                    .map(|p| PathBuf::from(p))
+                    .unwrap_or_else(|| PathBuf::from("/var/lib/xase/metadata"));
+                Ok(Self::new(base))
+            }
+            "s3" => {
+                let bucket = config.metadata_s3_bucket.clone()
+                    .ok_or_else(|| anyhow::anyhow!("METADATA_S3_BUCKET is required for S3 metadata backend"))?;
+                let prefix = config.metadata_s3_prefix.clone().unwrap_or_else(|| "metadata".to_string());
+                let aws_cfg = aws_config::load_defaults(BehaviorVersion::latest()).await;
+                let client = S3Client::new(&aws_cfg);
+                Ok(Self { backend: MetadataBackend::S3 { client, bucket, prefix } })
+            }
+            "clickhouse" => {
+                let url = config.clickhouse_url.clone()
+                    .ok_or_else(|| anyhow::anyhow!("CLICKHOUSE_URL is required for ClickHouse metadata backend"))?;
+                let database = config.clickhouse_database.clone().unwrap_or_else(|| "default".to_string());
+                let table = config.clickhouse_table.clone().unwrap_or_else(|| "xase_audio_metadata".to_string());
+                let client = HttpClient::new();
+                Ok(Self { backend: MetadataBackend::ClickHouse {
+                    client,
+                    url,
+                    database,
+                    table,
+                    user: config.clickhouse_user.clone(),
+                    password: config.clickhouse_password.clone(),
+                } })
+            }
+            other => Err(anyhow::anyhow!("Invalid METADATA_BACKEND: {}", other)),
+        }
     }
     
     /// Store audio metadata to disk
     pub async fn store(&self, metadata: &AudioMetadata) -> Result<()> {
-        // Create directory structure: base_path/tenant_id/dataset_id/
-        let dir_path = self.base_path
-            .join(&metadata.tenant_id)
-            .join(&metadata.dataset_id);
-        
-        fs::create_dir_all(&dir_path).await
-            .context("Failed to create metadata directory")?;
-        
-        // File path: session_id.json
-        let file_path = dir_path.join(format!("{}.json", metadata.session_id));
-        
-        // Serialize to JSON
-        let json = serde_json::to_string_pretty(metadata)
+        let json_pretty = serde_json::to_string_pretty(metadata)
             .context("Failed to serialize metadata")?;
+        let json_compact = serde_json::to_string(metadata)
+            .context("Failed to serialize metadata (compact)")?;
         
-        // Write to file
-        fs::write(&file_path, json).await
-            .context("Failed to write metadata file")?;
+        match &self.backend {
+            MetadataBackend::Fs { base_path } => {
+                let dir_path = base_path
+                    .join(&metadata.tenant_id)
+                    .join(&metadata.dataset_id);
+                fs::create_dir_all(&dir_path).await
+                    .context("Failed to create metadata directory")?;
+                let file_path = dir_path.join(format!("{}.json", metadata.session_id));
+                fs::write(&file_path, json_pretty).await
+                    .context("Failed to write metadata file")?;
+            }
+            MetadataBackend::S3 { client, bucket, prefix } => {
+                let key = format!(
+                    "{}/{}/{}/{}.json",
+                    prefix,
+                    metadata.tenant_id,
+                    metadata.dataset_id,
+                    metadata.session_id
+                );
+                client.put_object()
+                    .bucket(bucket)
+                    .key(key)
+                    .body(json_pretty.clone().into_bytes().into())
+                    .send()
+                    .await
+                    .context("Failed to write metadata to S3")?;
+            }
+            MetadataBackend::ClickHouse { client, url, database, table, user, password } => {
+                let mut req = client
+                    .post(format!("{}/?database={}", url, database))
+                    .body(format!("INSERT INTO {} FORMAT JSONEachRow\n{}", table, json_compact));
+                if let (Some(u), Some(p)) = (user, password) {
+                    req = req.basic_auth(u, Some(p));
+                }
+                req.send().await.context("Failed to insert metadata into ClickHouse")?;
+            }
+        }
         
         tracing::info!(
             session_id = %metadata.session_id,
@@ -102,66 +174,71 @@ impl MetadataStore {
     
     /// Load audio metadata from disk
     pub async fn load(&self, tenant_id: &str, dataset_id: &str, session_id: &str) -> Result<AudioMetadata> {
-        let file_path = self.base_path
-            .join(tenant_id)
-            .join(dataset_id)
-            .join(format!("{}.json", session_id));
-        
-        let json = fs::read_to_string(&file_path).await
-            .context("Failed to read metadata file")?;
-        
-        let metadata: AudioMetadata = serde_json::from_str(&json)
-            .context("Failed to deserialize metadata")?;
-        
-        Ok(metadata)
+        match &self.backend {
+            MetadataBackend::Fs { base_path } => {
+                let file_path = base_path
+                    .join(tenant_id)
+                    .join(dataset_id)
+                    .join(format!("{}.json", session_id));
+                let json = fs::read_to_string(&file_path).await
+                    .context("Failed to read metadata file")?;
+                let metadata: AudioMetadata = serde_json::from_str(&json)
+                    .context("Failed to deserialize metadata")?;
+                Ok(metadata)
+            }
+            _ => Err(anyhow::anyhow!("load() is only supported for fs metadata backend")),
+        }
     }
     
     /// List all metadata files for a dataset
     pub async fn list_sessions(&self, tenant_id: &str, dataset_id: &str) -> Result<Vec<String>> {
-        let dir_path = self.base_path
-            .join(tenant_id)
-            .join(dataset_id);
-        
-        if !dir_path.exists() {
-            return Ok(Vec::new());
-        }
-        
-        let mut sessions = Vec::new();
-        let mut entries = fs::read_dir(&dir_path).await
-            .context("Failed to read metadata directory")?;
-        
-        while let Some(entry) = entries.next_entry().await? {
-            let path = entry.path();
-            if path.extension().and_then(|s| s.to_str()) == Some("json") {
-                if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
-                    sessions.push(stem.to_string());
+        match &self.backend {
+            MetadataBackend::Fs { base_path } => {
+                let dir_path = base_path
+                    .join(tenant_id)
+                    .join(dataset_id);
+                if !dir_path.exists() {
+                    return Ok(Vec::new());
                 }
+                let mut sessions = Vec::new();
+                let mut entries = fs::read_dir(&dir_path).await
+                    .context("Failed to read metadata directory")?;
+                while let Some(entry) = entries.next_entry().await? {
+                    let path = entry.path();
+                    if path.extension().and_then(|s| s.to_str()) == Some("json") {
+                        if let Some(stem) = path.file_stem().and_then(|s| s.to_str()) {
+                            sessions.push(stem.to_string());
+                        }
+                    }
+                }
+                Ok(sessions)
             }
+            _ => Err(anyhow::anyhow!("list_sessions() is only supported for fs metadata backend")),
         }
-        
-        Ok(sessions)
     }
     
     /// Delete metadata for a session
     pub async fn delete(&self, tenant_id: &str, dataset_id: &str, session_id: &str) -> Result<()> {
-        let file_path = self.base_path
-            .join(tenant_id)
-            .join(dataset_id)
-            .join(format!("{}.json", session_id));
-        
-        if file_path.exists() {
-            fs::remove_file(&file_path).await
-                .context("Failed to delete metadata file")?;
-            
-            tracing::info!(
-                session_id = %session_id,
-                tenant_id = %tenant_id,
-                dataset_id = %dataset_id,
-                "Deleted audio metadata"
-            );
+        match &self.backend {
+            MetadataBackend::Fs { base_path } => {
+                let file_path = base_path
+                    .join(tenant_id)
+                    .join(dataset_id)
+                    .join(format!("{}.json", session_id));
+                if file_path.exists() {
+                    fs::remove_file(&file_path).await
+                        .context("Failed to delete metadata file")?;
+                    tracing::info!(
+                        session_id = %session_id,
+                        tenant_id = %tenant_id,
+                        dataset_id = %dataset_id,
+                        "Deleted audio metadata"
+                    );
+                }
+                Ok(())
+            }
+            _ => Err(anyhow::anyhow!("delete() is only supported for fs metadata backend")),
         }
-        
-        Ok(())
     }
     
     /// Get statistics for a dataset

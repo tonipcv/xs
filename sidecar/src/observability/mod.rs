@@ -1,3 +1,3 @@
 pub mod prometheus;
 
-pub use prometheus::{init_metrics, start_metrics_server};
+pub use prometheus::start_metrics_server;

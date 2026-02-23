@@ -105,7 +105,7 @@ pub async fn prefetch_loop(
                         resilience_manager.mark_download_success();
                         
                         // Pre-process during prefetch (OFF the GPU serving path)
-                        let final_data = match pipeline.process(data, &config) {
+                        let final_data = match pipeline.process(data, &config).await {
                             Ok(processed) => processed,
                             Err(e) => {
                                 warn!("Prefetch processing failed for {}: {}", seg_id, e);

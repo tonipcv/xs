@@ -119,6 +119,7 @@ pub fn watermark_audio(audio_data: Vec<u8>, contract_id: &str) -> Result<Vec<u8>
 }
 
 /// Detect watermark in audio data by brute-force searching known contract IDs
+#[allow(dead_code)]
 pub fn detect_watermark(audio_data: Vec<u8>) -> Result<Option<String>> {
     // Decode WAV audio
     let cursor = Cursor::new(&audio_data);
@@ -155,6 +156,7 @@ pub fn detect_watermark(audio_data: Vec<u8>) -> Result<Option<String>> {
 }
 
 /// Detect watermark by correlating FFT bin phases against expected bit pattern for candidate contracts
+#[allow(dead_code)]
 pub fn detect_watermark_with_candidates(audio_data: Vec<u8>, candidates: &[&str]) -> Result<Option<String>> {
     // Decode WAV audio
     let cursor = Cursor::new(&audio_data);
@@ -270,6 +272,7 @@ fn pn_sequence(contract_id: &str, len: usize) -> Vec<f32> {
 }
 
 /// Watermark using PN in time domain (for robust testing)
+#[allow(dead_code)]
 pub fn watermark_audio_pn(audio_data: Vec<u8>, contract_id: &str) -> Result<Vec<u8>> {
     let cursor = Cursor::new(&audio_data);
     let mut reader = WavReader::new(cursor).context("Failed to decode WAV audio")?;

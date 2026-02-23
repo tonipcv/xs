@@ -7,6 +7,7 @@ pub struct Config {
     pub api_key: String,
     pub base_url: String,
     pub lease_id: String,
+    pub session_id: String,
     pub socket_path: String,
     pub cache_size_gb: usize,
     pub bucket_name: String,
@@ -22,8 +23,22 @@ pub struct Config {
     pub resilience_grace_period_seconds: u64, // Grace period before entering cache-only mode
     pub metrics_bind_addr: String,          // Prometheus metrics server bind address
     
+    // Optional identifiers for metadata + audit trails
+    pub tenant_id: String,
+    pub dataset_id: String,
+    pub metadata_store_path: Option<String>,
+    pub metadata_backend: String,           // fs|s3|clickhouse
+    pub metadata_s3_bucket: Option<String>,
+    pub metadata_s3_prefix: Option<String>,
+    pub clickhouse_url: Option<String>,
+    pub clickhouse_database: Option<String>,
+    pub clickhouse_user: Option<String>,
+    pub clickhouse_password: Option<String>,
+    pub clickhouse_table: Option<String>,
+    
     // Pipeline configuration
     pub data_pipeline: String,              // audio|dicom|fhir|text|timeseries|passthrough
+    #[allow(dead_code)]
     pub dicom_strip_tags: Vec<String>,      // e.g., ["PatientName","PatientID"]
     pub fhir_redact_paths: Vec<String>,     // e.g., ["$.patient.name","$.identifier"]
     
@@ -84,6 +99,9 @@ impl Config {
                 .unwrap_or_else(|_| "https://xase.ai".to_string()),
             lease_id: env::var("LEASE_ID")
                 .context("LEASE_ID not set")?,
+            session_id: env::var("SESSION_ID")
+                .ok()
+                .unwrap_or_else(|| env::var("CONTRACT_ID").unwrap_or_else(|_| "session_unknown".to_string())),
             socket_path: env::var("SOCKET_PATH")
                 .unwrap_or_else(|_| "/var/run/xase/sidecar.sock".to_string()),
             cache_size_gb: env::var("CACHE_SIZE_GB")
@@ -108,6 +126,18 @@ impl Config {
                 .ok().and_then(|s| s.parse().ok()).unwrap_or(300),
             metrics_bind_addr: env::var("METRICS_BIND_ADDR")
                 .unwrap_or_else(|_| "0.0.0.0:9090".to_string()),
+            
+            tenant_id: env::var("TENANT_ID").unwrap_or_else(|_| "tenant_unknown".to_string()),
+            dataset_id: env::var("DATASET_ID").unwrap_or_else(|_| "dataset_unknown".to_string()),
+            metadata_store_path: env::var("METADATA_STORE_PATH").ok(),
+            metadata_backend: env::var("METADATA_BACKEND").unwrap_or_else(|_| "fs".to_string()),
+            metadata_s3_bucket: env::var("METADATA_S3_BUCKET").ok(),
+            metadata_s3_prefix: env::var("METADATA_S3_PREFIX").ok(),
+            clickhouse_url: env::var("CLICKHOUSE_URL").ok(),
+            clickhouse_database: env::var("CLICKHOUSE_DATABASE").ok(),
+            clickhouse_user: env::var("CLICKHOUSE_USER").ok(),
+            clickhouse_password: env::var("CLICKHOUSE_PASSWORD").ok(),
+            clickhouse_table: env::var("CLICKHOUSE_TABLE").ok(),
             
             data_pipeline: env::var("DATA_PIPELINE").unwrap_or_else(|_| "audio".to_string()),
             dicom_strip_tags: env::var("DICOM_STRIP_TAGS").ok()

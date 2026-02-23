@@ -1,4 +1,5 @@
-use anyhow::{Result, Context};
+#![allow(dead_code)]
+use anyhow::Result;
 use serde::{Serialize, Deserialize};
 use std::time::Duration;
 use crate::redis_client::RedisClient;

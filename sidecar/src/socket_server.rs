@@ -106,7 +106,7 @@ async fn handle_connection(
         };
 
         // Apply pipeline synchronously to enforce runtime governance
-        let processed = pipeline.process(raw_data, &config).map_err(|e| {
+        let processed = pipeline.process(raw_data, &config).await.map_err(|e| {
             error!("Processing failed for segment {}: {}", segment_id, e);
             anyhow::anyhow!("Processing failed: {}", e)
         })?;

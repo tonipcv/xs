@@ -1,0 +1,78 @@
+{
+  "$schema": "https://easypanel.dev/schema/app-service.json",
+  "name": "xase-sidecar",
+  "source": {
+    "type": "github",
+    "owner": "tonipcv",
+    "repository": "xs",
+    "branch": "main",
+    "buildPath": "/sidecar"
+  },
+  "build": {
+    "type": "nixpacks",
+    "installCommand": "apt-get update && apt-get install -y libssl-dev pkg-config tesseract-ocr",
+    "buildCommand": "cargo build --release",
+    "startCommand": "./target/release/xase-sidecar"
+  },
+  "resources": {
+    "volumes": [
+      {
+        "name": "xase-data",
+        "mountPath": "/var/lib/xase",
+        "sizeGB": 10
+      }
+    ]
+  },
+  "runtime": {
+    "ports": [
+      {
+        "name": "metrics",
+        "port": 9090,
+        "protocol": "http",
+        "public": true,
+        "healthcheck": {
+          "path": "/metrics",
+          "intervalSeconds": 15,
+          "timeoutSeconds": 5
+        }
+      }
+    ],
+    "env": [
+      { "key": "CONTRACT_ID", "value": "contract_abc123" },
+      { "key": "XASE_API_KEY", "value": "REDACT_ME" },
+      { "key": "XASE_BASE_URL", "value": "https://xase.ai" },
+      { "key": "LEASE_ID", "value": "lease_xyz789" },
+      { "key": "SESSION_ID", "value": "session_prod_1", "optional": true },
+
+      { "key": "INGESTION_MODE", "value": "hybrid" },
+      { "key": "DICOMWEB_URL", "value": "", "optional": true },
+      { "key": "DICOMWEB_AUTH_TOKEN", "value": "", "optional": true },
+      { "key": "FHIR_URL", "value": "", "optional": true },
+      { "key": "FHIR_AUTH_TOKEN", "value": "", "optional": true },
+      { "key": "HYBRID_FALLBACK_TO_S3", "value": "true" },
+
+      { "key": "RESILIENCE_GRACE_PERIOD_SECONDS", "value": "300" },
+      { "key": "METRICS_BIND_ADDR", "value": "0.0.0.0:9090" },
+
+      { "key": "DATA_PIPELINE", "value": "audio" },
+
+      { "key": "METADATA_BACKEND", "value": "fs" },
+      { "key": "METADATA_STORE_PATH", "value": "/var/lib/xase/metadata", "optional": true },
+      { "key": "METADATA_S3_BUCKET", "value": "", "optional": true },
+      { "key": "METADATA_S3_PREFIX", "value": "metadata", "optional": true },
+      { "key": "CLICKHOUSE_URL", "value": "", "optional": true },
+      { "key": "CLICKHOUSE_DATABASE", "value": "default", "optional": true },
+      { "key": "CLICKHOUSE_TABLE", "value": "xase_audio_metadata", "optional": true },
+      { "key": "CLICKHOUSE_USER", "value": "", "optional": true },
+      { "key": "CLICKHOUSE_PASSWORD", "value": "", "optional": true },
+
+      { "key": "TENANT_ID", "value": "tenant_unknown" },
+      { "key": "DATASET_ID", "value": "dataset_unknown" },
+
+      { "key": "XASE_TESSERACT_ENABLED", "value": "false", "optional": true },
+      { "key": "TESSERACT_CMD", "value": "tesseract", "optional": true },
+      { "key": "CLINICAL_NLP_USE_RUSTBERT", "value": "0", "optional": true },
+      { "key": "WHISPER_CLI", "value": "", "optional": true }
+    ]
+  }
+}

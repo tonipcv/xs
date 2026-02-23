@@ -1,5 +1,9 @@
 use anyhow::Result;
 use image::{DynamicImage, GenericImageView, GenericImage, ImageBuffer, Rgba};
+use std::fs;
+use std::path::PathBuf;
+use std::process::Command;
+use rand::Rng;
 
 /// OCR-based pixel scrubber for DICOM images
 /// Detects and removes burned-in text (PHI) from medical images
@@ -16,6 +20,7 @@ pub struct TextRegion {
 }
 
 #[derive(Debug, Clone)]
+#[allow(dead_code)]
 pub struct ScrubberConfig {
     pub min_confidence: f32,
     pub padding: u32,
@@ -36,7 +41,7 @@ impl Default for ScrubberConfig {
 
 /// Detect text regions in image using edge detection and connected components
 /// This is a lightweight alternative to full OCR when Tesseract is not available
-pub fn detect_text_regions_simple(img: &DynamicImage, config: &ScrubberConfig) -> Vec<TextRegion> {
+pub fn detect_text_regions_simple(img: &DynamicImage, _config: &ScrubberConfig) -> Vec<TextRegion> {
     let gray = img.to_luma8();
     let (width, height) = gray.dimensions();
     
@@ -92,6 +97,77 @@ pub fn detect_text_regions_simple(img: &DynamicImage, config: &ScrubberConfig) -
     merge_overlapping_regions(&mut regions);
     
     regions
+}
+
+/// Detect text regions using Tesseract CLI if available.
+/// Enable by setting `XASE_TESSERACT_ENABLED=true`.
+/// Optionally set `TESSERACT_CMD` to override the binary path.
+fn detect_text_regions_tesseract(img: &DynamicImage, config: &ScrubberConfig) -> Option<Vec<TextRegion>> {
+    let enabled = std::env::var("XASE_TESSERACT_ENABLED")
+        .ok()
+        .map(|v| v == "true" || v == "1")
+        .unwrap_or(false);
+    if !enabled {
+        return None;
+    }
+
+    let tesseract_cmd = std::env::var("TESSERACT_CMD").unwrap_or_else(|_| "tesseract".to_string());
+
+    // Write image to temp file
+    let mut rng = rand::thread_rng();
+    let tmp_dir = std::env::temp_dir();
+    let input_path = tmp_dir.join(format!("xase_ocr_{}.png", rng.gen::<u64>()));
+    let output_prefix = tmp_dir.join(format!("xase_ocr_out_{}", rng.gen::<u64>()));
+    let output_base = output_prefix.to_string_lossy().to_string();
+
+    if img.save(&input_path).is_err() {
+        return None;
+    }
+
+    // Run tesseract with TSV output
+    let status = Command::new(&tesseract_cmd)
+        .arg(&input_path)
+        .arg(&output_base)
+        .arg("--psm").arg("6")
+        .arg("-c").arg("tessedit_create_tsv=1")
+        .status();
+
+    if status.is_err() || !status.unwrap().success() {
+        let _ = fs::remove_file(&input_path);
+        return None;
+    }
+
+    let tsv_path = PathBuf::from(format!("{}.tsv", output_base));
+    let tsv = fs::read_to_string(&tsv_path).ok()?;
+
+    let mut regions = Vec::new();
+    for (i, line) in tsv.lines().enumerate() {
+        if i == 0 { continue; } // header
+        let cols: Vec<&str> = line.split('\t').collect();
+        if cols.len() < 12 { continue; }
+
+        let text = cols[11].trim();
+        if text.is_empty() { continue; }
+
+        let conf: f32 = cols[10].parse().unwrap_or(0.0);
+        if conf < config.min_confidence * 100.0 { continue; }
+
+        let x: u32 = cols[6].parse().unwrap_or(0);
+        let y: u32 = cols[7].parse().unwrap_or(0);
+        let w: u32 = cols[8].parse().unwrap_or(0);
+        let h: u32 = cols[9].parse().unwrap_or(0);
+
+        regions.push(TextRegion {
+            x, y, width: w, height: h,
+            confidence: conf / 100.0,
+            text: text.to_string(),
+        });
+    }
+
+    let _ = fs::remove_file(&input_path);
+    let _ = fs::remove_file(&tsv_path);
+
+    if regions.is_empty() { None } else { Some(regions) }
 }
 
 #[derive(Debug, Clone)]
@@ -304,7 +380,8 @@ pub fn ocr_scrub_pipeline(
     use_inpainting: bool,
 ) -> Result<DynamicImage> {
     // 1. Detect text regions
-    let regions = detect_text_regions_simple(&img, &config);
+    let regions = detect_text_regions_tesseract(&img, &config)
+        .unwrap_or_else(|| detect_text_regions_simple(&img, &config));
     
     if regions.is_empty() {
         tracing::debug!("No text regions detected in image");

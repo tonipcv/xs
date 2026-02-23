@@ -22,6 +22,7 @@ pub fn snapshot() -> (u64, u64) {
     (bytes, reds)
 }
 
+#[allow(dead_code)]
 pub fn reset() {
     PROCESSED_BYTES_TL.with(|c| c.set(0));
     REDACTIONS_TL.with(|c| c.set(0));
@@ -35,9 +36,13 @@ static DICOM_NIFTI_STUB: AtomicU64 = AtomicU64::new(0);
 static NLP_REGEX_FALLBACK: AtomicU64 = AtomicU64::new(0);
 
 pub fn inc_audio_diarization_fallback() { AUDIO_DIARIZATION_FALLBACK.fetch_add(1, Ordering::Relaxed); }
+#[allow(dead_code)]
 pub fn inc_audio_redaction_noop() { AUDIO_REDACTION_NOOP.fetch_add(1, Ordering::Relaxed); }
+#[allow(dead_code)]
 pub fn inc_dicom_ocr_stub() { DICOM_OCR_STUB.fetch_add(1, Ordering::Relaxed); }
+#[allow(dead_code)]
 pub fn inc_dicom_nifti_stub() { DICOM_NIFTI_STUB.fetch_add(1, Ordering::Relaxed); }
+#[allow(dead_code)]
 pub fn inc_nlp_regex_fallback() { NLP_REGEX_FALLBACK.fetch_add(1, Ordering::Relaxed); }
 
 pub fn snapshot_fallbacks() -> (u64, u64, u64, u64, u64) {
