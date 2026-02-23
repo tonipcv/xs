@@ -18,6 +18,8 @@ pub struct MetadataStore {
     backend: MetadataBackend,
 }
 
+#[derive(Debug, Clone)
+]
 enum MetadataBackend {
     Fs { base_path: PathBuf },
     S3 { client: S3Client, bucket: String, prefix: String },
