@@ -20,6 +20,18 @@ struct AuthRequest {
 }
 
 pub async fn authenticate(config: &Config) -> Result<AuthResponse> {
+    // Boot without real credentials: if XASE_SKIP_AUTH is set, return a dummy token/session
+    // This is useful to bring the service up (healthcheck /metrics) before wiring real creds
+    if std::env::var("XASE_SKIP_AUTH").map(|v| v == "1" || v.eq_ignore_ascii_case("true")).unwrap_or(false) {
+        let session = std::env::var("SESSION_ID").unwrap_or_else(|_| "session_boot".to_string());
+        let expires = (chrono::Utc::now() + chrono::Duration::hours(1)).to_rfc3339();
+        return Ok(AuthResponse {
+            sts_token: "dummy-token".to_string(),
+            session_id: session,
+            expires_at: expires,
+        });
+    }
+
     let client = reqwest::Client::new();
     
     let resp = client
