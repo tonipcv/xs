@@ -31,6 +31,8 @@ function applySecurityHeaders(res: NextResponse) {
   
   // Strict CSP for production, slightly relaxed for development
   const isDev = process.env.NODE_ENV === 'development';
+  const sidecar = (process.env.NEXT_PUBLIC_SIDECAR_ORIGIN || process.env.XASE_SIDECAR_ORIGIN || process.env.SIDECAR_ORIGIN || '').trim();
+  const sidecarConnect = sidecar ? ` ${sidecar}` : '';
   
   const csp = [
     "default-src 'self'",
@@ -47,8 +49,8 @@ function applySecurityHeaders(res: NextResponse) {
       : "img-src 'self' data: blob: https:",
     // Allow Stripe & Facebook connections in dev
     isDev
-      ? "connect-src 'self' https: http://localhost:* ws: wss: https://js.stripe.com https://*.stripe.com https://connect.facebook.net https://www.facebook.com"
-      : "connect-src 'self' https: https://js.stripe.com https://*.stripe.com",
+      ? ("connect-src 'self' https: http://localhost:* ws: wss: https://js.stripe.com https://*.stripe.com https://connect.facebook.net https://www.facebook.com" + sidecarConnect)
+      : ("connect-src 'self' https: https://js.stripe.com https://*.stripe.com" + sidecarConnect),
     "font-src 'self' data:",
     // Allow Stripe (and optionally Facebook) iframes in dev if used
     isDev
