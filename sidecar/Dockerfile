@@ -1,7 +1,14 @@
 # Multi-stage build for Xase Sidecar
-FROM rust:1.75 as builder
+# Use a recent Rust that understands Cargo.lock v4
+FROM rust:1.93 as builder
 
 WORKDIR /app
+
+# System deps for openssl/reqwest during build
+RUN apt-get update && apt-get install -y \
+    pkg-config \
+    libssl-dev \
+  && rm -rf /var/lib/apt/lists/*
 
 # Copy manifests
 COPY Cargo.toml Cargo.lock ./
@@ -19,7 +26,7 @@ FROM debian:bookworm-slim
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     libssl3 \
-    && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
 # Copy binary from builder
 COPY --from=builder /app/target/release/xase-sidecar /usr/local/bin/sidecar
@@ -29,7 +36,12 @@ RUN mkdir -p /var/run/xase
 
 # Set environment variables
 ENV RUST_LOG=info
-ENV SOCKET_PATH=/var/run/xase/sidecar.sock
+# Prefer a tmp location for default socket to avoid permission issues
+ENV SOCKET_PATH=/tmp/xase.sock
+ENV METRICS_BIND_ADDR=0.0.0.0:9090
+
+# Expose Prometheus metrics port
+EXPOSE 9090
 
 # Run sidecar
 CMD ["sidecar"]
