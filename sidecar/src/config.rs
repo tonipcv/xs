@@ -54,6 +54,9 @@ pub struct Config {
     // FHIR/HL7 pipeline advanced features
     pub fhir_date_shift_days: i32,          // Date shifting offset in days
     pub fhir_enable_nlp: bool,              // Enable NLP redaction for medical reports
+
+    // Operational toggles
+    pub disable_prefetch: bool,             // Disable background prefetch loop
 }
 
 impl Config {
@@ -186,6 +189,10 @@ impl Config {
                 .ok().and_then(|s| s.parse().ok()).unwrap_or(0),
             fhir_enable_nlp: env::var("FHIR_ENABLE_NLP")
                 .ok().map(|s| s == "true" || s == "1").unwrap_or(false),
+
+            // Operational toggles
+            disable_prefetch: env::var("DISABLE_PREFETCH")
+                .ok().map(|s| s == "true" || s == "1").unwrap_or(skip_auth),
         })
     }
 }

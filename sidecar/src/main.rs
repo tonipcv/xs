@@ -223,14 +223,19 @@ async fn main() -> Result<()> {
     let pipeline = pipeline::select_pipeline(&config, metadata_store);
 
     // Prefetch loop now pre-processes segments in background via selected pipeline
-    let prefetch_handle = tokio::spawn(prefetch::prefetch_loop(
-        cache.clone(),
-        data_provider.clone(),
-        config.clone(),
-        pipeline.clone(),
-        resilience_manager.clone(),
-    ));
-    info!("Prefetch engine started (adaptive window + pipeline: {})", pipeline.name());
+    let prefetch_handle = if !config.disable_prefetch {
+        info!("Prefetch enabled - starting engine (pipeline: {})", pipeline.name());
+        Some(tokio::spawn(prefetch::prefetch_loop(
+            cache.clone(),
+            data_provider.clone(),
+            config.clone(),
+            pipeline.clone(),
+            resilience_manager.clone(),
+        )))
+    } else {
+        info!("Prefetch disabled by configuration (DISABLE_PREFETCH=1 or XASE_SKIP_AUTH)");
+        None
+    };
 
     // Socket server: no Mutex, lock-free cache reads, watermark off critical path
     info!("Starting Unix socket server at {}", config.socket_path);
@@ -267,7 +272,7 @@ async fn main() -> Result<()> {
         async {
             let _ = telemetry_handle.await;
             let _ = kill_switch_handle.await;
-            let _ = prefetch_handle.await;
+            if let Some(h) = prefetch_handle { let _ = h.await; }
             let _ = token_refresh_handle.await;
             let _ = resilience_monitor_handle.await;
             let _ = metrics_server_handle.await;
