@@ -1,0 +1,48 @@
+{
+  "resourceType": "Patient",
+  "id": "patient-001",
+  "name": [
+    {
+      "family": "ANONYMIZED",
+      "given": [
+        "PATIENT"
+      ],
+      "text": "ANONYMIZED PATIENT"
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1979-05-16",
+  "address": [
+    {
+      "line": [
+        "REDACTED"
+      ],
+      "city": "REDACTED",
+      "state": "MA",
+      "postalCode": "021XX",
+      "country": "USA",
+      "text": "REDACTED"
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "XXX-XXX-XXXX",
+      "use": "home"
+    },
+    {
+      "system": "email",
+      "value": "redacted@example.com"
+    }
+  ],
+  "identifier": [
+    {
+      "system": "http://hospital.org/mrn",
+      "value": "ANON-8C1T9E1A"
+    },
+    {
+      "system": "http://hl7.org/fhir/sid/us-ssn",
+      "value": "ANON-FDTRH6BI"
+    }
+  ]
+}

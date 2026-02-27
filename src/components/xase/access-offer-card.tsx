@@ -3,7 +3,7 @@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Shield, Clock, DollarSign, Globe, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Shield, Clock, Globe, CheckCircle2, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 
 interface AccessOfferCardProps {
@@ -65,16 +65,7 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
           </Badge>
         </div>
 
-        {/* Pricing */}
-        <div className="flex items-center gap-2">
-          <DollarSign className="h-3.5 w-3.5 text-gray-400" />
-          <span className="text-[14px] font-bold text-gray-900">
-            {offer.currency} {offer.pricePerHour}/hr
-          </span>
-          <span className="text-[11px] text-gray-500">
-            • {offer.scopeHours}h scope
-          </span>
-        </div>
+        {/* Pricing removed: legacy hourly model no longer displayed */}
 
         {/* Jurisdiction & Language */}
         <div className="flex items-center gap-3">
@@ -141,7 +132,7 @@ export function AccessOfferCard({ offer }: AccessOfferCardProps) {
       <div className="p-3 border-t border-gray-100">
         <Link href={`/app/marketplace/${offer.offerId}`} className="block">
           <Button variant="outline" className="w-full h-7 text-[11px] border-gray-300 text-gray-900 bg-white hover:bg-gray-50">
-            View Details
+            Request Access
           </Button>
         </Link>
       </div>

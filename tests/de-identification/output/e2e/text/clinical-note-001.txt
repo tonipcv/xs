@@ -1,0 +1,48 @@
+PROGRESS NOTE
+
+Patient: ANONYMIZED PATIENT
+MRN: REDACTED
+DOB: 01/03/1992
+Visit Date: July 17, 2023
+Provider: Dr. REDACTED. REDACTED
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+31-year-old female presents for routine annual physical. Patient reports
+feeling well overall. No current complaints. Last menstrual period was
+07/11/2023. Patient is sexually active and uses oral contraceptives.
+
+PAST MEDICAL HISTORY:
+- Asthma (childhood, resolved)
+- Appendectomy (2010)
+
+MEDICATIONS:
+- Ortho Tri-Cyclen (oral contraceptive)
+- Multivitamin daily
+
+ALLERGIES:
+Penicillin (rash)
+
+SOCIAL HISTORY:
+Non-smoker, occasional alcohol use (1-2 drinks per week)
+Works as software engineer
+Lives at REDACTED, REDACTED
+REDACTED (brother) XXX-XXX-XXXX
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 118/72, HR 68, Temp 98.4°F, Wt 135 lbs
+General: Well-appearing, no acute distress
+HEENT: Normal
+Cardiovascular: Regular rate and rhythm, no murmurs
+Respiratory: Clear to auscultation bilaterally
+Abdomen: Soft, non-tender
+
+ASSESSMENT AND PLAN:
+Healthy 31-year-old female. Continue current medications. Recommended
+screening labs ordered. Follow up in 1 year or as needed.
+
+Electronically signed: Dr. REDACTED, MD
+Somerville Family Practice
+Date: 03/23/2023 11:30

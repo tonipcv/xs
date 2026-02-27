@@ -69,6 +69,26 @@ lazy_static! {
         "xase_seconds_since_last_auth",
         "Seconds since last successful authentication with Brain"
     ).unwrap();
+    
+    pub static ref DICOM_IMAGES_PROCESSED: Counter = Counter::new(
+        "xase_dicom_images_processed_total",
+        "Total DICOM images processed (for billing)"
+    ).unwrap();
+    
+    pub static ref FHIR_RESOURCES_PROCESSED: Counter = Counter::new(
+        "xase_fhir_resources_processed_total",
+        "Total FHIR resources processed (for billing)"
+    ).unwrap();
+    
+    pub static ref AUDIO_MINUTES_PROCESSED: Counter = Counter::new(
+        "xase_audio_minutes_processed_total",
+        "Total audio minutes processed (for billing)"
+    ).unwrap();
+    
+    pub static ref TEXT_PAGES_PROCESSED: Counter = Counter::new(
+        "xase_text_pages_processed_total",
+        "Total text pages/documents processed (for billing)"
+    ).unwrap();
 }
 
 /// Initialize Prometheus metrics registry
@@ -108,6 +128,18 @@ pub fn init_metrics() {
     }
     if let Err(e) = REGISTRY.register(Box::new(SECONDS_SINCE_LAST_AUTH.clone())) {
         error!("Failed to register SECONDS_SINCE_LAST_AUTH metric: {}", e);
+    }
+    if let Err(e) = REGISTRY.register(Box::new(DICOM_IMAGES_PROCESSED.clone())) {
+        error!("Failed to register DICOM_IMAGES_PROCESSED metric: {}", e);
+    }
+    if let Err(e) = REGISTRY.register(Box::new(FHIR_RESOURCES_PROCESSED.clone())) {
+        error!("Failed to register FHIR_RESOURCES_PROCESSED metric: {}", e);
+    }
+    if let Err(e) = REGISTRY.register(Box::new(AUDIO_MINUTES_PROCESSED.clone())) {
+        error!("Failed to register AUDIO_MINUTES_PROCESSED metric: {}", e);
+    }
+    if let Err(e) = REGISTRY.register(Box::new(TEXT_PAGES_PROCESSED.clone())) {
+        error!("Failed to register TEXT_PAGES_PROCESSED metric: {}", e);
     }
     
     info!("Prometheus metrics registry initialized");
@@ -154,13 +186,29 @@ async fn health_handler() -> impl IntoResponse {
 /// Readiness check endpoint handler
 async fn readiness_handler() -> impl IntoResponse {
     // Check if system is ready to serve
-    // For now, always ready (can be enhanced to check cache, auth, etc.)
     let ready = true;
     
     if ready {
         let status = serde_json::json!({
             "ready": true,
             "timestamp": chrono::Utc::now().to_rfc3339(),
+            "version": env!("CARGO_PKG_VERSION"),
+            "ingestion_mode": std::env::var("INGESTION_MODE").unwrap_or_else(|_| "unknown".to_string()),
+            "data_pipeline": std::env::var("DATA_PIPELINE").unwrap_or_else(|_| "unknown".to_string()),
+            "features": {
+                "dicom_ocr": std::env::var("DICOM_ENABLE_OCR").unwrap_or_else(|_| "false".to_string()) == "true",
+                "fhir_nlp": std::env::var("FHIR_ENABLE_NLP").unwrap_or_else(|_| "false".to_string()) == "true",
+                "audio_redaction": std::env::var("AUDIO_ENABLE_REDACTION").unwrap_or_else(|_| "false".to_string()) == "true",
+                "prefetch": std::env::var("DISABLE_PREFETCH").unwrap_or_else(|_| "false".to_string()) != "true",
+            },
+            "billing_counters": {
+                "dicom_images": DICOM_IMAGES_PROCESSED.get(),
+                "fhir_resources": FHIR_RESOURCES_PROCESSED.get(),
+                "audio_minutes": AUDIO_MINUTES_PROCESSED.get(),
+                "text_pages": TEXT_PAGES_PROCESSED.get(),
+                "bytes_total": BYTES_PROCESSED.get(),
+                "redactions_total": REDACTIONS.get(),
+            },
         });
         (axum::http::StatusCode::OK, Json(status))
     } else {

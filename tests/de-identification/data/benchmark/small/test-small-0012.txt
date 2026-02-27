@@ -1,0 +1,251 @@
+RADIOLOGY REPORT
+
+Patient: Patricia A. Brown
+MRN: MRN-981643
+DOB: 11/03/2021
+Exam Date: 10/19/2020
+Ordering Physician: Dr. Lee
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Anderson, MD
+Date: 10/13/2020
+Regional Hospital
+Phone: 560-555-1563
+
+
+RADIOLOGY REPORT
+
+Patient: Patricia C. Brown
+MRN: MRN-267338
+DOB: 03/25/2023
+Exam Date: 01/11/2020
+Ordering Physician: Dr. Thompson
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Clark, MD
+Date: 09/14/2024
+Community Hospital
+Phone: 971-555-6518
+
+
+PROGRESS NOTE
+
+Patient: Linda C. Smith
+MRN: MRN-560939
+DOB: 09/15/2020
+Visit Date: 02/28/2024
+Provider: Dr. Lewis
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Lewis, MD
+Health Center
+Date: 08/19/2020
+
+
+PROGRESS NOTE
+
+Patient: Jennifer F. Brown
+MRN: MRN-811472
+DOB: 04/18/2020
+Visit Date: 05/11/2020
+Provider: Dr. Martinez
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Martinez, MD
+Internal Medicine
+Date: 05/13/2024
+
+
+RADIOLOGY REPORT
+
+Patient: James E. Garcia
+MRN: MRN-559656
+DOB: 11/12/2024
+Exam Date: 01/13/2024
+Ordering Physician: Dr. Rodriguez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Robinson, MD
+Date: 05/22/2022
+Community Hospital
+Phone: 914-555-7771
+
+
+RADIOLOGY REPORT
+
+Patient: Mary A. Williams
+MRN: MRN-801520
+DOB: 09/26/2020
+Exam Date: 01/15/2024
+Ordering Physician: Dr. Martinez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Robinson, MD
+Date: 04/07/2020
+Regional Hospital
+Phone: 817-555-8857
+
+
+RADIOLOGY REPORT
+
+Patient: John D. Johnson
+MRN: MRN-166990
+DOB: 03/12/2022
+Exam Date: 01/15/2020
+Ordering Physician: Dr. Robinson
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Thompson, MD
+Date: 06/21/2022
+Regional Hospital
+Phone: 538-555-6177
+
+
+PROGRESS NOTE
+
+Patient: Mary A. Garcia
+MRN: MRN-919162
+DOB: 12/08/2022
+Visit Date: 03/18/2023
+Provider: Dr. Thompson
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Thompson, MD
+Internal Medicine
+Date: 02/06/2023
+
+
+PROGRESS NOTE
+
+Patient: Linda D. Jones
+MRN: MRN-233870
+DOB: 06/10/2024
+Visit Date: 06/16/2021
+Provider: Dr. Thompson
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute comp

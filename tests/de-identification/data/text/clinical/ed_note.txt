@@ -1,0 +1,44 @@
+EMERGENCY DEPARTMENT NOTE
+
+Patient: Thompson, Jennifer L.
+MRN: 456789
+DOB: 07/08/1992
+SSN: 234-56-7890
+Visit Date: 02/20/2024 22:15
+Provider: Dr. Chen, Michael
+
+CHIEF COMPLAINT: Severe headache
+
+HPI:
+31-year-old female presents with sudden onset severe headache starting 3 hours ago.
+Denies trauma, fever, vision changes. No similar episodes in past.
+Patient works at Boston General Hospital as a nurse.
+
+PMH: Migraines (last episode 6 months ago)
+Medications: Sumatriptan 50mg PRN
+Allergies: Penicillin (rash)
+
+PHYSICAL EXAM:
+Vitals: BP 142/88, HR 92, RR 18, Temp 37.0°C
+Neuro: Alert, oriented x3. CN II-XII intact. No focal deficits.
+Neck: Supple, no meningismus
+
+DIAGNOSTIC STUDIES:
+CT Head (02/20/2024 22:45): No acute intracranial abnormality
+
+ASSESSMENT: Migraine headache
+
+PLAN:
+1. Sumatriptan 6mg SC given with good response
+2. Discharge home with migraine precautions
+3. Follow-up with PCP Dr. Anderson within 1 week
+4. Return precautions discussed
+
+Discharge time: 02/21/2024 01:30
+Patient contact: Cell 857-555-2468
+Emergency contact: Mother Susan Thompson 781-555-9012
+
+Address: 456 Oak Avenue, Cambridge, MA 02139
+
+Electronically signed: Dr. Michael Chen, MD
+Date: 02/21/2024 01:35

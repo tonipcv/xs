@@ -1,0 +1,32 @@
+{
+  "resourceType": "Encounter",
+  "id": "enc-001",
+  "status": "finished",
+  "class": {
+    "system": "http://terminology.hl7.org/CodeSystem/v3-ActCode",
+    "code": "IMP",
+    "display": "inpatient encounter"
+  },
+  "subject": {
+    "reference": "Patient/patient-001"
+  },
+  "period": {
+    "start": "2024-01-15T08:00:00Z",
+    "end": "2024-01-17T16:00:00Z"
+  },
+  "location": [
+    {
+      "location": {
+        "display": "Massachusetts General Hospital, Room 301"
+      }
+    }
+  ],
+  "participant": [
+    {
+      "individual": {
+        "reference": "Practitioner/dr-jones",
+        "display": "Dr. Robert Jones"
+      }
+    }
+  ]
+}

@@ -1,0 +1,72 @@
+{
+  "timestamp": "2026-02-26T20:35:04.716Z",
+  "summary": {
+    "total": 8,
+    "passed": 7,
+    "warnings": 1,
+    "failed": 0,
+    "passRate": "87.5%"
+  },
+  "results": [
+    {
+      "component": "Dependencies",
+      "status": "pass",
+      "message": "All required dependencies installed"
+    },
+    {
+      "component": "Data Directories",
+      "status": "pass",
+      "message": "All directories present"
+    },
+    {
+      "component": "DICOM Binary",
+      "status": "pass",
+      "message": "10/10 PHI redacted",
+      "details": {
+        "phiDetected": 10,
+        "phiRedacted": 10,
+        "redactionRate": 100
+      }
+    },
+    {
+      "component": "FHIR",
+      "status": "pass",
+      "message": "3/3 PHI redacted",
+      "details": {
+        "phiDetected": 3,
+        "phiRedacted": 3,
+        "redactionRate": 100
+      }
+    },
+    {
+      "component": "Text",
+      "status": "warning",
+      "message": "17/18 PHI redacted",
+      "details": {
+        "phiDetected": 18,
+        "phiRedacted": 17,
+        "redactionRate": 94.44444444444444
+      }
+    },
+    {
+      "component": "HL7",
+      "status": "pass",
+      "message": "9/9 PHI redacted",
+      "details": {
+        "phiDetected": 9,
+        "phiRedacted": 9,
+        "redactionRate": 100
+      }
+    },
+    {
+      "component": "Documentation",
+      "status": "pass",
+      "message": "All key documents present"
+    },
+    {
+      "component": "Scripts",
+      "status": "pass",
+      "message": "All scripts present"
+    }
+  ]
+}

@@ -1,0 +1,73 @@
+{
+  "file": "oru_lab_results.hl7",
+  "metrics": {
+    "phiDetected": 8,
+    "phiRedacted": 8,
+    "redactionRate": 100
+  },
+  "phiEntities": [
+    {
+      "type": "ID",
+      "text": "987654321^^^HOSPITAL^MR",
+      "start": 0,
+      "end": 23,
+      "confidence": 0.95
+    },
+    {
+      "type": "NAME",
+      "text": "SMITH^JANE^BETH",
+      "start": 0,
+      "end": 15,
+      "confidence": 0.95
+    },
+    {
+      "type": "DATE",
+      "text": "19920708",
+      "start": 0,
+      "end": 8,
+      "confidence": 0.95
+    },
+    {
+      "type": "LOCATION",
+      "text": "789 ELM ST^^BROOKLINE^MA^02445^USA",
+      "start": 0,
+      "end": 34,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(857)555-2468",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(857)555-7890",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    },
+    {
+      "type": "DATE",
+      "text": "20240220100000",
+      "start": 0,
+      "end": 14,
+      "confidence": 0.95
+    },
+    {
+      "type": "NAME",
+      "text": "CHEN^MICHAEL^MD",
+      "start": 0,
+      "end": 15,
+      "confidence": 0.95
+    }
+  ],
+  "validation": {
+    "isValid": true,
+    "errors": [],
+    "warnings": [
+      "Possible SSN pattern detected"
+    ]
+  }
+}

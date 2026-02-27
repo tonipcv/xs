@@ -1,0 +1,26 @@
+RADIOLOGY REPORT
+
+Patient: ANONYMIZED PATIENT
+MRN: REDACTED
+DOB: 11/18/1974
+SSN: XXX-XX-XXXX
+Exam Date: January 26, 2023
+Ordering Physician: Dr. REDACTED. REDACTED Medical CenterAL INDICATION:
+Follow-up CT scan for known lung nodule
+
+TECHNIQUE:
+CT chest without contrast
+
+FINDINGS:
+Previously identified 8mm nodule in the right upper lobe is stable in size
+compared to prior exam from 07/31/2022. No new pulmonary nodules. No 
+lymphadenopathy. Heart and great vessels are unremarkable.
+
+IMPRESSION:
+Stable right upper lobe pulmonary nodule. Recommend continued surveillance
+in 6 months.
+
+Dictated by Dr. REDACTED, MD on 01/26/2023 at 16:45
+Transcribed by Mary Anderson
+REDACTED Medical Center, REDACTED, REDACTED
+Contact: XXX-XXX-XXXXXXX-XXX-XXXX

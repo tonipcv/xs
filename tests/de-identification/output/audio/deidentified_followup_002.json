@@ -1,0 +1,36 @@
+{
+  "transcript": "This is Dr. [NAME REDACTED] calling about patient [NAME REDACTED], SSN [SSN REDACTED]. Follow-up appointment scheduled for [DATE REDACTED] at 2 PM. Please call back at [PHONE REDACTED].",
+  "audioSegmentsToRedact": [
+    {
+      "start": 0.5333333333333333,
+      "end": 1.5333333333333334,
+      "type": "NAME"
+    },
+    {
+      "start": 3.1333333333333333,
+      "end": 3.8666666666666667,
+      "type": "NAME"
+    },
+    {
+      "start": 4.266666666666667,
+      "end": 5,
+      "type": "SSN"
+    },
+    {
+      "start": 7.533333333333333,
+      "end": 8.466666666666667,
+      "type": "DATE"
+    },
+    {
+      "start": 10.533333333333333,
+      "end": 11.333333333333334,
+      "type": "PHONE"
+    }
+  ],
+  "metadata": {
+    "duration": 12,
+    "sampleRate": 16000,
+    "phiDetected": 5,
+    "phiRedacted": 5
+  }
+}

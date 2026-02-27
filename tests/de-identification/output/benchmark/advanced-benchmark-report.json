@@ -1,0 +1,68 @@
+{
+  "timestamp": "2026-02-26T20:21:21.875Z",
+  "summary": {
+    "totalFiles": 20,
+    "totalSize": 363222,
+    "totalPHI": 189,
+    "totalRedacted": 187,
+    "totalDuration": 57,
+    "overallThroughput": 6.0771139044510685,
+    "overallFilesPerSecond": 350.8771929824561,
+    "overallRedactionRate": 98.94179894179894,
+    "averageMemory": 3401936
+  },
+  "results": [
+    {
+      "format": "DICOM Binary",
+      "fileCount": 6,
+      "totalSize": 352898,
+      "totalPHI": 51,
+      "totalRedacted": 51,
+      "totalDuration": 29,
+      "avgDuration": 4.833333333333333,
+      "throughput": 11.60516410038389,
+      "filesPerSecond": 206.8965517241379,
+      "redactionRate": 100,
+      "memoryUsed": 3073232
+    },
+    {
+      "format": "FHIR",
+      "fileCount": 5,
+      "totalSize": 3231,
+      "totalPHI": 19,
+      "totalRedacted": 19,
+      "totalDuration": 11,
+      "avgDuration": 2.2,
+      "throughput": 0.280120156028054,
+      "filesPerSecond": 454.54545454545456,
+      "redactionRate": 100,
+      "memoryUsed": 3330944
+    },
+    {
+      "format": "Clinical Text",
+      "fileCount": 4,
+      "totalSize": 4069,
+      "totalPHI": 84,
+      "totalRedacted": 82,
+      "totalDuration": 8,
+      "avgDuration": 2,
+      "throughput": 0.4850625991821289,
+      "filesPerSecond": 500,
+      "redactionRate": 97.61904761904762,
+      "memoryUsed": 3543216
+    },
+    {
+      "format": "HL7 v2",
+      "fileCount": 5,
+      "totalSize": 3024,
+      "totalPHI": 35,
+      "totalRedacted": 35,
+      "totalDuration": 9,
+      "avgDuration": 1.8,
+      "throughput": 0.3204345703125,
+      "filesPerSecond": 555.5555555555555,
+      "redactionRate": 100,
+      "memoryUsed": 3660352
+    }
+  ]
+}

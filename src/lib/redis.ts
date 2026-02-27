@@ -199,6 +199,10 @@ export const redis = {
     const c = await getRedisClient();
     return c.zRemRangeByScore(key, min, max);
   },
+  async zRangeByScore(key: string, min: number, max: number) {
+    const c = await getRedisClient();
+    return c.zRangeByScore(key, min, max);
+  },
   async del(key: string) {
     const c = await getRedisClient();
     return c.del(key);

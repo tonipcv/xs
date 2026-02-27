@@ -1,0 +1,5 @@
+Patient.name: [{"family":"Garcia","given":["Maria","Carmen"]}] -> [{"family":"ANONYMIZED","given":["PATIENT"],"text":"ANONYMIZED PATIENT"}]
+Patient.birthDate: "1992-08-22" -> "1991-09-13"
+Patient.address: [{"line":["789 Elm Street"],"city":"Somerville","state":"MA","postalCode":"02144","country":"USA"}] -> [{"line":["REDACTED"],"city":"REDACTED","state":"MA","postalCode":"021XX","country":"USA","text":"REDACTED"}]
+Patient.telecom: [{"system":"phone","value":"617-555-0789"}] -> [{"system":"phone","value":"XXX-XXX-XXXX"}]
+Patient.identifier: [{"system":"http://hospital.org/mrn","value":"MRN-345678"}] -> [{"system":"http://hospital.org/mrn","value":"ANON-G3PXO6CU"}]

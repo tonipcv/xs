@@ -1,0 +1,28 @@
+RADIOLOGY REPORT
+
+Patient: Sarah Elizabeth Johnson
+MRN: MRN-789012
+DOB: 12/03/1975
+SSN: 987-65-4321
+Exam Date: February 10, 2024
+Ordering Physician: Dr. Michael Brown
+
+CLINICAL INDICATION:
+Follow-up CT scan for known lung nodule
+
+TECHNIQUE:
+CT chest without contrast
+
+FINDINGS:
+Previously identified 8mm nodule in the right upper lobe is stable in size
+compared to prior exam from 08/15/2023. No new pulmonary nodules. No 
+lymphadenopathy. Heart and great vessels are unremarkable.
+
+IMPRESSION:
+Stable right upper lobe pulmonary nodule. Recommend continued surveillance
+in 6 months.
+
+Dictated by Dr. James Wilson, MD on 02/10/2024 at 16:45
+Transcribed by Mary Anderson
+Cambridge Medical Center, 456 Oak Avenue, Cambridge, MA 02139
+Contact: 617-555-0456

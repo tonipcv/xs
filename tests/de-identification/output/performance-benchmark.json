@@ -1,0 +1,96 @@
+{
+  "timestamp": "2026-02-24T15:02:10.470Z",
+  "benchmarks": [
+    {
+      "testName": "Small Files (<10KB)",
+      "dataType": "text",
+      "fileCount": 50,
+      "totalSizeBytes": 250106,
+      "processingTimeMs": 355,
+      "throughputMBps": 0.6718863903636664,
+      "avgTimePerFile": 7.1,
+      "peakMemoryMB": 161.82666015625,
+      "phiDetected": 6163,
+      "phiRedacted": 5611,
+      "errorsEncountered": 0
+    },
+    {
+      "testName": "Medium Files (10-100KB)",
+      "dataType": "text",
+      "fileCount": 20,
+      "totalSizeBytes": 1000527,
+      "processingTimeMs": 174,
+      "throughputMBps": 5.483775303281587,
+      "avgTimePerFile": 8.7,
+      "peakMemoryMB": 162.91915893554688,
+      "phiDetected": 23786,
+      "phiRedacted": 21660,
+      "errorsEncountered": 0
+    },
+    {
+      "testName": "Large Files (>100KB)",
+      "dataType": "text",
+      "fileCount": 5,
+      "totalSizeBytes": 1000484,
+      "processingTimeMs": 263,
+      "throughputMBps": 3.627893136028101,
+      "avgTimePerFile": 52.6,
+      "peakMemoryMB": 171.74010467529297,
+      "phiDetected": 24288,
+      "phiRedacted": 22001,
+      "errorsEncountered": 0
+    },
+    {
+      "testName": "Batch Processing (100 files)",
+      "dataType": "text",
+      "fileCount": 100,
+      "totalSizeBytes": 1000481,
+      "processingTimeMs": 309,
+      "throughputMBps": 3.087809170719875,
+      "avgTimePerFile": 3.09,
+      "peakMemoryMB": 169.38867950439453,
+      "phiDetected": 24240,
+      "phiRedacted": 22014,
+      "errorsEncountered": 0
+    }
+  ],
+  "stressTests": [
+    {
+      "concurrentFiles": 10,
+      "totalFiles": 10,
+      "successRate": 100,
+      "avgProcessingTime": 2.6,
+      "peakMemory": 160.80023193359375,
+      "throughput": 3846.153846153846
+    },
+    {
+      "concurrentFiles": 50,
+      "totalFiles": 50,
+      "successRate": 100,
+      "avgProcessingTime": 2.84,
+      "peakMemory": 162.5071258544922,
+      "throughput": 3521.1267605633807
+    },
+    {
+      "concurrentFiles": 100,
+      "totalFiles": 100,
+      "successRate": 100,
+      "avgProcessingTime": 2.86,
+      "peakMemory": 172.11204528808594,
+      "throughput": 3496.503496503497
+    },
+    {
+      "concurrentFiles": 200,
+      "totalFiles": 200,
+      "successRate": 100,
+      "avgProcessingTime": 3.325,
+      "peakMemory": 196.9310531616211,
+      "throughput": 3007.518796992481
+    }
+  ],
+  "summary": {
+    "avgThroughput": 3.2178410000983075,
+    "avgRedactionRate": 90.8764878425489,
+    "maxStressSuccess": 100
+  }
+}

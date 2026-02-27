@@ -1,0 +1,40 @@
+{
+  "resourceType": "Patient",
+  "id": "patient-002",
+  "name": [
+    {
+      "family": "ANONYMIZED",
+      "given": [
+        "PATIENT"
+      ],
+      "text": "ANONYMIZED PATIENT"
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1975-10-11",
+  "address": [
+    {
+      "line": [
+        "REDACTED"
+      ],
+      "city": "REDACTED",
+      "state": "MA",
+      "postalCode": "021XX",
+      "country": "USA",
+      "text": "REDACTED"
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "XXX-XXX-XXXX",
+      "use": "mobile"
+    }
+  ],
+  "identifier": [
+    {
+      "system": "http://hospital.org/mrn",
+      "value": "ANON-VRYIPIV0"
+    }
+  ]
+}

@@ -1,0 +1,156 @@
+{
+  "timestamp": "2026-02-26T21:14:09.585Z",
+  "summary": {
+    "totalFiles": 12,
+    "success": 12,
+    "failed": 0,
+    "totalPHI": 118,
+    "totalRedacted": 118,
+    "overallRedactionRate": 100,
+    "averageDuration": 4.25
+  },
+  "results": [
+    {
+      "format": "DICOM Binary",
+      "file": "CT_small.dcm",
+      "success": true,
+      "phiDetected": 10,
+      "phiRedacted": 10,
+      "redactionRate": 100,
+      "duration": 9
+    },
+    {
+      "format": "DICOM Binary",
+      "file": "MR_small.dcm",
+      "success": true,
+      "phiDetected": 10,
+      "phiRedacted": 10,
+      "redactionRate": 100,
+      "duration": 4
+    },
+    {
+      "format": "DICOM Binary",
+      "file": "rtdose.dcm",
+      "success": true,
+      "phiDetected": 8,
+      "phiRedacted": 8,
+      "redactionRate": 100,
+      "duration": 2
+    },
+    {
+      "format": "FHIR",
+      "file": "encounter-1.json",
+      "success": true,
+      "phiDetected": 3,
+      "phiRedacted": 3,
+      "redactionRate": 100,
+      "duration": 6
+    },
+    {
+      "format": "FHIR",
+      "file": "observation-1.json",
+      "success": true,
+      "phiDetected": 1,
+      "phiRedacted": 1,
+      "redactionRate": 100,
+      "duration": 3
+    },
+    {
+      "format": "FHIR",
+      "file": "patient-1.json",
+      "success": true,
+      "phiDetected": 5,
+      "phiRedacted": 5,
+      "redactionRate": 100,
+      "duration": 2
+    },
+    {
+      "format": "Text",
+      "file": "clinical-note-001.txt",
+      "success": true,
+      "phiDetected": 19,
+      "phiRedacted": 19,
+      "redactionRate": 100,
+      "duration": 12
+    },
+    {
+      "format": "Text",
+      "file": "discharge-summary-001.txt",
+      "success": true,
+      "phiDetected": 26,
+      "phiRedacted": 26,
+      "redactionRate": 100,
+      "duration": 6
+    },
+    {
+      "format": "Text",
+      "file": "radiology-report-001.txt",
+      "success": true,
+      "phiDetected": 15,
+      "phiRedacted": 15,
+      "redactionRate": 100,
+      "duration": 2
+    },
+    {
+      "format": "HL7",
+      "file": "adt_admit_patient.hl7",
+      "success": true,
+      "phiDetected": 9,
+      "phiRedacted": 9,
+      "redactionRate": 100,
+      "duration": 2
+    },
+    {
+      "format": "HL7",
+      "file": "mdm_discharge_summary.hl7",
+      "success": true,
+      "phiDetected": 6,
+      "phiRedacted": 6,
+      "redactionRate": 100,
+      "duration": 3
+    },
+    {
+      "format": "HL7",
+      "file": "orm_medication_order.hl7",
+      "success": true,
+      "phiDetected": 6,
+      "phiRedacted": 6,
+      "redactionRate": 100,
+      "duration": 0
+    }
+  ],
+  "formatStats": [
+    {
+      "format": "DICOM Binary",
+      "success": 3,
+      "failed": 0,
+      "phi": 28,
+      "redacted": 28,
+      "redactionRate": 100
+    },
+    {
+      "format": "FHIR",
+      "success": 3,
+      "failed": 0,
+      "phi": 9,
+      "redacted": 9,
+      "redactionRate": 100
+    },
+    {
+      "format": "Text",
+      "success": 3,
+      "failed": 0,
+      "phi": 60,
+      "redacted": 60,
+      "redactionRate": 100
+    },
+    {
+      "format": "HL7",
+      "success": 3,
+      "failed": 0,
+      "phi": 21,
+      "redacted": 21,
+      "redactionRate": 100
+    }
+  ]
+}

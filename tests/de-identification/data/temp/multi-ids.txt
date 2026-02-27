@@ -1,0 +1,4 @@
+
+Patient identifiers: MRN-123456, SSN: 123-45-6789, Account: ACC-789012
+Insurance ID: INS-456789, Driver's License: DL-987654
+  

@@ -4,7 +4,8 @@
  */
 
 import { prisma } from '@/lib/prisma'
-import { getRedisClient } from '@/lib/redis'
+import { Prisma } from '@prisma/client'
+import { redis as RedisCompat } from '@/lib/redis'
 
 export interface StorageSnapshot {
   id: string
@@ -82,11 +83,11 @@ export class StorageService {
 
     const snapshotId = `ss_${Date.now()}_${Math.random().toString(36).substring(7)}`
 
-    // Store in Redis for fast access
-    const redis = await getRedisClient()
+    // Store in Redis for fast access (using compatibility wrapper)
     const redisKey = `${this.REDIS_PREFIX}snapshot:${snapshotId}`
-    await redis.set(
+    await RedisCompat.setex(
       redisKey,
+      7 * 24 * 60 * 60, // 7 days
       JSON.stringify({
         id: snapshotId,
         tenantId,
@@ -99,15 +100,13 @@ export class StorageService {
         billingPeriod: period,
         hoursInPeriod,
         gbHours,
-      }),
-      'EX',
-      7 * 24 * 60 * 60 // 7 days
+      })
     )
 
     // Add to tenant's snapshot timeline
     const timelineKey = `${this.REDIS_PREFIX}timeline:${tenantId}`
-    await redis.zadd(timelineKey, now.getTime(), snapshotId)
-    await redis.expire(timelineKey, 30 * 24 * 60 * 60) // 30 days
+    await RedisCompat.zAdd(timelineKey, { score: now.getTime(), value: snapshotId })
+    await RedisCompat.expire(timelineKey, 30 * 24 * 60 * 60) // 30 days
 
     // Persist to database (async, non-blocking)
     this.persistSnapshotToDb({
@@ -228,15 +227,21 @@ export class StorageService {
     datasetId?: string
   ): Promise<number> {
     try {
-      // Try database first
-      const result = await prisma.$queryRaw<Array<{ total: number }>>`
-        SELECT COALESCE(SUM(gb_hours), 0) as total
-        FROM xase_storage_snapshots
-        WHERE tenant_id = ${tenantId}
-          AND snapshot_timestamp >= ${start}
-          AND snapshot_timestamp <= ${end}
-          ${datasetId ? prisma.$queryRaw`AND dataset_id = ${datasetId}` : prisma.$queryRaw``}
-      `
+      // Try database first with safe SQL composition
+      const datasetFilter = datasetId
+        ? Prisma.sql` AND dataset_id = ${datasetId}`
+        : Prisma.empty;
+
+      const result = await prisma.$queryRaw<Array<{ total: number }>>(
+        Prisma.sql`
+          SELECT COALESCE(SUM(gb_hours), 0) as total
+          FROM xase_storage_snapshots
+          WHERE tenant_id = ${tenantId}
+            AND snapshot_timestamp >= ${start}
+            AND snapshot_timestamp <= ${end}
+            ${datasetFilter}
+        `
+      )
       
       if (result && result[0]) {
         return Number(result[0].total)
@@ -258,10 +263,9 @@ export class StorageService {
     end: Date,
     datasetId?: string
   ): Promise<number> {
-    const redis = await getRedisClient()
     const timelineKey = `${this.REDIS_PREFIX}timeline:${tenantId}`
     
-    const snapshotIds = await redis.zrangebyscore(
+    const snapshotIds = await RedisCompat.zRangeByScore(
       timelineKey,
       start.getTime(),
       end.getTime()
@@ -271,7 +275,7 @@ export class StorageService {
 
     for (const snapshotId of snapshotIds) {
       const snapshotKey = `${this.REDIS_PREFIX}snapshot:${snapshotId}`
-      const snapshotData = await redis.get(snapshotKey)
+      const snapshotData = await RedisCompat.get(snapshotKey)
       
       if (snapshotData) {
         const snapshot = JSON.parse(snapshotData)

@@ -1,0 +1,1 @@
+{"resourceType":"Patient","id":"test-nested","extension":[{"url":"http://example.org/custom-extension","valueString":"Contact: John Doe at 555-1234"}],"name":[{"family":"TestPatient","given":["Test"]}],"contact":[{"relationship":[{"text":"Emergency Contact: Jane Smith"}],"telecom":[{"system":"phone","value":"555-5678"}]}]}

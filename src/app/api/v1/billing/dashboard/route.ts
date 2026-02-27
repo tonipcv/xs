@@ -8,6 +8,18 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { BillingService } from '@/lib/billing/billing-service'
 
+// Safely convert BigInt values to string for JSON responses
+function toSafeJSON(value: any): any {
+  if (typeof value === 'bigint') return value.toString()
+  if (Array.isArray(value)) return value.map((v) => toSafeJSON(v))
+  if (value && typeof value === 'object') {
+    const out: Record<string, any> = {}
+    for (const [k, v] of Object.entries(value)) out[k] = toSafeJSON(v)
+    return out
+  }
+  return value
+}
+
 export async function GET(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -26,13 +38,13 @@ export async function GET(req: NextRequest) {
     // Get comprehensive billing summary
     if (action === 'summary' || !action) {
       const summary = await BillingService.getBillingSummary(tenantId)
-      return NextResponse.json(summary)
+      return NextResponse.json(toSafeJSON(summary))
     }
 
     // Get current month usage
     if (action === 'current-month') {
       const usage = await BillingService.getCurrentMonthUsage(tenantId)
-      return NextResponse.json(usage)
+      return NextResponse.json(toSafeJSON(usage))
     }
 
     // Get monthly usage for specific month
@@ -45,7 +57,7 @@ export async function GET(req: NextRequest) {
       const [year, month] = monthStr.split('-').map(Number)
       const monthDate = new Date(year, month - 1, 1)
       const usage = await BillingService.getMonthlyUsage(tenantId, monthDate)
-      return NextResponse.json(usage)
+      return NextResponse.json(toSafeJSON(usage))
     }
 
     // Get invoices

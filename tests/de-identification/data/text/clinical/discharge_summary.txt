@@ -1,0 +1,65 @@
+DISCHARGE SUMMARY
+
+Patient: Wilson, Patricia Ann
+MRN: 654321
+DOB: 05/15/1970
+SSN: 456-78-9012
+Admission Date: 02/10/2024
+Discharge Date: 02/16/2024
+Length of Stay: 6 days
+
+Attending Physician: Dr. Rodriguez, Maria
+Consulting Physicians: Cardiology (Dr. Kim), Endocrinology (Dr. Brown)
+
+ADMITTING DIAGNOSIS: Diabetic ketoacidosis
+
+DISCHARGE DIAGNOSIS:
+1. Diabetic ketoacidosis, resolved
+2. Type 2 Diabetes Mellitus, uncontrolled
+3. Hypertension
+4. Hyperlipidemia
+
+HOSPITAL COURSE:
+53-year-old female with history of T2DM presented to ED on 02/10/2024 with
+nausea, vomiting, and altered mental status. Initial labs showed glucose 487,
+pH 7.18, anion gap 24, positive ketones. Started on insulin drip and IVF.
+Anion gap closed by hospital day 2. Transitioned to subcutaneous insulin.
+
+Diabetes education provided by RN Sarah Johnson on 02/14/2024.
+Patient demonstrated understanding of insulin administration and glucose monitoring.
+
+DISCHARGE MEDICATIONS:
+1. Insulin glargine 20 units subcutaneous daily
+2. Insulin lispro 6 units subcutaneous with meals
+3. Metformin 1000mg PO BID
+4. Lisinopril 20mg PO daily
+5. Atorvastatin 40mg PO daily
+
+FOLLOW-UP:
+1. Endocrinology clinic with Dr. Brown on 02/28/2024 at 10:00 AM
+2. PCP Dr. Martinez within 1 week
+3. Diabetes education class scheduled for 03/05/2024
+
+PATIENT INSTRUCTIONS:
+- Check blood glucose before meals and at bedtime
+- Call if glucose >300 or <70
+- Follow diabetic diet as instructed
+- Exercise 30 minutes daily as tolerated
+
+CONTACT INFORMATION:
+Home: 339-555-7890
+Cell: 617-555-4567
+Emergency Contact: Husband John Wilson 508-555-8901
+Address: 789 Maple Drive, Brookline, MA 02445
+
+Primary Care Provider:
+Dr. Martinez, Luis
+Boston Family Medicine
+123 Medical Plaza, Boston, MA 02115
+Phone: 617-555-CARE (2273)
+Fax: 617-555-2274
+
+Insurance: Medicare #123-45-6789A
+
+Electronically signed: Dr. Maria Rodriguez, MD
+Date: 02/16/2024 15:45

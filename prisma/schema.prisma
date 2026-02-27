@@ -162,6 +162,7 @@ model Tenant {
   buyerExecutions   PolicyExecution[] @relation("BuyerExecutions")
   buyerReviews      AccessReview[] @relation("BuyerReviews")
   ropaRecords       ROPARecord[]
+  billingSnapshots  BillingSnapshot[]
   
   @@map("xase_tenants")
 }
@@ -1181,4 +1182,39 @@ model ExecutionContractSnapshot {
   @@index([executionId])
   @@index([contractHash])
   @@map("execution_contract_snapshots")
+}
+
+model BillingSnapshot {
+  id                   BigInt   @id @default(autoincrement())
+  tenantId             String   @map("tenant_id")
+  sidecarUrl           String   @map("sidecar_url")
+  snapshotDate         DateTime @map("snapshot_date")
+  period               String   // YYYY-MM format
+  
+  // Billing counters
+  dicomImages          Float    @default(0) @map("dicom_images")
+  fhirResources        Float    @default(0) @map("fhir_resources")
+  audioMinutes         Float    @default(0) @map("audio_minutes")
+  textPages            Float    @default(0) @map("text_pages")
+  bytesTotal           Float    @default(0) @map("bytes_total")
+  redactionsTotal      Float    @default(0) @map("redactions_total")
+  
+  // Sidecar metadata
+  sidecarVersion       String?  @map("sidecar_version")
+  ingestionMode        String?  @map("ingestion_mode")
+  dataPipeline         String?  @map("data_pipeline")
+  
+  // Features enabled
+  featureDicomOcr      Boolean  @default(false) @map("feature_dicom_ocr")
+  featureFhirNlp       Boolean  @default(false) @map("feature_fhir_nlp")
+  featureAudioRedaction Boolean @default(false) @map("feature_audio_redaction")
+  featurePrefetch      Boolean  @default(false) @map("feature_prefetch")
+  
+  createdAt            DateTime @default(now()) @map("created_at")
+  
+  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([tenantId, period])
+  @@index([snapshotDate])
+  @@map("billing_snapshots")
 }

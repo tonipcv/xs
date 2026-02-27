@@ -1,0 +1,41 @@
+DISCHARGE SUMMARY
+
+Patient Name: Robert James Williams
+Medical Record Number: MRN: REDACTED
+Date of Birth: January 17, 1964
+Social Security Number: XXX-XX-XXXX
+Admission Date: November 8, 2022
+Discharge Date: November 12, 2022
+Attending Physician: Dr. REDACTED. REDACTED
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+ST-elevation myocardial infarction (STEMI), anterior REDACTED Medical Center COURSE:
+58-year-old male presented to emergency department on 07/21/2023 at 02:30
+with acute onset chest pain. EKG showed ST elevations in leads V1-V4.
+Patient was taken emergently to cardiac catheterization lab where he
+underwent successful PCI with drug-eluting stent placement to proximal LAD.
+
+Post-procedure course was uncomplicated. Patient was monitored in CCU for
+48 hours then transferred to telemetry floor. Cardiac enzymes trended down
+appropriately. Echocardiogram showed LVEF 45% with anterior wall hypokinesis.
+
+DISCHARGE MEDICATIONS:
+- Aspirin 81mg daily
+- Clopidogrel 75mg daily
+- Atorvastatin 80mg daily
+- Metoprolol 50mg twice daily
+- Lisinopril 10mg daily
+
+FOLLOW-UP:
+REDACTED Medical Center in 2 weeks with Dr. REDACTED: XXX-XXX-XXXXXXX-XXX-XXXX
+Address: REDACTED
+
+Patient discharged home with wife on 07/25/2023 at 14:00.
+Home Address: REDACTED
+Home phone: XXX-XXX-XXXXXXX-XXX-XXXX
+
+Electronically signed: Dr. REDACTED, MD
+Date: 11/12/2022 15:30

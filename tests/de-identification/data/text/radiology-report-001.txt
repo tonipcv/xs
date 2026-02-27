@@ -1,0 +1,25 @@
+RADIOLOGY REPORT
+
+Patient: John Michael Smith
+MRN: MRN-123456
+DOB: 05/15/1980
+Exam Date: January 15, 2024
+Ordering Physician: Dr. Robert Jones
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, 
+pleural effusion, or pneumothorax. No acute bony abnormality is identified.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Emily Chen, MD
+Date: 01/15/2024 14:30
+Massachusetts General Hospital
+Phone: 617-555-0100

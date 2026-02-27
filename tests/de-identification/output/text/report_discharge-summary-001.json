@@ -1,0 +1,308 @@
+{
+  "originalFile": "discharge-summary-001.txt",
+  "phiDetected": 26,
+  "phiRedacted": 26,
+  "phiTypes": {
+    "SSN": 1,
+    "MRN": 1,
+    "PHONE": 4,
+    "DATE": 10,
+    "LOCATION": 6,
+    "NAME": 4
+  },
+  "entities": [
+    {
+      "type": "SSN",
+      "text": "555-66-7777",
+      "start": 142,
+      "end": 153,
+      "confidence": 1
+    },
+    {
+      "type": "MRN",
+      "text": "MRN-456789",
+      "start": 78,
+      "end": 88,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "617-555-0200",
+      "start": 1140,
+      "end": 1152,
+      "confidence": 0.9
+    },
+    {
+      "type": "PHONE",
+      "text": "617-555-0321",
+      "start": 1339,
+      "end": 1351,
+      "confidence": 0.9
+    },
+    {
+      "type": "PHONE",
+      "text": "Phone: ",
+      "start": 1133,
+      "end": 1140,
+      "confidence": 0.9
+    },
+    {
+      "type": "PHONE",
+      "text": "phone: ",
+      "start": 1332,
+      "end": 1339,
+      "confidence": 0.9
+    },
+    {
+      "type": "DATE",
+      "text": "04/01/2024",
+      "start": 457,
+      "end": 467,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "04/05/2024",
+      "start": 1269,
+      "end": 1279,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "04/05/2024",
+      "start": 1427,
+      "end": 1437,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "June 10, 1965",
+      "start": 107,
+      "end": 120,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "April 1, 2024",
+      "start": 173,
+      "end": 186,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "April 5, 2024",
+      "start": 203,
+      "end": 216,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Date of Birth: April 29, 1965",
+      "start": 92,
+      "end": 121,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Admission Date: February 19, 2024",
+      "start": 158,
+      "end": 191,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Discharge Date: February 23, 2024",
+      "start": 192,
+      "end": 225,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Date: 02/23/2024",
+      "start": 1430,
+      "end": 1446,
+      "confidence": 0.85
+    },
+    {
+      "type": "LOCATION",
+      "text": "100 Medical Drive",
+      "start": 1201,
+      "end": 1218,
+      "confidence": 0.8
+    },
+    {
+      "type": "LOCATION",
+      "text": "321 Pine Road",
+      "start": 1310,
+      "end": 1323,
+      "confidence": 0.8
+    },
+    {
+      "type": "LOCATION",
+      "text": "Address: Boston Heart Center, REDACTED, Boston, MA 02115",
+      "start": 1171,
+      "end": 1227,
+      "confidence": 0.8
+    },
+    {
+      "type": "LOCATION",
+      "text": "address: REDACTED, Brookline, MA 02445",
+      "start": 1292,
+      "end": 1330,
+      "confidence": 0.8
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. Patricia Lee",
+      "start": 244,
+      "end": 260,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. Patricia Lee\nPhone",
+      "start": 1122,
+      "end": 1144,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. Patricia Lee",
+      "start": 1332,
+      "end": 1348,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Attending Physician: Dr",
+      "start": 223,
+      "end": 246,
+      "confidence": 0.75
+    },
+    {
+      "type": "LOCATION",
+      "text": "wall\n\nHOSPITAL",
+      "start": 392,
+      "end": 406,
+      "confidence": 0.7
+    },
+    {
+      "type": "LOCATION",
+      "text": "Cardiology clinic",
+      "start": 1094,
+      "end": 1111,
+      "confidence": 0.7
+    }
+  ],
+  "redactionMap": [
+    [
+      "SSN_142",
+      "555-66-7777 -> XXX-XX-XXXX"
+    ],
+    [
+      "MRN_78",
+      "MRN-456789 -> MRN: REDACTED"
+    ],
+    [
+      "PHONE_1140",
+      "617-555-0200 -> XXX-XXX-XXXX"
+    ],
+    [
+      "PHONE_1339",
+      "617-555-0321 -> XXX-XXX-XXXX"
+    ],
+    [
+      "PHONE_1133",
+      "Phone:  -> Phone: XXX-XXX-XXXX"
+    ],
+    [
+      "PHONE_1332",
+      "phone:  -> phone: XXX-XXX-XXXX"
+    ],
+    [
+      "DATE_457",
+      "04/01/2024 -> 02/19/2024"
+    ],
+    [
+      "DATE_1269",
+      "04/05/2024 -> 02/23/2024"
+    ],
+    [
+      "DATE_1427",
+      "04/05/2024 -> 02/23/2024"
+    ],
+    [
+      "DATE_107",
+      "June 10, 1965 -> April 29, 1965"
+    ],
+    [
+      "DATE_173",
+      "April 1, 2024 -> February 19, 2024"
+    ],
+    [
+      "DATE_203",
+      "April 5, 2024 -> February 23, 2024"
+    ],
+    [
+      "DATE_92",
+      "Date of Birth: April 29, 1965 -> Date of Birth: March 18, 1965"
+    ],
+    [
+      "DATE_158",
+      "Admission Date: February 19, 2024 -> Admission Date: January 8, 2024"
+    ],
+    [
+      "DATE_192",
+      "Discharge Date: February 23, 2024 -> Discharge Date: January 12, 2024"
+    ],
+    [
+      "DATE_1430",
+      "Date: 02/23/2024 -> Date: 01/12/2024"
+    ],
+    [
+      "ADDRESS_1201",
+      "100 Medical Drive -> REDACTED"
+    ],
+    [
+      "ADDRESS_1310",
+      "321 Pine Road -> REDACTED"
+    ],
+    [
+      "ADDRESS_1171",
+      "Address: Boston Heart Center, REDACTED, Boston, MA 02115 -> Address: REDACTED"
+    ],
+    [
+      "ADDRESS_1292",
+      "address: REDACTED, Brookline, MA 02445 -> Address: REDACTED"
+    ],
+    [
+      "NAME_244",
+      "Dr. Patricia Lee -> Dr. REDACTED"
+    ],
+    [
+      "NAME_1122",
+      "Dr. Patricia Lee\nPhone -> Dr. REDACTED"
+    ],
+    [
+      "NAME_1332",
+      "Dr. Patricia Lee -> Dr. REDACTED"
+    ],
+    [
+      "NAME_223",
+      "Attending Physician: Dr -> Attending Physician: Dr. REDACTED"
+    ],
+    [
+      "LOCATION_392",
+      "wall\n\nHOSPITAL -> REDACTED Medical Center"
+    ],
+    [
+      "LOCATION_1094",
+      "Cardiology clinic -> REDACTED Medical Center"
+    ]
+  ],
+  "validation": {
+    "isValid": true,
+    "hasStructure": true,
+    "errors": []
+  }
+}

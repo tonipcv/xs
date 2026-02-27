@@ -1,0 +1,83 @@
+{
+  "file": "consultation_001.wav",
+  "metrics": {
+    "phiDetected": 6,
+    "phiRedacted": 6,
+    "redactionRate": 100
+  },
+  "phiEntities": [
+    {
+      "type": "NAME",
+      "text": "Patient John",
+      "start": 0,
+      "end": 12,
+      "confidence": 0.85
+    },
+    {
+      "type": "NAME",
+      "text": "Main Street",
+      "start": 155,
+      "end": 166,
+      "confidence": 0.85
+    },
+    {
+      "type": "MRN",
+      "text": "123456",
+      "start": 18,
+      "end": 46,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "617-555-0123",
+      "start": 126,
+      "end": 138,
+      "confidence": 0.9
+    },
+    {
+      "type": "DATE",
+      "text": "August 15, 1980",
+      "start": 62,
+      "end": 77,
+      "confidence": 0.9
+    },
+    {
+      "type": "ADDRESS",
+      "text": "123 Main Street, Boston, MA 02101",
+      "start": 151,
+      "end": 184,
+      "confidence": 0.85
+    }
+  ],
+  "validation": {
+    "isValid": true,
+    "errors": [],
+    "warnings": []
+  },
+  "redactionMap": [
+    [
+      "NAME_155",
+      "Main Street -> [NAME REDACTED]"
+    ],
+    [
+      "ADDRESS_151",
+      "123 Main Street, Boston, MA 02101 -> [ADDRESS REDACTED]"
+    ],
+    [
+      "PHONE_126",
+      "617-555-0123 -> [PHONE REDACTED]"
+    ],
+    [
+      "DATE_62",
+      "August 15, 1980 -> [DATE REDACTED]"
+    ],
+    [
+      "MRN_18",
+      "123456 -> [MRN REDACTED]"
+    ],
+    [
+      "NAME_0",
+      "Patient John -> [NAME REDACTED]"
+    ]
+  ]
+}

@@ -1,0 +1,47 @@
+[
+  {
+    "timestamp": "2026-02-24T16:54:04.013Z",
+    "period": "Last test run",
+    "summary": {
+      "totalFiles": 15,
+      "filesProcessed": 15,
+      "filesFailed": 0,
+      "successRate": 100,
+      "avgProcessingTime": 187.13333333333333,
+      "throughput": 5.3437833986462415
+    },
+    "quality": {
+      "phiDetected": 142,
+      "phiRedacted": 142,
+      "redactionRate": 100,
+      "integrityRate": 100
+    },
+    "byDataType": {
+      "DICOM": {
+        "files": 3,
+        "redactionRate": 100,
+        "avgTime": 2.3333333333333335
+      },
+      "FHIR": {
+        "files": 5,
+        "redactionRate": 100,
+        "avgTime": 1.2
+      },
+      "Text": {
+        "files": 4,
+        "redactionRate": 100,
+        "avgTime": 4.5
+      },
+      "Audio": {
+        "files": 3,
+        "redactionRate": 100,
+        "avgTime": 5
+      }
+    },
+    "errors": [],
+    "alerts": [
+      "✅ Excellent redaction rate - system performing optimally",
+      "✅ Excellent file integrity - no data corruption detected"
+    ]
+  }
+]

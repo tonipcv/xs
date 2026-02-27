@@ -1,0 +1,59 @@
+{
+  "file": "mdm_discharge_summary.hl7",
+  "metrics": {
+    "phiDetected": 6,
+    "phiRedacted": 6,
+    "redactionRate": 100
+  },
+  "phiEntities": [
+    {
+      "type": "ID",
+      "text": "147258369^^^HOSPITAL^MR",
+      "start": 0,
+      "end": 23,
+      "confidence": 0.95
+    },
+    {
+      "type": "NAME",
+      "text": "WILSON^PATRICIA^ANN",
+      "start": 0,
+      "end": 19,
+      "confidence": 0.95
+    },
+    {
+      "type": "DATE",
+      "text": "19700515",
+      "start": 0,
+      "end": 8,
+      "confidence": 0.95
+    },
+    {
+      "type": "LOCATION",
+      "text": "654 MAPLE DR^^QUINCY^MA^02169^USA",
+      "start": 0,
+      "end": 33,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(339)555-7890",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(339)555-4321",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    }
+  ],
+  "validation": {
+    "isValid": true,
+    "errors": [],
+    "warnings": [
+      "Possible SSN pattern detected"
+    ]
+  }
+}

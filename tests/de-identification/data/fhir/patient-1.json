@@ -1,0 +1,48 @@
+{
+  "resourceType": "Patient",
+  "id": "patient-001",
+  "name": [
+    {
+      "family": "Smith",
+      "given": [
+        "John",
+        "Michael"
+      ]
+    }
+  ],
+  "gender": "male",
+  "birthDate": "1980-05-15",
+  "address": [
+    {
+      "line": [
+        "123 Main Street",
+        "Apt 4B"
+      ],
+      "city": "Boston",
+      "state": "MA",
+      "postalCode": "02101",
+      "country": "USA"
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "617-555-0123",
+      "use": "home"
+    },
+    {
+      "system": "email",
+      "value": "john.smith@example.com"
+    }
+  ],
+  "identifier": [
+    {
+      "system": "http://hospital.org/mrn",
+      "value": "MRN-123456"
+    },
+    {
+      "system": "http://hl7.org/fhir/sid/us-ssn",
+      "value": "123-45-6789"
+    }
+  ]
+}

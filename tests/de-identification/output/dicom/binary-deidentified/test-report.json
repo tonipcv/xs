@@ -1,0 +1,56 @@
+{
+  "timestamp": "2026-02-26T21:15:26.249Z",
+  "summary": {
+    "totalFiles": 6,
+    "success": 5,
+    "failed": 1,
+    "totalPHI": 51,
+    "totalRedacted": 51,
+    "overallRedactionRate": 100
+  },
+  "results": [
+    {
+      "file": "CT_small.dcm",
+      "success": true,
+      "phiDetected": 10,
+      "phiRedacted": 10,
+      "redactionRate": 100
+    },
+    {
+      "file": "MR_small.dcm",
+      "success": true,
+      "phiDetected": 10,
+      "phiRedacted": 10,
+      "redactionRate": 100
+    },
+    {
+      "file": "rtdose.dcm",
+      "success": true,
+      "phiDetected": 8,
+      "phiRedacted": 8,
+      "redactionRate": 100
+    },
+    {
+      "file": "rtplan.dcm",
+      "success": true,
+      "phiDetected": 10,
+      "phiRedacted": 10,
+      "redactionRate": 100
+    },
+    {
+      "file": "rtstruct.dcm",
+      "success": false,
+      "phiDetected": 0,
+      "phiRedacted": 0,
+      "redactionRate": 0,
+      "error": "Failed to parse DICOM: undefined"
+    },
+    {
+      "file": "waveform_ecg.dcm",
+      "success": true,
+      "phiDetected": 13,
+      "phiRedacted": 13,
+      "redactionRate": 100
+    }
+  ]
+}

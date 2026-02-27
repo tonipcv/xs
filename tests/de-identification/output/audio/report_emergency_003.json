@@ -1,0 +1,61 @@
+{
+  "file": "emergency_003.wav",
+  "metrics": {
+    "phiDetected": 4,
+    "phiRedacted": 4,
+    "redactionRate": 100
+  },
+  "phiEntities": [
+    {
+      "type": "NAME",
+      "text": "Robert Johnson",
+      "start": 22,
+      "end": 36,
+      "confidence": 0.85
+    },
+    {
+      "type": "NAME",
+      "text": "Mary Johnson",
+      "start": 49,
+      "end": 61,
+      "confidence": 0.85
+    },
+    {
+      "type": "PHONE",
+      "text": "508-555-4321",
+      "start": 65,
+      "end": 77,
+      "confidence": 0.9
+    },
+    {
+      "type": "DATE",
+      "text": "January 10, 2024",
+      "start": 99,
+      "end": 115,
+      "confidence": 0.9
+    }
+  ],
+  "validation": {
+    "isValid": true,
+    "errors": [],
+    "warnings": []
+  },
+  "redactionMap": [
+    [
+      "DATE_99",
+      "January 10, 2024 -> [DATE REDACTED]"
+    ],
+    [
+      "PHONE_65",
+      "508-555-4321 -> [PHONE REDACTED]"
+    ],
+    [
+      "NAME_49",
+      "Mary Johnson -> [NAME REDACTED]"
+    ],
+    [
+      "NAME_22",
+      "Robert Johnson -> [NAME REDACTED]"
+    ]
+  ]
+}

@@ -1,0 +1,242 @@
+{
+  "originalFile": "radiology-report-002.txt",
+  "phiDetected": 20,
+  "phiRedacted": 20,
+  "phiTypes": {
+    "SSN": 1,
+    "MRN": 1,
+    "PHONE": 2,
+    "DATE": 8,
+    "LOCATION": 4,
+    "NAME": 4
+  },
+  "entities": [
+    {
+      "type": "SSN",
+      "text": "987-65-4321",
+      "start": 88,
+      "end": 99,
+      "confidence": 1
+    },
+    {
+      "type": "MRN",
+      "text": "MRN: MRN-789012",
+      "start": 51,
+      "end": 66,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "617-555-0456",
+      "start": 738,
+      "end": 750,
+      "confidence": 0.9
+    },
+    {
+      "type": "PHONE",
+      "text": "Contact: ",
+      "start": 729,
+      "end": 738,
+      "confidence": 0.9
+    },
+    {
+      "type": "DATE",
+      "text": "12/03/1975",
+      "start": 70,
+      "end": 80,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "08/15/2023",
+      "start": 379,
+      "end": 389,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "02/10/2024",
+      "start": 618,
+      "end": 628,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "February 10, 2024",
+      "start": 109,
+      "end": 126,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "02/06/2023",
+      "start": 376,
+      "end": 386,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "08/04/2023",
+      "start": 615,
+      "end": 625,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "DOB: 05/27/1975",
+      "start": 65,
+      "end": 80,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Exam Date: August 4, 2023",
+      "start": 98,
+      "end": 123,
+      "confidence": 0.85
+    },
+    {
+      "type": "LOCATION",
+      "text": "456 Oak Avenue",
+      "start": 692,
+      "end": 706,
+      "confidence": 0.8
+    },
+    {
+      "type": "LOCATION",
+      "text": "Cambridge, MA 02139",
+      "start": 702,
+      "end": 721,
+      "confidence": 0.8
+    },
+    {
+      "type": "NAME",
+      "text": "Patient: Sarah Elizabeth Johnson",
+      "start": 18,
+      "end": 50,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. Michael Brown",
+      "start": 141,
+      "end": 158,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. James Wilson",
+      "start": 588,
+      "end": 604,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Ordering Physician: Dr",
+      "start": 121,
+      "end": 143,
+      "confidence": 0.75
+    },
+    {
+      "type": "LOCATION",
+      "text": "REDACTED\n\nCLINIC",
+      "start": 155,
+      "end": 171,
+      "confidence": 0.7
+    },
+    {
+      "type": "LOCATION",
+      "text": "Cambridge Medical Center",
+      "start": 662,
+      "end": 686,
+      "confidence": 0.7
+    }
+  ],
+  "redactionMap": [
+    [
+      "SSN_88",
+      "987-65-4321 -> XXX-XX-XXXX"
+    ],
+    [
+      "MRN_51",
+      "MRN: MRN-789012 -> MRN: REDACTED"
+    ],
+    [
+      "PHONE_738",
+      "617-555-0456 -> XXX-XXX-XXXX"
+    ],
+    [
+      "PHONE_729",
+      "Contact:  -> Contact: XXX-XXX-XXXX"
+    ],
+    [
+      "DATE_70",
+      "12/03/1975 -> 05/27/1975"
+    ],
+    [
+      "DATE_379",
+      "08/15/2023 -> 02/06/2023"
+    ],
+    [
+      "DATE_618",
+      "02/10/2024 -> 08/04/2023"
+    ],
+    [
+      "DATE_109",
+      "February 10, 2024 -> August 4, 2023"
+    ],
+    [
+      "DATE_376",
+      "02/06/2023 -> 07/31/2022"
+    ],
+    [
+      "DATE_615",
+      "08/04/2023 -> 01/26/2023"
+    ],
+    [
+      "DATE_65",
+      "DOB: 05/27/1975 -> DOB: 11/18/1974"
+    ],
+    [
+      "DATE_98",
+      "Exam Date: August 4, 2023 -> Exam Date: January 26, 2023"
+    ],
+    [
+      "ADDRESS_692",
+      "456 Oak Avenue -> REDACTED"
+    ],
+    [
+      "ADDRESS_702",
+      "Cambridge, MA 02139 -> REDACTED"
+    ],
+    [
+      "NAME_18",
+      "Patient: Sarah Elizabeth Johnson -> Patient: ANONYMIZED PATIENT"
+    ],
+    [
+      "NAME_141",
+      "Dr. Michael Brown -> Dr. REDACTED"
+    ],
+    [
+      "NAME_588",
+      "Dr. James Wilson -> Dr. REDACTED"
+    ],
+    [
+      "NAME_121",
+      "Ordering Physician: Dr -> Ordering Physician: Dr. REDACTED"
+    ],
+    [
+      "LOCATION_155",
+      "REDACTED\n\nCLINIC -> REDACTED Medical Center"
+    ],
+    [
+      "LOCATION_662",
+      "Cambridge Medical Center -> REDACTED Medical Center"
+    ]
+  ],
+  "validation": {
+    "isValid": true,
+    "hasStructure": true,
+    "errors": []
+  }
+}

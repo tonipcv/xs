@@ -22,7 +22,7 @@ export default function GovernedAccessCatalogPage() {
   const [offers, setOffers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [view, setView] = useState<'grid' | 'list'>('grid')
-  const [sort, setSort] = useState<'relevance' | 'price_asc' | 'newest' | 'accessed_desc'>('relevance')
+  const [sort, setSort] = useState<'relevance' | 'newest' | 'accessed_desc'>('relevance')
   const [filters, setFilters] = useState({
     riskClass: '',
     language: '',
@@ -175,12 +175,12 @@ export default function GovernedAccessCatalogPage() {
                   />
 
                   {/* Data Type */}
-                  <Select value={filters.dataType} onValueChange={(v) => handleFilterChange('dataType', v)}>
+                  <Select value={filters.dataType} onValueChange={(v) => handleFilterChange('dataType', v === '__ALL__' ? '' : v)}>
                     <SelectTrigger className="h-7 w-[160px] text-[11px] border-gray-300">
                       <SelectValue placeholder="Data Type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Types</SelectItem>
+                      <SelectItem value="__ALL__">All Types</SelectItem>
                       <SelectItem value="AUDIO">Audio</SelectItem>
                       <SelectItem value="IMAGE">Medical Image</SelectItem>
                       <SelectItem value="TEXT">Clinical Text</SelectItem>
@@ -190,12 +190,12 @@ export default function GovernedAccessCatalogPage() {
                   </Select>
 
                   {/* Regulatory */}
-                  <Select value={filters.regulatory} onValueChange={(v) => handleFilterChange('regulatory', v)}>
+                  <Select value={filters.regulatory} onValueChange={(v) => handleFilterChange('regulatory', v === '__ALL__' ? '' : v)}>
                     <SelectTrigger className="h-7 w-[180px] text-[11px] border-gray-300">
                       <SelectValue placeholder="Regulatory" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="">All Frameworks</SelectItem>
+                      <SelectItem value="__ALL__">All Frameworks</SelectItem>
                       <SelectItem value="HIPAA">HIPAA</SelectItem>
                       <SelectItem value="GDPR">GDPR</SelectItem>
                       <SelectItem value="LGPD">LGPD</SelectItem>
@@ -249,7 +249,6 @@ export default function GovernedAccessCatalogPage() {
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="relevance" className="text-[11px]">Relevance</SelectItem>
-                  <SelectItem value="price_asc" className="text-[11px]">Price: Low → High</SelectItem>
                   <SelectItem value="newest" className="text-[11px]">Newest</SelectItem>
                   <SelectItem value="accessed_desc" className="text-[11px]">Most Accessed</SelectItem>
                 </SelectContent>

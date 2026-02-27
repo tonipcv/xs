@@ -125,15 +125,13 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
   }
 
   const getTrendIcon = (growth: number) => {
-    if (growth > 0) return <TrendingUp className="h-4 w-4 text-red-500" />
-    if (growth < 0) return <TrendingDown className="h-4 w-4 text-green-500" />
+    if (growth > 0) return <TrendingUp className="h-4 w-4 text-gray-900" />
+    if (growth < 0) return <TrendingDown className="h-4 w-4 text-gray-900" />
     return null
   }
 
   const getTrendColor = (growth: number) => {
-    if (growth > 0) return 'text-red-600'
-    if (growth < 0) return 'text-green-600'
-    return 'text-gray-600'
+    return 'text-gray-900'
   }
 
   if (loading) {
@@ -165,12 +163,12 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Current Balance</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-900">Current Balance</CardTitle>
+            <DollarSign className="h-4 w-4 text-gray-900" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summary.balance)}</div>
-            <p className="text-xs text-muted-foreground">
+            <div className="text-2xl font-bold text-gray-900">{formatCurrency(summary.balance)}</div>
+            <p className="text-xs text-gray-900">
               Available credits
             </p>
           </CardContent>
@@ -178,12 +176,12 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Storage Usage</CardTitle>
-            <HardDrive className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-900">Storage Usage</CardTitle>
+            <HardDrive className="h-4 w-4 text-gray-900" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{storage.totalStorageGb.toFixed(2)} GB</div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <div className="text-2xl font-bold text-gray-900">{storage.totalStorageGb.toFixed(2)} GB</div>
+            <p className="text-xs text-gray-900 flex items-center gap-1">
               {getTrendIcon(summary.trends.storageGrowth)}
               <span className={getTrendColor(summary.trends.storageGrowth)}>
                 {Math.abs(summary.trends.storageGrowth).toFixed(1)}% from last month
@@ -194,14 +192,14 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Compute Hours</CardTitle>
-            <Cpu className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-900">Compute Hours</CardTitle>
+            <Cpu className="h-4 w-4 text-gray-900" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-gray-900">
               {summary.currentMonth.usage.computeHours.toFixed(1)}h
             </div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <p className="text-xs text-gray-900 flex items-center gap-1">
               {getTrendIcon(summary.trends.computeGrowth)}
               <span className={getTrendColor(summary.trends.computeGrowth)}>
                 {Math.abs(summary.trends.computeGrowth).toFixed(1)}% from last month
@@ -212,14 +210,14 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">This Month</CardTitle>
-            <Calendar className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-gray-900">This Month</CardTitle>
+            <Calendar className="h-4 w-4 text-gray-900" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
+            <div className="text-2xl font-bold text-gray-900">
               {formatCurrency(summary.currentMonth.costs.total)}
             </div>
-            <p className="text-xs text-muted-foreground flex items-center gap-1">
+            <p className="text-xs text-gray-900 flex items-center gap-1">
               {getTrendIcon(summary.trends.costGrowth)}
               <span className={getTrendColor(summary.trends.costGrowth)}>
                 {Math.abs(summary.trends.costGrowth).toFixed(1)}% from last month
@@ -232,27 +230,27 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
       {/* Cost Breakdown */}
       <Card>
         <CardHeader>
-          <CardTitle>Cost Breakdown</CardTitle>
-          <CardDescription>Current month usage and costs</CardDescription>
+          <CardTitle className="text-gray-900">Cost Breakdown</CardTitle>
+          <CardDescription className="text-gray-900">Current month usage and costs</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {/* Data Processing */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Database className="h-5 w-5 text-blue-500" />
+                <Database className="h-5 w-5 text-gray-900" />
                 <div>
-                  <p className="text-sm font-medium">Data Processing</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-medium text-gray-900">Data Processing</p>
+                  <p className="text-xs text-gray-900">
                     {formatBytes(Number(summary.currentMonth.usage.bytesProcessed))} processed
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold">
+                <p className="text-sm font-bold text-gray-900">
                   {formatCurrency(summary.currentMonth.costs.dataProcessing)}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-900">
                   {((summary.currentMonth.costs.dataProcessing / summary.currentMonth.costs.total) * 100).toFixed(0)}%
                 </p>
               </div>
@@ -261,19 +259,19 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
             {/* Compute */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <Cpu className="h-5 w-5 text-purple-500" />
+                <Cpu className="h-5 w-5 text-gray-900" />
                 <div>
-                  <p className="text-sm font-medium">Compute</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-medium text-gray-900">Compute</p>
+                  <p className="text-xs text-gray-900">
                     {summary.currentMonth.usage.computeHours.toFixed(1)} hours
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold">
+                <p className="text-sm font-bold text-gray-900">
                   {formatCurrency(summary.currentMonth.costs.compute)}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-900">
                   {((summary.currentMonth.costs.compute / summary.currentMonth.costs.total) * 100).toFixed(0)}%
                 </p>
               </div>
@@ -282,19 +280,19 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
             {/* Storage */}
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <HardDrive className="h-5 w-5 text-green-500" />
+                <HardDrive className="h-5 w-5 text-gray-900" />
                 <div>
-                  <p className="text-sm font-medium">Storage</p>
-                  <p className="text-xs text-muted-foreground">
+                  <p className="text-sm font-medium text-gray-900">Storage</p>
+                  <p className="text-xs text-gray-900">
                     {summary.currentMonth.usage.storageGbHours.toFixed(1)} GB-hours
                   </p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-sm font-bold">
+                <p className="text-sm font-bold text-gray-900">
                   {formatCurrency(summary.currentMonth.costs.storage)}
                 </p>
-                <p className="text-xs text-muted-foreground">
+                <p className="text-xs text-gray-900">
                   {((summary.currentMonth.costs.storage / summary.currentMonth.costs.total) * 100).toFixed(0)}%
                 </p>
               </div>
@@ -303,8 +301,8 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
             {/* Total */}
             <div className="pt-4 border-t">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-semibold">Total</p>
-                <p className="text-lg font-bold">
+                <p className="text-sm font-semibold text-gray-900">Total</p>
+                <p className="text-lg font-bold text-gray-900">
                   {formatCurrency(summary.currentMonth.costs.total)}
                 </p>
               </div>
@@ -316,8 +314,8 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
       {/* Storage by Dataset */}
       <Card>
         <CardHeader>
-          <CardTitle>Storage by Dataset</CardTitle>
-          <CardDescription>Current storage allocation across datasets</CardDescription>
+          <CardTitle className="text-gray-900">Storage by Dataset</CardTitle>
+          <CardDescription className="text-gray-900">Current storage allocation across datasets</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
@@ -325,21 +323,21 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
               storage.datasets.map((dataset) => (
                 <div key={dataset.datasetId} className="flex items-center justify-between py-2 border-b last:border-0">
                   <div className="flex-1">
-                    <p className="text-sm font-medium truncate">{dataset.datasetId}</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-medium text-gray-900 truncate">{dataset.datasetId}</p>
+                    <p className="text-xs text-gray-900">
                       Last updated: {new Date(dataset.lastSnapshot).toLocaleString()}
                     </p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-bold">{dataset.storageGb.toFixed(2)} GB</p>
-                    <p className="text-xs text-muted-foreground">
+                    <p className="text-sm font-bold text-gray-900">{dataset.storageGb.toFixed(2)} GB</p>
+                    <p className="text-xs text-gray-900">
                       {((dataset.storageGb / storage.totalStorageGb) * 100).toFixed(0)}%
                     </p>
                   </div>
                 </div>
               ))
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-4">
+              <p className="text-sm text-gray-900 text-center py-4">
                 No storage data available
               </p>
             )}
@@ -350,22 +348,22 @@ export function BillingDashboard({ tenantId }: { tenantId: string }) {
       {/* Upcoming Invoice */}
       <Card>
         <CardHeader>
-          <CardTitle>Upcoming Invoice</CardTitle>
-          <CardDescription>
+          <CardTitle className="text-gray-900">Upcoming Invoice</CardTitle>
+          <CardDescription className="text-gray-900">
             Due {new Date(summary.upcomingInvoice.dueDate).toLocaleDateString()}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-3xl font-bold">
+              <p className="text-3xl font-bold text-gray-900">
                 {formatCurrency(summary.upcomingInvoice.amount)}
               </p>
-              <p className="text-sm text-muted-foreground mt-1">
+              <p className="text-sm text-gray-900 mt-1">
                 Based on current month usage
               </p>
             </div>
-            <Button variant="outline" size="sm">
+            <Button variant="outline" size="sm" className="border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white">
               <Download className="h-4 w-4 mr-2" />
               Download
             </Button>

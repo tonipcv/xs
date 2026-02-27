@@ -30,6 +30,7 @@ axum = "0.7"
 lazy_static = "1.4"
 redis = { version = "0.27", features = ["tokio-comp", "connection-manager"] }
 uuid = { version = "1.6", features = ["v4", "serde"] }
+jsonwebtoken = "9.2"
 # Audio processing
 rubato = "0.5"  # pitch shifting
 pyannote-rs = { version = "0.1", optional = true }  # diarization

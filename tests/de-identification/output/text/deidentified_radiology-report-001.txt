@@ -1,0 +1,23 @@
+RADIOLOGY REPORT
+
+Patient: ANONYMIZED PATIENT
+MRN: REDACTED
+DOB: 04/09/1979
+Exam Date: December 9, 2022
+Ordering Physician: Dr. REDACTED. REDACTED Medical CenterAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, 
+pleural effusion, or pneumothorax. No acute bony abnormality is identified.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. REDACTED, MD
+Date: 12/09/2022 14:30
+REDACTED Medical Center
+Phone: XXX-XXX-XXXXXXX-XXX-XXXX

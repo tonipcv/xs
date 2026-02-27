@@ -1,0 +1,489 @@
+PROGRESS NOTE
+
+Patient: John E. Garcia
+MRN: MRN-526879
+DOB: 12/25/2021
+Visit Date: 08/28/2021
+Provider: Dr. Thompson
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Thompson, MD
+Health Center
+Date: 08/28/2021
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Michael E. Williams
+Medical Record Number: MRN-801399
+Date of Birth: 05/07/2021
+Social Security Number: 307-80-8523
+Admission Date: 04/12/2023
+Discharge Date: 06/03/2022
+Attending Physician: Dr. Clark
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 06/03/2022.
+Home address: 8845 Main St, Somerville, MA 22069
+Home phone: 272-555-1453
+
+Electronically signed: Dr. Clark, MD
+Date: 03/05/2023
+
+
+RADIOLOGY REPORT
+
+Patient: Jennifer D. Garcia
+MRN: MRN-666621
+DOB: 12/21/2022
+Exam Date: 11/06/2023
+Ordering Physician: Dr. Robinson
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Lewis, MD
+Date: 01/24/2024
+General Hospital
+Phone: 541-555-8690
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Robert H. Jones
+Medical Record Number: MRN-138105
+Date of Birth: 07/14/2020
+Social Security Number: 615-18-5178
+Admission Date: 05/11/2024
+Discharge Date: 04/25/2020
+Attending Physician: Dr. Thompson
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 04/25/2020.
+Home address: 1145 Oak Ave, Cambridge, MA 54048
+Home phone: 642-555-9489
+
+Electronically signed: Dr. Thompson, MD
+Date: 08/07/2022
+
+
+PROGRESS NOTE
+
+Patient: Michael B. Davis
+MRN: MRN-513272
+DOB: 03/21/2024
+Visit Date: 02/22/2022
+Provider: Dr. Thompson
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Thompson, MD
+Family Practice
+Date: 03/16/2023
+
+
+DISCHARGE SUMMARY
+
+Patient Name: James H. Smith
+Medical Record Number: MRN-213779
+Date of Birth: 02/12/2024
+Social Security Number: 467-45-1732
+Admission Date: 08/16/2021
+Discharge Date: 03/17/2022
+Attending Physician: Dr. Clark
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 03/17/2022.
+Home address: 139 Maple Dr, Boston, MA 67444
+Home phone: 689-555-3031
+
+Electronically signed: Dr. Clark, MD
+Date: 08/14/2021
+
+
+PROGRESS NOTE
+
+Patient: Linda G. Miller
+MRN: MRN-729329
+DOB: 09/05/2020
+Visit Date: 10/20/2022
+Provider: Dr. Thompson
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Thompson, MD
+Health Center
+Date: 04/14/2022
+
+
+RADIOLOGY REPORT
+
+Patient: Patricia F. Garcia
+MRN: MRN-232559
+DOB: 08/10/2024
+Exam Date: 06/20/2021
+Ordering Physician: Dr. Anderson
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Robinson, MD
+Date: 08/27/2024
+Regional Hospital
+Phone: 532-555-2795
+
+
+RADIOLOGY REPORT
+
+Patient: Linda B. Garcia
+MRN: MRN-382567
+DOB: 01/04/2023
+Exam Date: 03/03/2021
+Ordering Physician: Dr. Thompson
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Martinez, MD
+Date: 03/04/2021
+General Hospital
+Phone: 215-555-1712
+
+
+PROGRESS NOTE
+
+Patient: Robert E. Garcia
+MRN: MRN-738919
+DOB: 02/19/2022
+Visit Date: 01/26/2022
+Provider: Dr. Martinez
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Martinez, MD
+Internal Medicine
+Date: 04/04/2020
+
+
+RADIOLOGY REPORT
+
+Patient: Jennifer B. Miller
+MRN: MRN-234010
+DOB: 03/04/2024
+Exam Date: 06/15/2020
+Ordering Physician: Dr. Martinez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Rodriguez, MD
+Date: 02/19/2023
+Regional Hospital
+Phone: 414-555-2733
+
+
+RADIOLOGY REPORT
+
+Patient: Linda G. Davis
+MRN: MRN-767304
+DOB: 07/26/2020
+Exam Date: 06/03/2023
+Ordering Physician: Dr. Rodriguez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Clark, MD
+Date: 03/25/2024
+General Hospital
+Phone: 773-555-4807
+
+
+PROGRESS NOTE
+
+Patient: James H. Miller
+MRN: MRN-301814
+DOB: 07/01/2022
+Visit Date: 11/16/2021
+Provider: Dr. Clark
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Clark, MD
+Family Practice
+Date: 09/10/2024
+
+
+RADIOLOGY REPORT
+
+Patient: John E. Miller
+MRN: MRN-301824
+DOB: 12/12/2020
+Exam Date: 05/06/2020
+Ordering Physician: Dr. Robinson
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Robinson, MD
+Date: 02/23/2020
+Regional Hospital
+Phone: 251-555-9916
+
+
+DISCHARGE SUMMARY
+
+Patient Name: John D. Jones
+Medical Record Number: MRN-496438
+Date of Birth: 11/01/2022
+Social Security Number: 827-23-3057
+Admission Date: 09/14/2022
+Discharge Date: 02/07/2023
+Attending Physician: Dr. Thompson
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 02/07/2023.
+Home address: 7158 Oak Ave, Boston, MA 95343
+Home phone: 602-555-9635
+
+Electronically signed: Dr. Thompson, MD
+Date: 05/19/2022
+
+
+RADIOLOGY REPORT
+
+Patient: Jennifer H. Johnson
+MRN: MRN-907606
+DOB: 03/22/2024
+Exam Date: 07/20/2020
+Ordering Physician: Dr. Rodriguez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and 

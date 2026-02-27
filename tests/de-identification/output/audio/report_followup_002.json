@@ -1,0 +1,72 @@
+{
+  "file": "followup_002.wav",
+  "metrics": {
+    "phiDetected": 5,
+    "phiRedacted": 5,
+    "redactionRate": 100
+  },
+  "phiEntities": [
+    {
+      "type": "NAME",
+      "text": "Sarah Smith",
+      "start": 12,
+      "end": 23,
+      "confidence": 0.85
+    },
+    {
+      "type": "NAME",
+      "text": "Jane Wilson",
+      "start": 46,
+      "end": 57,
+      "confidence": 0.85
+    },
+    {
+      "type": "SSN",
+      "text": "123-45-6789",
+      "start": 63,
+      "end": 74,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "857-555-9876",
+      "start": 156,
+      "end": 168,
+      "confidence": 0.9
+    },
+    {
+      "type": "DATE",
+      "text": "March 15, 2024",
+      "start": 112,
+      "end": 126,
+      "confidence": 0.9
+    }
+  ],
+  "validation": {
+    "isValid": true,
+    "errors": [],
+    "warnings": []
+  },
+  "redactionMap": [
+    [
+      "PHONE_156",
+      "857-555-9876 -> [PHONE REDACTED]"
+    ],
+    [
+      "DATE_112",
+      "March 15, 2024 -> [DATE REDACTED]"
+    ],
+    [
+      "SSN_63",
+      "123-45-6789 -> [SSN REDACTED]"
+    ],
+    [
+      "NAME_46",
+      "Jane Wilson -> [NAME REDACTED]"
+    ],
+    [
+      "NAME_12",
+      "Sarah Smith -> [NAME REDACTED]"
+    ]
+  ]
+}

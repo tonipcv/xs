@@ -1,0 +1,49 @@
+SURGICAL PATHOLOGY REPORT
+
+Patient: Davis, Robert M.
+MRN: 321654
+DOB: 11/30/1958
+SSN: 345-67-8901
+Accession #: S24-12345
+Date Collected: 02/18/2024
+Date Received: 02/18/2024
+Date Reported: 02/22/2024
+
+Surgeon: Dr. Patel, Anjali
+Pathologist: Dr. Lee, James
+
+CLINICAL HISTORY:
+65-year-old male with 2cm right upper lobe lung nodule found on screening CT.
+History of 40 pack-year smoking. Underwent VATS wedge resection.
+
+SPECIMEN: Right upper lobe lung wedge resection
+
+GROSS DESCRIPTION:
+Received fresh labeled with patient name and MRN is a 4.5 x 3.2 x 2.1 cm
+wedge of tan-pink lung tissue. Sectioning reveals a 2.1 cm firm, white-gray
+nodule with irregular borders located 0.5 cm from the pleural surface.
+
+MICROSCOPIC DESCRIPTION:
+Sections show invasive adenocarcinoma with acinar and papillary patterns.
+Tumor cells show moderate nuclear pleomorphism. Mitotic activity is 8/10 HPF.
+Lymphovascular invasion is present. Pleural surface is uninvolved.
+Surgical margins are negative (closest margin 0.8 cm).
+
+DIAGNOSIS:
+Lung, right upper lobe, wedge resection:
+- Invasive adenocarcinoma, 2.1 cm
+- Grade 2 (moderately differentiated)
+- pT1c N0 (0/3 lymph nodes positive)
+- Margins negative
+
+IMMUNOHISTOCHEMISTRY:
+TTF-1: Positive
+Napsin A: Positive
+PD-L1 (22C3): 45% tumor proportion score
+
+MOLECULAR TESTING: Pending (sent to reference lab 02/22/2024)
+
+Electronically signed: Dr. James Lee, MD
+Anatomic Pathology
+Phone: 617-555-PATH (7284)
+Date: 02/22/2024 16:30

@@ -1,0 +1,38 @@
+{
+  "filename": "emergency_003.wav",
+  "transcript": "Emergency contact for Robert Johnson is his wife Mary Johnson at 508-555-4321. Patient admitted on January 10, 2024. Insurance ID is INS-789012.",
+  "duration": 8,
+  "sampleRate": 16000,
+  "phiEntities": [
+    {
+      "type": "NAME",
+      "text": "Robert Johnson",
+      "start": 21,
+      "end": 35
+    },
+    {
+      "type": "NAME",
+      "text": "Mary Johnson",
+      "start": 48,
+      "end": 60
+    },
+    {
+      "type": "PHONE",
+      "text": "508-555-4321",
+      "start": 64,
+      "end": 76
+    },
+    {
+      "type": "DATE",
+      "text": "January 10, 2024",
+      "start": 96,
+      "end": 112
+    },
+    {
+      "type": "ID",
+      "text": "INS-789012",
+      "start": 130,
+      "end": 140
+    }
+  ]
+}

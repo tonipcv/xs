@@ -11,7 +11,7 @@ export async function GET(req: NextRequest) {
     const riskClass = searchParams.get('riskClass') || undefined
     const language = searchParams.get('language') || undefined
     const jurisdiction = searchParams.get('jurisdiction') || undefined
-    const maxPrice = searchParams.get('maxPrice') ? Number(searchParams.get('maxPrice')) : undefined
+    const maxPrice = undefined
     const useCase = searchParams.get('useCase') || undefined
     const supplierId = searchParams.get('supplierId') || undefined
     const dataType = searchParams.get('dataType') || undefined
@@ -23,7 +23,7 @@ export async function GET(req: NextRequest) {
     if (riskClass) where.riskClass = riskClass
     if (language) where.language = language
     if (jurisdiction) where.jurisdiction = jurisdiction
-    if (typeof maxPrice === 'number' && !Number.isNaN(maxPrice)) where.pricePerHour = { lte: maxPrice }
+    
     if (useCase) where.useCases = { has: useCase }
     if (supplierId) where.supplierTenantId = supplierId
     if (regulatory) where.regulatoryFrameworks = { has: regulatory }
@@ -44,9 +44,6 @@ export async function GET(req: NextRequest) {
         offerId: true,
         title: true,
         description: true,
-        pricePerHour: true,
-        currency: true,
-        scopeHours: true,
         riskClass: true,
         jurisdiction: true,
         language: true,

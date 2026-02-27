@@ -1,0 +1,38 @@
+INTENSIVE CARE UNIT PROGRESS NOTE
+
+Date: 02/15/2024
+Time: 14:30
+
+Patient: Martinez, Carlos A.
+MRN: 987654
+DOB: 03/22/1965
+Attending: Dr. Williams, Sarah
+Room: ICU-4B
+
+SUBJECTIVE:
+58-year-old male, post-op day 2 s/p CABG x3. Patient reports improved chest pain.
+Family contact: Wife Maria Martinez at 617-555-8901.
+
+OBJECTIVE:
+Vitals: BP 128/76, HR 82, RR 16, Temp 37.2°C, SpO2 98% on 2L NC
+Cardiac: Regular rate and rhythm, no murmurs
+Lungs: Clear bilaterally, diminished at bases
+Surgical site: Clean, dry, intact. No erythema or drainage.
+
+Labs (02/15/2024 06:00):
+WBC 11.2, Hgb 10.8, Plt 245
+Na 138, K 4.1, Cr 1.1, BUN 18
+Troponin 0.8 (trending down from 2.1)
+
+ASSESSMENT/PLAN:
+1. S/P CABG - stable, continue current management
+2. Pain control - adequate on current regimen
+3. Cardiac rehab consult today
+4. Target discharge 02/17/2024
+
+Contact: Home phone 508-555-3421
+Insurance: Blue Cross Policy #BC-789456
+
+Electronically signed: Dr. Sarah Williams, MD
+NPI: 1234567890
+Date: 02/15/2024 14:45

@@ -1,0 +1,432 @@
+{
+  "timestamp": "2026-02-24T14:57:49.280Z",
+  "totalTests": 3,
+  "totalFilesProcessed": 12,
+  "totalFilesValid": 12,
+  "totalPHIDetected": 129,
+  "totalPHIRedacted": 128,
+  "overallRedactionRate": 99.2248062015504,
+  "totalProcessingTimeMs": 78,
+  "totalMemoryUsageMB": -10.0836181640625,
+  "testResults": [
+    {
+      "testName": "DICOM De-Identification",
+      "dataType": "dicom",
+      "timestamp": "2026-02-24T14:57:49.220Z",
+      "filesProcessed": 3,
+      "filesValid": 3,
+      "filesInvalid": 0,
+      "phiDetected": 29,
+      "phiRedacted": 29,
+      "falsePositives": 0,
+      "processingTimeMs": 14,
+      "memoryUsageMB": 0.146636962890625,
+      "errors": [],
+      "edgeCases": [
+        {
+          "case": "ct-brain-001.json: UID consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "ct-brain-001.json: Date shifting",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "ct-brain-001.json: Required tags preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "ct-brain-001.json: Pixel data integrity",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "ct-chest-001.json: UID consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "ct-chest-001.json: Date shifting",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "ct-chest-001.json: Required tags preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "ct-chest-001.json: Pixel data integrity",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "mr-spine-001.json: UID consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "mr-spine-001.json: Date shifting",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "mr-spine-001.json: Required tags preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "mr-spine-001.json: Pixel data integrity",
+          "detected": true,
+          "redacted": true
+        }
+      ]
+    },
+    {
+      "testName": "FHIR De-Identification",
+      "dataType": "fhir",
+      "timestamp": "2026-02-24T14:57:49.234Z",
+      "filesProcessed": 5,
+      "filesValid": 5,
+      "filesInvalid": 0,
+      "phiDetected": 19,
+      "phiRedacted": 19,
+      "falsePositives": 0,
+      "processingTimeMs": 19,
+      "memoryUsageMB": -10.974151611328125,
+      "errors": [],
+      "edgeCases": [
+        {
+          "case": "encounter-1.json: Nested PHI detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "encounter-1.json: Date consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "encounter-1.json: Identifier consistency",
+          "detected": false,
+          "redacted": true
+        },
+        {
+          "case": "encounter-1.json: Profile conformance",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "encounter-1.json: References preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "observation-1.json: Nested PHI detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "observation-1.json: Date consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "observation-1.json: Identifier consistency",
+          "detected": false,
+          "redacted": true
+        },
+        {
+          "case": "observation-1.json: Profile conformance",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "observation-1.json: References preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-1.json: Nested PHI detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-1.json: Date consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-1.json: Identifier consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-1.json: Profile conformance",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-1.json: References preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-2.json: Nested PHI detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-2.json: Date consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-2.json: Identifier consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-2.json: Profile conformance",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-2.json: References preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-3.json: Nested PHI detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-3.json: Date consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-3.json: Identifier consistency",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-3.json: Profile conformance",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "patient-3.json: References preserved",
+          "detected": true,
+          "redacted": true
+        }
+      ]
+    },
+    {
+      "testName": "Text De-Identification",
+      "dataType": "text",
+      "timestamp": "2026-02-24T14:57:49.253Z",
+      "filesProcessed": 4,
+      "filesValid": 4,
+      "filesInvalid": 0,
+      "phiDetected": 81,
+      "phiRedacted": 80,
+      "falsePositives": 0,
+      "processingTimeMs": 27,
+      "memoryUsageMB": 0.743896484375,
+      "errors": [],
+      "edgeCases": [
+        {
+          "case": "clinical-note-001.txt: Name format detection",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "clinical-note-001.txt: Multiple date formats",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "clinical-note-001.txt: Contact information",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "clinical-note-001.txt: Address detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "clinical-note-001.txt: MRN detection",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "clinical-note-001.txt: SSN detection",
+          "detected": false,
+          "redacted": true
+        },
+        {
+          "case": "clinical-note-001.txt: Medical content preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "clinical-note-001.txt: Document structure",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "discharge-summary-001.txt: Name format detection",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "discharge-summary-001.txt: Multiple date formats",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "discharge-summary-001.txt: Contact information",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "discharge-summary-001.txt: Address detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "discharge-summary-001.txt: MRN detection",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "discharge-summary-001.txt: SSN detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "discharge-summary-001.txt: Medical content preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "discharge-summary-001.txt: Document structure",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "radiology-report-001.txt: Name format detection",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "radiology-report-001.txt: Multiple date formats",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-001.txt: Contact information",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-001.txt: Address detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-001.txt: MRN detection",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "radiology-report-001.txt: SSN detection",
+          "detected": false,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-001.txt: Medical content preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-001.txt: Document structure",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "radiology-report-002.txt: Name format detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-002.txt: Multiple date formats",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-002.txt: Contact information",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-002.txt: Address detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-002.txt: MRN detection",
+          "detected": true,
+          "redacted": false
+        },
+        {
+          "case": "radiology-report-002.txt: SSN detection",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-002.txt: Medical content preserved",
+          "detected": true,
+          "redacted": true
+        },
+        {
+          "case": "radiology-report-002.txt: Document structure",
+          "detected": true,
+          "redacted": false
+        }
+      ]
+    }
+  ],
+  "summary": {
+    "dicom": {
+      "filesProcessed": 3,
+      "validityRate": 100,
+      "redactionRate": 100,
+      "avgProcessingTime": 4.666666666666667,
+      "edgeCasePassRate": 100,
+      "errors": 0
+    },
+    "fhir": {
+      "filesProcessed": 5,
+      "validityRate": 100,
+      "redactionRate": 100,
+      "avgProcessingTime": 3.8,
+      "edgeCasePassRate": 100,
+      "errors": 0
+    },
+    "text": {
+      "filesProcessed": 4,
+      "validityRate": 100,
+      "redactionRate": 98.76543209876543,
+      "avgProcessingTime": 6.75,
+      "edgeCasePassRate": 68.75,
+      "errors": 0
+    }
+  }
+}

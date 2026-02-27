@@ -1,0 +1,3 @@
+Encounter.period.start: "2024-01-15T08:00:00Z" -> "2023-03-20T08:00:00.000Z"
+Encounter.period.end: "2024-01-17T16:00:00Z" -> "2023-03-22T16:00:00.000Z"
+Encounter.location[0].location.display: "Massachusetts General Hospital, Room 301" -> "REDACTED"

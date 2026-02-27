@@ -18,7 +18,6 @@ export default function GovernedAccessCatalogPage() {
     riskClass: '',
     language: '',
     jurisdiction: '',
-    maxPrice: '',
     useCase: '',
     search: '',
   })
@@ -34,7 +33,6 @@ export default function GovernedAccessCatalogPage() {
       if (filters.riskClass) params.set('riskClass', filters.riskClass)
       if (filters.language) params.set('language', filters.language)
       if (filters.jurisdiction) params.set('jurisdiction', filters.jurisdiction)
-      if (filters.maxPrice) params.set('maxPrice', filters.maxPrice)
       if (filters.useCase) params.set('useCase', filters.useCase)
 
       const res = await fetch(`/api/v1/access-offers?${params.toString()}`)
@@ -68,13 +66,13 @@ export default function GovernedAccessCatalogPage() {
 
       {/* Filters (simplified) */}
       <div className="bg-white border border-gray-200 rounded-md p-2 mb-3">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <div>
             <label className="text-xs font-medium mb-0.5 block text-gray-900">Risk Class</label>
             <select
               value={filters.riskClass || 'ALL'}
               onChange={(e) => handleFilterChange('riskClass', e.target.value === 'ALL' ? '' : e.target.value)}
-              className="h-8 text-xs border border-gray-300 rounded-md px-2 bg-white text-gray-900 focus:outline-none focus:ring-0 focus:border-gray-400"
+              className="h-8 text-xs border border-gray-300 rounded-md px-2 bg-transparent text-gray-900 focus:outline-none focus:ring-0 focus:border-gray-400"
             >
               <option value="ALL">All</option>
               <option value="LOW">Low</option>
@@ -82,17 +80,6 @@ export default function GovernedAccessCatalogPage() {
               <option value="HIGH">High</option>
               <option value="CRITICAL">Critical</option>
             </select>
-          </div>
-
-          <div>
-            <label className="text-xs font-medium mb-0.5 block text-gray-900">Max Price (per hour)</label>
-            <Input
-              type="number"
-              placeholder="e.g., 50"
-              value={filters.maxPrice}
-              onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
-              className="h-8 text-xs border border-gray-300 bg-white text-gray-900 focus:outline-none focus:ring-0"
-            />
           </div>
 
           <div className="flex items-end justify-end">

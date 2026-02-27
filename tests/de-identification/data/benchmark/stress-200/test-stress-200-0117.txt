@@ -1,0 +1,489 @@
+RADIOLOGY REPORT
+
+Patient: John H. Garcia
+MRN: MRN-103705
+DOB: 06/26/2021
+Exam Date: 02/21/2022
+Ordering Physician: Dr. Lewis
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Anderson, MD
+Date: 08/05/2024
+Medical Center
+Phone: 819-555-3311
+
+
+RADIOLOGY REPORT
+
+Patient: John F. Davis
+MRN: MRN-113013
+DOB: 04/11/2021
+Exam Date: 04/07/2021
+Ordering Physician: Dr. Martinez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Anderson, MD
+Date: 10/21/2022
+Community Hospital
+Phone: 642-555-9442
+
+
+PROGRESS NOTE
+
+Patient: Michael E. Garcia
+MRN: MRN-739720
+DOB: 08/14/2022
+Visit Date: 02/01/2022
+Provider: Dr. Lee
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Lee, MD
+Health Center
+Date: 08/03/2023
+
+
+RADIOLOGY REPORT
+
+Patient: Jennifer F. Davis
+MRN: MRN-949821
+DOB: 04/20/2024
+Exam Date: 08/27/2020
+Ordering Physician: Dr. Rodriguez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Anderson, MD
+Date: 10/28/2024
+General Hospital
+Phone: 545-555-8878
+
+
+RADIOLOGY REPORT
+
+Patient: Robert G. Davis
+MRN: MRN-907385
+DOB: 06/28/2022
+Exam Date: 08/22/2021
+Ordering Physician: Dr. Thompson
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Thompson, MD
+Date: 11/02/2020
+General Hospital
+Phone: 220-555-9844
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Mary A. Miller
+Medical Record Number: MRN-518535
+Date of Birth: 04/02/2022
+Social Security Number: 358-16-5657
+Admission Date: 02/08/2022
+Discharge Date: 10/13/2022
+Attending Physician: Dr. Rodriguez
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 10/13/2022.
+Home address: 6276 Main St, Cambridge, MA 40643
+Home phone: 462-555-7501
+
+Electronically signed: Dr. Rodriguez, MD
+Date: 11/20/2024
+
+
+DISCHARGE SUMMARY
+
+Patient Name: James E. Garcia
+Medical Record Number: MRN-695474
+Date of Birth: 04/13/2021
+Social Security Number: 704-10-1483
+Admission Date: 03/08/2023
+Discharge Date: 06/05/2023
+Attending Physician: Dr. Martinez
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 06/05/2023.
+Home address: 9230 Pine Ln, Cambridge, MA 20867
+Home phone: 572-555-4879
+
+Electronically signed: Dr. Martinez, MD
+Date: 10/07/2020
+
+
+RADIOLOGY REPORT
+
+Patient: James G. Williams
+MRN: MRN-846656
+DOB: 08/02/2024
+Exam Date: 04/19/2022
+Ordering Physician: Dr. Martinez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Anderson, MD
+Date: 08/21/2022
+General Hospital
+Phone: 855-555-4615
+
+
+PROGRESS NOTE
+
+Patient: Mary C. Johnson
+MRN: MRN-918302
+DOB: 09/23/2021
+Visit Date: 10/24/2023
+Provider: Dr. Rodriguez
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Rodriguez, MD
+Primary Care
+Date: 04/09/2022
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Patricia D. Jones
+Medical Record Number: MRN-765037
+Date of Birth: 08/06/2023
+Social Security Number: 320-29-3450
+Admission Date: 02/22/2024
+Discharge Date: 11/10/2022
+Attending Physician: Dr. Martinez
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 11/10/2022.
+Home address: 1787 Pine Ln, Newton, MA 52473
+Home phone: 466-555-6871
+
+Electronically signed: Dr. Martinez, MD
+Date: 04/20/2022
+
+
+RADIOLOGY REPORT
+
+Patient: Michael C. Smith
+MRN: MRN-519984
+DOB: 09/02/2024
+Exam Date: 01/26/2022
+Ordering Physician: Dr. Clark
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Robinson, MD
+Date: 06/26/2024
+Community Hospital
+Phone: 274-555-5259
+
+
+PROGRESS NOTE
+
+Patient: James H. Miller
+MRN: MRN-924151
+DOB: 11/09/2021
+Visit Date: 07/22/2020
+Provider: Dr. Lee
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Lee, MD
+Primary Care
+Date: 08/23/2024
+
+
+RADIOLOGY REPORT
+
+Patient: Mary B. Miller
+MRN: MRN-261617
+DOB: 12/24/2021
+Exam Date: 10/06/2021
+Ordering Physician: Dr. Clark
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Lewis, MD
+Date: 01/26/2023
+General Hospital
+Phone: 462-555-4697
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Patricia B. Smith
+Medical Record Number: MRN-826043
+Date of Birth: 08/07/2020
+Social Security Number: 362-45-4818
+Admission Date: 05/23/2024
+Discharge Date: 09/17/2021
+Attending Physician: Dr. Anderson
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 09/17/2021.
+Home address: 644 Maple Dr, Newton, MA 43067
+Home phone: 512-555-5502
+
+Electronically signed: Dr. Anderson, MD
+Date: 03/01/2022
+
+
+RADIOLOGY REPORT
+
+Patient: Jennifer B. Miller
+MRN: MRN-315221
+DOB: 12/12/2021
+Exam Date: 12/23/2022
+Ordering Physician: Dr. Anderson
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Anderson, MD
+Date: 03/26/2020
+General Hospital
+Phone: 344-555-4865
+
+
+RADIOLOGY REPORT
+
+Patient: Patricia G. Jones
+MRN: MRN-839571
+DOB: 07/24/2024
+Exam Date: 10/18/2021
+Ordering Physician: Dr. Martinez
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Robinson, MD
+Date: 12/28/2024
+Community Hospital
+Phone: 662-555-9758
+
+
+PROGRESS NOTE
+
+Patient: Robert D. Jones
+MRN: MRN-723743
+DOB: 06/24/2024
+Visit Date: 02/17/2024
+Provider: D

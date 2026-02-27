@@ -1,0 +1,36 @@
+{
+  "transcript": "Emergency contact for [NAME REDACTED] is his wife [NAME REDACTED] at [PHONE REDACTED]. Patient admitted on [DATE REDACTED]. Insurance ID is INS-789012.",
+  "audioSegmentsToRedact": [
+    {
+      "start": 1.4,
+      "end": 2.3333333333333335,
+      "type": "NAME"
+    },
+    {
+      "start": 3.2,
+      "end": 4,
+      "type": "NAME"
+    },
+    {
+      "start": 4.266666666666667,
+      "end": 5.066666666666666,
+      "type": "PHONE"
+    },
+    {
+      "start": 6.4,
+      "end": 7.466666666666667,
+      "type": "DATE"
+    },
+    {
+      "start": 8.666666666666666,
+      "end": 9.333333333333334,
+      "type": "ID"
+    }
+  ],
+  "metadata": {
+    "duration": 8,
+    "sampleRate": 16000,
+    "phiDetected": 4,
+    "phiRedacted": 4
+  }
+}

@@ -1,0 +1,59 @@
+{
+  "file": "orm_medication_order.hl7",
+  "metrics": {
+    "phiDetected": 6,
+    "phiRedacted": 6,
+    "redactionRate": 100
+  },
+  "phiEntities": [
+    {
+      "type": "ID",
+      "text": "456789123^^^HOSPITAL^MR",
+      "start": 0,
+      "end": 23,
+      "confidence": 0.95
+    },
+    {
+      "type": "NAME",
+      "text": "JOHNSON^ROBERT^CHARLES",
+      "start": 0,
+      "end": 22,
+      "confidence": 0.95
+    },
+    {
+      "type": "DATE",
+      "text": "19651130",
+      "start": 0,
+      "end": 8,
+      "confidence": 0.95
+    },
+    {
+      "type": "LOCATION",
+      "text": "321 PINE RD^^NEWTON^MA^02458^USA",
+      "start": 0,
+      "end": 32,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(508)555-3421",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(508)555-6789",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    }
+  ],
+  "validation": {
+    "isValid": true,
+    "errors": [],
+    "warnings": [
+      "Possible SSN pattern detected"
+    ]
+  }
+}

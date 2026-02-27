@@ -26,7 +26,15 @@ export async function GET(req: NextRequest) {
     // Get current storage metrics
     if (action === 'current') {
       const metrics = await StorageService.getCurrentStorage(tenantId)
-      return NextResponse.json(metrics)
+      const safe = {
+        ...metrics,
+        totalStorageBytes: metrics.totalStorageBytes.toString(),
+        datasets: metrics.datasets.map(d => ({
+          ...d,
+          storageBytes: d.storageBytes.toString(),
+        })),
+      }
+      return NextResponse.json(safe)
     }
 
     // Get storage usage summary for period
@@ -34,6 +42,7 @@ export async function GET(req: NextRequest) {
       const start = new Date(url.searchParams.get('start') || Date.now() - 30 * 24 * 60 * 60 * 1000)
       const end = new Date(url.searchParams.get('end') || Date.now())
       const summary = await StorageService.getUsageSummary(tenantId, start, end)
+      // summary is numeric/date only, safe to return as-is
       return NextResponse.json(summary)
     }
 
@@ -93,7 +102,8 @@ export async function POST(req: NextRequest) {
         snapshotType: snapshotType || 'MANUAL',
       })
 
-      return NextResponse.json(snapshot)
+      const safe = { ...snapshot, storageBytes: snapshot.storageBytes.toString() }
+      return NextResponse.json(safe)
     }
 
     // Track dataset storage
@@ -108,7 +118,8 @@ export async function POST(req: NextRequest) {
         BigInt(storageBytes)
       )
 
-      return NextResponse.json(snapshot)
+      const safe = { ...snapshot, storageBytes: snapshot.storageBytes.toString() }
+      return NextResponse.json(safe)
     }
 
     // Track lease storage start
@@ -124,7 +135,8 @@ export async function POST(req: NextRequest) {
         BigInt(storageBytes)
       )
 
-      return NextResponse.json(snapshot)
+      const safe = { ...snapshot, storageBytes: snapshot.storageBytes.toString() }
+      return NextResponse.json(safe)
     }
 
     // Track lease storage end
@@ -141,7 +153,8 @@ export async function POST(req: NextRequest) {
         body.hoursActive
       )
 
-      return NextResponse.json(snapshot)
+      const safe = { ...snapshot, storageBytes: snapshot.storageBytes.toString() }
+      return NextResponse.json(safe)
     }
 
     // Update dataset storage

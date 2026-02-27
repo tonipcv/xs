@@ -1,0 +1,467 @@
+DISCHARGE SUMMARY
+
+Patient Name: Mary A. Brown
+Medical Record Number: MRN-511182
+Date of Birth: 12/12/2024
+Social Security Number: 232-86-5744
+Admission Date: 10/19/2023
+Discharge Date: 02/25/2024
+Attending Physician: Dr. Anderson
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 02/25/2024.
+Home address: 4104 Pine Ln, Brookline, MA 55185
+Home phone: 315-555-2190
+
+Electronically signed: Dr. Anderson, MD
+Date: 11/21/2020
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Michael A. Jones
+Medical Record Number: MRN-141445
+Date of Birth: 12/05/2022
+Social Security Number: 195-38-8237
+Admission Date: 09/27/2020
+Discharge Date: 05/21/2023
+Attending Physician: Dr. Robinson
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 05/21/2023.
+Home address: 6485 Maple Dr, Newton, MA 33331
+Home phone: 768-555-5947
+
+Electronically signed: Dr. Robinson, MD
+Date: 12/09/2021
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Michael G. Garcia
+Medical Record Number: MRN-422446
+Date of Birth: 01/08/2020
+Social Security Number: 980-23-1169
+Admission Date: 02/03/2021
+Discharge Date: 07/08/2024
+Attending Physician: Dr. Robinson
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 07/08/2024.
+Home address: 8428 Pine Ln, Newton, MA 89800
+Home phone: 926-555-1233
+
+Electronically signed: Dr. Robinson, MD
+Date: 11/23/2021
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Jennifer C. Williams
+Medical Record Number: MRN-414698
+Date of Birth: 04/03/2021
+Social Security Number: 223-57-9591
+Admission Date: 12/08/2021
+Discharge Date: 01/10/2024
+Attending Physician: Dr. Martinez
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 01/10/2024.
+Home address: 5414 Elm Rd, Somerville, MA 42580
+Home phone: 576-555-9931
+
+Electronically signed: Dr. Martinez, MD
+Date: 09/12/2023
+
+
+PROGRESS NOTE
+
+Patient: Jennifer G. Johnson
+MRN: MRN-615726
+DOB: 01/28/2023
+Visit Date: 07/12/2024
+Provider: Dr. Martinez
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Martinez, MD
+Internal Medicine
+Date: 01/24/2021
+
+
+RADIOLOGY REPORT
+
+Patient: John F. Miller
+MRN: MRN-129694
+DOB: 11/25/2024
+Exam Date: 11/13/2022
+Ordering Physician: Dr. Lee
+
+CLINICAL INDICATION:
+Chest pain, rule out pneumonia
+
+TECHNIQUE:
+Frontal and lateral chest radiographs were obtained.
+
+FINDINGS:
+The heart size is normal. The lungs are clear without focal consolidation, pleural effusion, or pneumothorax.
+
+IMPRESSION:
+No acute cardiopulmonary process.
+
+Electronically signed by Dr. Thompson, MD
+Date: 05/14/2021
+Community Hospital
+Phone: 946-555-7741
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Michael E. Johnson
+Medical Record Number: MRN-488135
+Date of Birth: 01/02/2021
+Social Security Number: 824-16-6548
+Admission Date: 08/23/2022
+Discharge Date: 12/05/2020
+Attending Physician: Dr. Rodriguez
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 12/05/2020.
+Home address: 7949 Maple Dr, Somerville, MA 51004
+Home phone: 266-555-6242
+
+Electronically signed: Dr. Rodriguez, MD
+Date: 11/22/2023
+
+
+PROGRESS NOTE
+
+Patient: Robert D. Miller
+MRN: MRN-538411
+DOB: 10/08/2023
+Visit Date: 02/17/2022
+Provider: Dr. Clark
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Clark, MD
+Family Practice
+Date: 06/22/2022
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Michael C. Jones
+Medical Record Number: MRN-653982
+Date of Birth: 05/15/2020
+Social Security Number: 247-74-9896
+Admission Date: 04/03/2023
+Discharge Date: 06/12/2022
+Attending Physician: Dr. Thompson
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 06/12/2022.
+Home address: 6341 Maple Dr, Boston, MA 19113
+Home phone: 201-555-8315
+
+Electronically signed: Dr. Thompson, MD
+Date: 12/05/2022
+
+
+PROGRESS NOTE
+
+Patient: James D. Garcia
+MRN: MRN-852343
+DOB: 02/27/2022
+Visit Date: 02/08/2021
+Provider: Dr. Martinez
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Martinez, MD
+Health Center
+Date: 04/06/2020
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Robert H. Brown
+Medical Record Number: MRN-251926
+Date of Birth: 10/22/2024
+Social Security Number: 571-93-8643
+Admission Date: 11/05/2022
+Discharge Date: 03/18/2023
+Attending Physician: Dr. Martinez
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 03/18/2023.
+Home address: 2611 Main St, Brookline, MA 34474
+Home phone: 519-555-6222
+
+Electronically signed: Dr. Martinez, MD
+Date: 11/03/2022
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Robert D. Davis
+Medical Record Number: MRN-466672
+Date of Birth: 06/09/2021
+Social Security Number: 253-34-8376
+Admission Date: 08/13/2022
+Discharge Date: 04/12/2020
+Attending Physician: Dr. Rodriguez
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSPITAL COURSE:
+Patient underwent successful cardiac catheterization with stent placement. Post-procedure course was uncomplicated.
+
+DISCHARGE MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks
+
+Patient discharged home on 04/12/2020.
+Home address: 3350 Oak Ave, Brookline, MA 12758
+Home phone: 575-555-6803
+
+Electronically signed: Dr. Rodriguez, MD
+Date: 06/23/2024
+
+
+PROGRESS NOTE
+
+Patient: James E. Brown
+MRN: MRN-673071
+DOB: 09/01/2021
+Visit Date: 07/04/2023
+Provider: Dr. Anderson
+
+CHIEF COMPLAINT:
+Annual physical examination
+
+HISTORY OF PRESENT ILLNESS:
+Patient presents for routine follow-up. Reports feeling well overall with no acute complaints.
+
+PAST MEDICAL HISTORY:
+- Hypertension
+- Type 2 Diabetes
+- Hyperlipidemia
+
+MEDICATIONS:
+- Lisinopril 10mg daily
+- Metformin 500mg twice daily
+- Atorvastatin 20mg daily
+
+PHYSICAL EXAMINATION:
+Vital Signs: BP 120/80, HR 72, Temp 98.6°F
+General: Well-appearing, no acute distress
+
+ASSESSMENT AND PLAN:
+Continue current medications. Follow up in 3 months.
+
+Electronically signed: Dr. Anderson, MD
+Internal Medicine
+Date: 11/15/2022
+
+
+DISCHARGE SUMMARY
+
+Patient Name: Patricia A. Brown
+Medical Record Number: MRN-357566
+Date of Birth: 06/18/2024
+Social Security Number: 375-44-4294
+Admission Date: 01/03/2024
+Discharge Date: 02/01/2020
+Attending Physician: Dr. Martinez
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+Acute myocardial infarction
+
+HOSP

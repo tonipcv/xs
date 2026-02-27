@@ -1,0 +1,44 @@
+DISCHARGE SUMMARY
+
+Patient Name: Robert James Williams
+Medical Record Number: MRN-456789
+Date of Birth: June 10, 1965
+Social Security Number: 555-66-7777
+Admission Date: April 1, 2024
+Discharge Date: April 5, 2024
+Attending Physician: Dr. Patricia Lee
+
+ADMISSION DIAGNOSIS:
+Acute myocardial infarction
+
+DISCHARGE DIAGNOSIS:
+ST-elevation myocardial infarction (STEMI), anterior wall
+
+HOSPITAL COURSE:
+58-year-old male presented to emergency department on 04/01/2024 at 02:30
+with acute onset chest pain. EKG showed ST elevations in leads V1-V4.
+Patient was taken emergently to cardiac catheterization lab where he
+underwent successful PCI with drug-eluting stent placement to proximal LAD.
+
+Post-procedure course was uncomplicated. Patient was monitored in CCU for
+48 hours then transferred to telemetry floor. Cardiac enzymes trended down
+appropriately. Echocardiogram showed LVEF 45% with anterior wall hypokinesis.
+
+DISCHARGE MEDICATIONS:
+- Aspirin 81mg daily
+- Clopidogrel 75mg daily
+- Atorvastatin 80mg daily
+- Metoprolol 50mg twice daily
+- Lisinopril 10mg daily
+
+FOLLOW-UP:
+Cardiology clinic in 2 weeks with Dr. Patricia Lee
+Phone: 617-555-0200
+Address: Boston Heart Center, 100 Medical Drive, Boston, MA 02115
+
+Patient discharged home with wife on 04/05/2024 at 14:00.
+Home address: 321 Pine Road, Brookline, MA 02445
+Home phone: 617-555-0321
+
+Electronically signed: Dr. Patricia Lee, MD
+Date: 04/05/2024 15:30

@@ -1,0 +1,54 @@
+═══════════════════════════════════════════════════════════════
+  XASE DE-IDENTIFICATION QUALITY TEST SUMMARY
+═══════════════════════════════════════════════════════════════
+
+Test Date: 2026-02-24T14:57:49.280Z
+
+OVERALL METRICS
+───────────────────────────────────────────────────────────────
+Total Files Processed:     12
+Total Files Valid:         12 (100.0%)
+Total PHI Detected:        129
+Total PHI Redacted:        128
+Overall Redaction Rate:    99.2%
+Total Processing Time:     78ms (0.08s)
+Total Memory Usage:        -10.08MB
+
+DICOM RESULTS
+───────────────────────────────────────────────────────────────
+Files Processed:           3
+Validity Rate:             100.0%
+Redaction Rate:            100.0%
+Avg Processing Time:       4.7ms
+Edge Case Pass Rate:       100.0%
+Errors:                    0
+
+FHIR RESULTS
+───────────────────────────────────────────────────────────────
+Files Processed:           5
+Validity Rate:             100.0%
+Redaction Rate:            100.0%
+Avg Processing Time:       3.8ms
+Edge Case Pass Rate:       100.0%
+Errors:                    0
+
+TEXT/CLINICAL NOTES RESULTS
+───────────────────────────────────────────────────────────────
+Files Processed:           4
+Validity Rate:             100.0%
+Redaction Rate:            98.8%
+Avg Processing Time:       6.8ms
+Edge Case Pass Rate:       68.8%
+Errors:                    0
+
+QUALITY ASSESSMENT
+───────────────────────────────────────────────────────────────
+File Integrity:            EXCELLENT (100.0%)
+PHI Redaction:             EXCELLENT (99.2%)
+Edge Case Handling:        GOOD (89.6%)
+
+RECOMMENDATIONS
+───────────────────────────────────────────────────────────────
+✅ All quality metrics passed - system ready for production
+
+═══════════════════════════════════════════════════════════════

@@ -1,0 +1,30 @@
+{
+  "resourceType": "Observation",
+  "id": "obs-001",
+  "status": "final",
+  "code": {
+    "coding": [
+      {
+        "system": "http://loinc.org",
+        "code": "8867-4",
+        "display": "Heart rate"
+      }
+    ]
+  },
+  "subject": {
+    "reference": "Patient/patient-001"
+  },
+  "effectiveDateTime": "2023-02-22T10:30:00.000Z",
+  "valueQuantity": {
+    "value": 72,
+    "unit": "beats/minute",
+    "system": "http://unitsofmeasure.org",
+    "code": "/min"
+  },
+  "performer": [
+    {
+      "reference": "Practitioner/dr-jones",
+      "display": "Dr. Robert Jones"
+    }
+  ]
+}

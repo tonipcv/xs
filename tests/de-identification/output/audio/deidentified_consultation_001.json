@@ -1,0 +1,36 @@
+{
+  "transcript": "[NAME REDACTED] Doe, [MRN REDACTED], date of birth [DATE REDACTED]. Chief complaint is chest pain. Phone number is [PHONE REDACTED]. Address is [ADDRESS REDACTED]2101.",
+  "audioSegmentsToRedact": [
+    {
+      "start": 0.5333333333333333,
+      "end": 1.0666666666666667,
+      "type": "NAME"
+    },
+    {
+      "start": 2.8,
+      "end": 3.2,
+      "type": "MRN"
+    },
+    {
+      "start": 4.266666666666667,
+      "end": 5.266666666666667,
+      "type": "DATE"
+    },
+    {
+      "start": 8.466666666666667,
+      "end": 9.266666666666667,
+      "type": "PHONE"
+    },
+    {
+      "start": 10.2,
+      "end": 12.4,
+      "type": "ADDRESS"
+    }
+  ],
+  "metadata": {
+    "duration": 10,
+    "sampleRate": 16000,
+    "phiDetected": 6,
+    "phiRedacted": 6
+  }
+}

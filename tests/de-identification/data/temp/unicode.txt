@@ -1,0 +1,6 @@
+
+Patient: José María García-López
+Address: 123 Rue de la Paix, Montréal
+Phone: +33 1 23 45 67 89
+Notes: Patient speaks 中文 and العربية
+  

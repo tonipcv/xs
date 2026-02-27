@@ -1,0 +1,5 @@
+Patient.name: [{"family":"Johnson","given":["Sarah","Elizabeth"]}] -> [{"family":"ANONYMIZED","given":["PATIENT"],"text":"ANONYMIZED PATIENT"}]
+Patient.birthDate: "1975-12-03" -> "1975-10-11"
+Patient.address: [{"line":["456 Oak Avenue"],"city":"Cambridge","state":"MA","postalCode":"02139","country":"USA"}] -> [{"line":["REDACTED"],"city":"REDACTED","state":"MA","postalCode":"021XX","country":"USA","text":"REDACTED"}]
+Patient.telecom: [{"system":"phone","value":"617-555-0456","use":"mobile"}] -> [{"system":"phone","value":"XXX-XXX-XXXX","use":"mobile"}]
+Patient.identifier: [{"system":"http://hospital.org/mrn","value":"MRN-789012"}] -> [{"system":"http://hospital.org/mrn","value":"ANON-VRYIPIV0"}]

@@ -1,0 +1,38 @@
+{
+  "resourceType": "Patient",
+  "id": "patient-003",
+  "name": [
+    {
+      "family": "Garcia",
+      "given": [
+        "Maria",
+        "Carmen"
+      ]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1992-08-22",
+  "address": [
+    {
+      "line": [
+        "789 Elm Street"
+      ],
+      "city": "Somerville",
+      "state": "MA",
+      "postalCode": "02144",
+      "country": "USA"
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "617-555-0789"
+    }
+  ],
+  "identifier": [
+    {
+      "system": "http://hospital.org/mrn",
+      "value": "MRN-345678"
+    }
+  ]
+}

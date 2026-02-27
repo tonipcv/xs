@@ -1,0 +1,38 @@
+{
+  "filename": "consultation_001.wav",
+  "transcript": "Patient John Doe, medical record number 123456, date of birth August 15, 1980. Chief complaint is chest pain. Phone number is 617-555-0123. Address is 123 Main Street, Boston, MA 02101.",
+  "duration": 10,
+  "sampleRate": 16000,
+  "phiEntities": [
+    {
+      "type": "NAME",
+      "text": "John Doe",
+      "start": 8,
+      "end": 16
+    },
+    {
+      "type": "MRN",
+      "text": "123456",
+      "start": 42,
+      "end": 48
+    },
+    {
+      "type": "DATE",
+      "text": "August 15, 1980",
+      "start": 64,
+      "end": 79
+    },
+    {
+      "type": "PHONE",
+      "text": "617-555-0123",
+      "start": 127,
+      "end": 139
+    },
+    {
+      "type": "ADDRESS",
+      "text": "123 Main Street, Boston, MA 02101",
+      "start": 153,
+      "end": 186
+    }
+  ]
+}

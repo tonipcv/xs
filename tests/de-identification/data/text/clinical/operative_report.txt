@@ -1,0 +1,54 @@
+OPERATIVE REPORT
+
+Patient: Anderson, Michael J.
+MRN: 789012
+DOB: 09/12/1955
+SSN: 567-89-0123
+Date of Surgery: 02/25/2024
+Surgeon: Dr. Thompson, David
+Assistant: Dr. Lee, Susan
+Anesthesiologist: Dr. Patel, Raj
+
+PREOPERATIVE DIAGNOSIS: Symptomatic cholelithiasis
+
+POSTOPERATIVE DIAGNOSIS: Acute cholecystitis with cholelithiasis
+
+PROCEDURE: Laparoscopic cholecystectomy
+
+ANESTHESIA: General endotracheal
+
+INDICATIONS:
+68-year-old male with recurrent right upper quadrant pain, ultrasound showing
+multiple gallstones and gallbladder wall thickening. Patient consented for
+laparoscopic cholecystectomy after discussion of risks including bleeding,
+infection, bile duct injury, and conversion to open procedure.
+
+PROCEDURE IN DETAIL:
+Patient identified in pre-op area. Timeout performed confirming patient identity
+(Michael Anderson, MRN 789012), procedure, and surgical site. Patient positioned
+supine. General anesthesia induced without complication.
+
+Abdomen prepped and draped in sterile fashion. Pneumoperitoneum established
+with Veress needle at umbilicus. Four trocars placed: 10mm umbilical, 5mm
+epigastric, 5mm right subcostal, 5mm right lateral.
+
+Gallbladder visualized - markedly distended and inflamed. Adhesions lysed.
+Cystic duct and artery identified using critical view of safety technique.
+Cystic duct clipped x3 and divided. Cystic artery clipped x2 and divided.
+Gallbladder dissected from liver bed using electrocautery. Hemostasis confirmed.
+
+Specimen removed through umbilical port. Irrigation performed. No bile leak
+identified. Fascia closed with 0-Vicryl. Skin closed with 4-0 Monocryl.
+
+ESTIMATED BLOOD LOSS: 25 mL
+SPECIMENS: Gallbladder to pathology
+DRAINS: None
+COMPLICATIONS: None
+
+Patient tolerated procedure well and transferred to PACU in stable condition.
+
+Contact for questions: Surgical office 617-555-SURG (7874)
+On-call pager: 617-555-9999
+
+Electronically signed: Dr. David Thompson, MD, FACS
+Date: 02/25/2024 14:20

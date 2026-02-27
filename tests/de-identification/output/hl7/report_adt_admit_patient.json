@@ -1,0 +1,80 @@
+{
+  "file": "adt_admit_patient.hl7",
+  "metrics": {
+    "phiDetected": 9,
+    "phiRedacted": 9,
+    "redactionRate": 100
+  },
+  "phiEntities": [
+    {
+      "type": "ID",
+      "text": "123456789^^^HOSPITAL^MR",
+      "start": 0,
+      "end": 23,
+      "confidence": 0.95
+    },
+    {
+      "type": "NAME",
+      "text": "DOE^JOHN^ALLEN",
+      "start": 0,
+      "end": 14,
+      "confidence": 0.95
+    },
+    {
+      "type": "DATE",
+      "text": "19800115",
+      "start": 0,
+      "end": 8,
+      "confidence": 0.95
+    },
+    {
+      "type": "LOCATION",
+      "text": "123 MAIN ST^^BOSTON^MA^02101^USA",
+      "start": 0,
+      "end": 32,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(617)555-1234",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(617)555-5678",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    },
+    {
+      "type": "NAME",
+      "text": "DOE^JANE^MARIE",
+      "start": 0,
+      "end": 14,
+      "confidence": 0.95
+    },
+    {
+      "type": "LOCATION",
+      "text": "456 OAK AVE^^CAMBRIDGE^MA^02139^USA",
+      "start": 0,
+      "end": 35,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(617)555-9876",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    }
+  ],
+  "validation": {
+    "isValid": true,
+    "errors": [],
+    "warnings": [
+      "Possible SSN pattern detected"
+    ]
+  }
+}

@@ -1,0 +1,39 @@
+{
+  "resourceType": "Patient",
+  "id": "patient-002",
+  "name": [
+    {
+      "family": "Johnson",
+      "given": [
+        "Sarah",
+        "Elizabeth"
+      ]
+    }
+  ],
+  "gender": "female",
+  "birthDate": "1975-12-03",
+  "address": [
+    {
+      "line": [
+        "456 Oak Avenue"
+      ],
+      "city": "Cambridge",
+      "state": "MA",
+      "postalCode": "02139",
+      "country": "USA"
+    }
+  ],
+  "telecom": [
+    {
+      "system": "phone",
+      "value": "617-555-0456",
+      "use": "mobile"
+    }
+  ],
+  "identifier": [
+    {
+      "system": "http://hospital.org/mrn",
+      "value": "MRN-789012"
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+{
+  "filename": "followup_002.wav",
+  "transcript": "This is Dr. Sarah Smith calling about patient Jane Wilson, SSN 123-45-6789. Follow-up appointment scheduled for March 15, 2024 at 2 PM. Please call back at 857-555-9876.",
+  "duration": 12,
+  "sampleRate": 16000,
+  "phiEntities": [
+    {
+      "type": "NAME",
+      "text": "Dr. Sarah Smith",
+      "start": 8,
+      "end": 23
+    },
+    {
+      "type": "NAME",
+      "text": "Jane Wilson",
+      "start": 47,
+      "end": 58
+    },
+    {
+      "type": "SSN",
+      "text": "123-45-6789",
+      "start": 64,
+      "end": 75
+    },
+    {
+      "type": "DATE",
+      "text": "March 15, 2024",
+      "start": 113,
+      "end": 127
+    },
+    {
+      "type": "PHONE",
+      "text": "857-555-9876",
+      "start": 158,
+      "end": 170
+    }
+  ]
+}

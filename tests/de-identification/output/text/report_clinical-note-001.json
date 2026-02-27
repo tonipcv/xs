@@ -1,0 +1,219 @@
+{
+  "originalFile": "clinical-note-001.txt",
+  "phiDetected": 18,
+  "phiRedacted": 18,
+  "phiTypes": {
+    "MRN": 1,
+    "PHONE": 2,
+    "DATE": 8,
+    "LOCATION": 2,
+    "NAME": 5
+  },
+  "entities": [
+    {
+      "type": "MRN",
+      "text": "MRN: MRN-345678",
+      "start": 44,
+      "end": 59,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "617-555-0999",
+      "start": 787,
+      "end": 799,
+      "confidence": 0.9
+    },
+    {
+      "type": "PHONE",
+      "text": "contact: ",
+      "start": 754,
+      "end": 763,
+      "confidence": 0.9
+    },
+    {
+      "type": "DATE",
+      "text": "08/22/1992",
+      "start": 63,
+      "end": 73,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "02/28/2024",
+      "start": 347,
+      "end": 357,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "03/05/2024",
+      "start": 1301,
+      "end": 1311,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "March 5, 2024",
+      "start": 86,
+      "end": 99,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "05/08/2023",
+      "start": 346,
+      "end": 356,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "DOB: 10/31/1991",
+      "start": 58,
+      "end": 73,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Visit Date: May 14, 2023",
+      "start": 74,
+      "end": 98,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Date: 05/14/2023",
+      "start": 1294,
+      "end": 1310,
+      "confidence": 0.85
+    },
+    {
+      "type": "LOCATION",
+      "text": "789 Elm Street",
+      "start": 707,
+      "end": 721,
+      "confidence": 0.8
+    },
+    {
+      "type": "LOCATION",
+      "text": "Somerville, MA 02144",
+      "start": 717,
+      "end": 737,
+      "confidence": 0.8
+    },
+    {
+      "type": "NAME",
+      "text": "Patient: Maria Carmen Garcia",
+      "start": 15,
+      "end": 43,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. Lisa Martinez",
+      "start": 109,
+      "end": 126,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. Lisa Martinez",
+      "start": 1227,
+      "end": 1244,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Provider: Dr",
+      "start": 99,
+      "end": 111,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Emergency contact: XXX-XXX-XXXXCarlos Garcia",
+      "start": 730,
+      "end": 774,
+      "confidence": 0.75
+    }
+  ],
+  "redactionMap": [
+    [
+      "MRN_44",
+      "MRN: MRN-345678 -> MRN: REDACTED"
+    ],
+    [
+      "PHONE_787",
+      "617-555-0999 -> XXX-XXX-XXXX"
+    ],
+    [
+      "PHONE_754",
+      "contact:  -> contact: XXX-XXX-XXXX"
+    ],
+    [
+      "DATE_63",
+      "08/22/1992 -> 10/31/1991"
+    ],
+    [
+      "DATE_347",
+      "02/28/2024 -> 05/08/2023"
+    ],
+    [
+      "DATE_1301",
+      "03/05/2024 -> 05/14/2023"
+    ],
+    [
+      "DATE_86",
+      "March 5, 2024 -> May 14, 2023"
+    ],
+    [
+      "DATE_346",
+      "05/08/2023 -> 07/16/2022"
+    ],
+    [
+      "DATE_58",
+      "DOB: 10/31/1991 -> DOB: 01/08/1991"
+    ],
+    [
+      "DATE_74",
+      "Visit Date: May 14, 2023 -> Visit Date: July 22, 2022"
+    ],
+    [
+      "DATE_1294",
+      "Date: 05/14/2023 -> Date: 07/22/2022"
+    ],
+    [
+      "ADDRESS_707",
+      "789 Elm Street -> REDACTED"
+    ],
+    [
+      "ADDRESS_717",
+      "Somerville, MA 02144 -> REDACTED"
+    ],
+    [
+      "NAME_15",
+      "Patient: Maria Carmen Garcia -> Patient: ANONYMIZED PATIENT"
+    ],
+    [
+      "NAME_109",
+      "Dr. Lisa Martinez -> Dr. REDACTED"
+    ],
+    [
+      "NAME_1227",
+      "Dr. Lisa Martinez -> Dr. REDACTED"
+    ],
+    [
+      "NAME_99",
+      "Provider: Dr -> Provider: Dr. REDACTED"
+    ],
+    [
+      "NAME_730",
+      "Emergency contact: XXX-XXX-XXXXCarlos Garcia -> REDACTED"
+    ]
+  ],
+  "validation": {
+    "isValid": true,
+    "hasStructure": true,
+    "errors": []
+  }
+}

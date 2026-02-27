@@ -1,0 +1,6 @@
+
+Patient: Dr. Heart presented with chest pain.
+Consulting physician: Dr. Lung examined the patient.
+Medical history includes Dr. Brain's assessment.
+Patient works at St. Mary's Hospital.
+  

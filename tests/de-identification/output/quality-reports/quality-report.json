@@ -1,0 +1,79 @@
+{
+  "timestamp": "2026-02-26T20:17:42.054Z",
+  "period": "Last Test Run",
+  "overall": {
+    "filesProcessed": 15,
+    "filesValid": 15,
+    "filesFailed": 0,
+    "successRate": 100,
+    "totalPhiDetected": 142,
+    "totalPhiRedacted": 142,
+    "redactionRate": 100,
+    "integrityRate": 100
+  },
+  "byDataType": {
+    "dicom": {
+      "files": 3,
+      "phiDetected": 29,
+      "phiRedacted": 29,
+      "redactionRate": 100,
+      "avgProcessingTime": 2.3333333333333335
+    },
+    "fhir": {
+      "files": 5,
+      "phiDetected": 19,
+      "phiRedacted": 19,
+      "redactionRate": 100,
+      "avgProcessingTime": 1.2
+    },
+    "text": {
+      "files": 4,
+      "phiDetected": 79,
+      "phiRedacted": 79,
+      "redactionRate": 100,
+      "avgProcessingTime": 4.5
+    },
+    "audio": {
+      "files": 3,
+      "phiDetected": 15,
+      "phiRedacted": 15,
+      "redactionRate": 100,
+      "avgProcessingTime": 5
+    }
+  },
+  "performance": {
+    "avgProcessingTime": 187.13333333333333,
+    "throughput": 5.3437833986462415,
+    "peakMemoryUsage": 200
+  },
+  "qualityGates": [
+    {
+      "name": "Redaction Rate",
+      "threshold": 95,
+      "actual": 100,
+      "status": "pass"
+    },
+    {
+      "name": "File Integrity",
+      "threshold": 90,
+      "actual": 100,
+      "status": "pass"
+    },
+    {
+      "name": "Processing Speed",
+      "threshold": 100,
+      "actual": 187.13333333333333,
+      "status": "fail"
+    },
+    {
+      "name": "Success Rate",
+      "threshold": 95,
+      "actual": 100,
+      "status": "pass"
+    }
+  ],
+  "recommendations": [
+    "⚡ Optimize processing pipeline",
+    "🚀 Consider parallel processing"
+  ]
+}

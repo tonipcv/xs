@@ -40,7 +40,7 @@ export default async function BillingPage() {
               <h1 className={`${heading.className} text-3xl font-semibold text-gray-900 tracking-tight`}>
                 {isSupplier ? 'Revenue & Billing' : 'Usage & Billing'}
               </h1>
-              <p className="text-sm text-gray-600">
+              <p className="text-sm text-gray-900">
                 {isSupplier
                   ? 'Revenue credits and platform movements for this tenant'
                   : 'Comprehensive billing dashboard with storage, compute, and data processing metrics'}
@@ -51,12 +51,12 @@ export default async function BillingPage() {
           {/* Tabs for Dashboard and Ledger */}
           <Tabs defaultValue="dashboard" className="space-y-6">
             <TabsList>
-              <TabsTrigger value="dashboard" className="flex items-center gap-2">
-                <TrendingUp className="h-4 w-4" />
+              <TabsTrigger value="dashboard" className="flex items-center gap-2 text-gray-900">
+                <TrendingUp className="h-4 w-4 text-gray-900" />
                 Dashboard
               </TabsTrigger>
-              <TabsTrigger value="ledger" className="flex items-center gap-2">
-                <Activity className="h-4 w-4" />
+              <TabsTrigger value="ledger" className="flex items-center gap-2 text-gray-900">
+                <Activity className="h-4 w-4 text-gray-900" />
                 Ledger
               </TabsTrigger>
             </TabsList>
@@ -70,22 +70,22 @@ export default async function BillingPage() {
           {/* Summary cards */}
           <div className="grid gap-3 md:grid-cols-3">
             <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <p className="text-xs font-medium text-gray-600">Current Balance</p>
+              <p className="text-xs font-medium text-gray-900">Current Balance</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1 tabular-nums flex items-center gap-2">
-                <DollarSign className="h-4 w-4 text-gray-500" />
+                <DollarSign className="h-4 w-4 text-gray-900" />
                 {balance.toFixed(2)}
               </p>
-              <p className="text-xs text-gray-600 mt-1">Positive = credits available for usage</p>
+              <p className="text-xs text-gray-900 mt-1">Positive = credits available for usage</p>
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <p className="text-xs font-medium text-gray-600">
+              <p className="text-xs font-medium text-gray-900">
                 {isSupplier ? 'Total Credits (sample)' : 'Total Debits (sample)'}
               </p>
               <p className="text-2xl font-semibold text-gray-900 mt-1 tabular-nums">
                 {isSupplier ? totalCredits.toFixed(2) : Math.abs(totalDebits).toFixed(2)}
               </p>
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs text-gray-900 mt-1">
                 {isSupplier
                   ? `Revenue credits in the last ${entries.length} entries`
                   : `Usage-based charges in the last ${entries.length} entries`}
@@ -93,9 +93,9 @@ export default async function BillingPage() {
             </div>
 
             <div className="bg-white border border-gray-200 rounded-xl p-5">
-              <p className="text-xs font-medium text-gray-600">Ledger Entries</p>
+              <p className="text-xs font-medium text-gray-900">Ledger Entries</p>
               <p className="text-2xl font-semibold text-gray-900 mt-1 tabular-nums">{entries.length}</p>
-              <p className="text-xs text-gray-600 mt-1">Most recent movements only</p>
+              <p className="text-xs text-gray-900 mt-1">Most recent movements only</p>
             </div>
           </div>
 
@@ -105,11 +105,11 @@ export default async function BillingPage() {
                   <table className="w-full text-sm">
                     <thead className="bg-gray-50 border-b border-gray-200">
                       <tr>
-                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">When</th>
-                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Type</th>
-                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Amount</th>
-                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Policy / Dataset</th>
-                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-600">Description</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-900">When</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-900">Type</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-900">Amount</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-900">Policy / Dataset</th>
+                        <th className="text-left px-4 py-2 text-xs font-medium text-gray-900">Description</th>
                       </tr>
                     </thead>
                     <tbody>
@@ -119,33 +119,33 @@ export default async function BillingPage() {
                             key={entry.id}
                             className="border-b border-gray-200 hover:bg-white transition-colors"
                           >
-                            <td className="px-4 py-2 text-xs text-gray-600 tabular-nums">
-                              <Clock className="h-3 w-3 inline mr-1 text-gray-500" />
+                            <td className="px-4 py-2 text-xs text-gray-900 tabular-nums">
+                              <Clock className="h-3 w-3 inline mr-1 text-gray-900" />
                               {new Date(entry.createdAt).toLocaleString()}
                             </td>
                             <td className="px-4 py-2 text-xs">
                               <span
-                                className={`px-2 py-0.5 rounded text-[10px] font-medium text-gray-700 border border-gray-300 bg-white`}
+                                className={`px-2 py-0.5 rounded text-[10px] font-medium text-gray-900 border border-gray-900 bg-white`}
                               >
                                 {entry.eventType}
                               </span>
                             </td>
-                            <td className="px-4 py-2 text-xs tabular-nums text-gray-800">
+                            <td className="px-4 py-2 text-xs tabular-nums text-gray-900">
                               {Number(entry.amount).toFixed(2)}
                             </td>
-                            <td className="px-4 py-2 text-xs text-gray-600 max-w-[220px] truncate">
+                            <td className="px-4 py-2 text-xs text-gray-900 max-w-[220px] truncate">
                               {(entry.metadata as any)?.policyId || '-'}
                               {(entry.metadata as any)?.datasetName ? ` • ${(entry.metadata as any).datasetName}` : ''}
                             </td>
-                            <td className="px-4 py-2 text-xs text-gray-600 max-w-[260px] truncate">
+                            <td className="px-4 py-2 text-xs text-gray-900 max-w-[260px] truncate">
                               {entry.description || entry.eventType}
                             </td>
                           </tr>
                         ))
                       ) : (
                         <tr>
-                          <td colSpan={5} className="px-4 py-6 text-center text-xs text-gray-600">
-                            <Activity className="h-4 w-4 inline mr-2 text-gray-400" />
+                          <td colSpan={5} className="px-4 py-6 text-center text-xs text-gray-900">
+                            <Activity className="h-4 w-4 inline mr-2 text-gray-900" />
                             No billing activity yet for this account.
                           </td>
                         </tr>

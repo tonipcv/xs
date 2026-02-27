@@ -1,0 +1,59 @@
+{
+  "file": "siu_appointment.hl7",
+  "metrics": {
+    "phiDetected": 6,
+    "phiRedacted": 6,
+    "redactionRate": 100
+  },
+  "phiEntities": [
+    {
+      "type": "ID",
+      "text": "789012345^^^HOSPITAL^MR",
+      "start": 0,
+      "end": 23,
+      "confidence": 0.95
+    },
+    {
+      "type": "NAME",
+      "text": "ANDERSON^MICHAEL^JAMES",
+      "start": 0,
+      "end": 22,
+      "confidence": 0.95
+    },
+    {
+      "type": "DATE",
+      "text": "19550912",
+      "start": 0,
+      "end": 8,
+      "confidence": 0.95
+    },
+    {
+      "type": "LOCATION",
+      "text": "987 OAK ST^^WALTHAM^MA^02451^USA",
+      "start": 0,
+      "end": 32,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(781)555-8901",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "(781)555-2345",
+      "start": 0,
+      "end": 13,
+      "confidence": 0.95
+    }
+  ],
+  "validation": {
+    "isValid": true,
+    "errors": [],
+    "warnings": [
+      "Possible SSN pattern detected"
+    ]
+  }
+}

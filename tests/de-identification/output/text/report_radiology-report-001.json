@@ -1,0 +1,186 @@
+{
+  "originalFile": "radiology-report-001.txt",
+  "phiDetected": 15,
+  "phiRedacted": 15,
+  "phiTypes": {
+    "MRN": 1,
+    "PHONE": 2,
+    "DATE": 6,
+    "NAME": 4,
+    "LOCATION": 2
+  },
+  "entities": [
+    {
+      "type": "MRN",
+      "text": "MRN: MRN-123456",
+      "start": 46,
+      "end": 61,
+      "confidence": 0.95
+    },
+    {
+      "type": "PHONE",
+      "text": "617-555-0100",
+      "start": 575,
+      "end": 587,
+      "confidence": 0.9
+    },
+    {
+      "type": "PHONE",
+      "text": "Phone: ",
+      "start": 568,
+      "end": 575,
+      "confidence": 0.9
+    },
+    {
+      "type": "DATE",
+      "text": "05/15/1980",
+      "start": 65,
+      "end": 75,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "01/15/2024",
+      "start": 520,
+      "end": 530,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "January 15, 2024",
+      "start": 87,
+      "end": 103,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "DOB: 10/27/1979",
+      "start": 60,
+      "end": 75,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Exam Date: June 28, 2023",
+      "start": 76,
+      "end": 100,
+      "confidence": 0.85
+    },
+    {
+      "type": "DATE",
+      "text": "Date: 06/28/2023",
+      "start": 511,
+      "end": 527,
+      "confidence": 0.85
+    },
+    {
+      "type": "NAME",
+      "text": "Patient: John Michael Smith",
+      "start": 18,
+      "end": 45,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. Robert Jones",
+      "start": 124,
+      "end": 140,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Dr. Emily Chen",
+      "start": 495,
+      "end": 509,
+      "confidence": 0.75
+    },
+    {
+      "type": "NAME",
+      "text": "Ordering Physician: Dr",
+      "start": 104,
+      "end": 126,
+      "confidence": 0.75
+    },
+    {
+      "type": "LOCATION",
+      "text": "REDACTED\n\nCLINIC",
+      "start": 138,
+      "end": 154,
+      "confidence": 0.7
+    },
+    {
+      "type": "LOCATION",
+      "text": "Massachusetts General Hospital",
+      "start": 541,
+      "end": 571,
+      "confidence": 0.7
+    }
+  ],
+  "redactionMap": [
+    [
+      "MRN_46",
+      "MRN: MRN-123456 -> MRN: REDACTED"
+    ],
+    [
+      "PHONE_575",
+      "617-555-0100 -> XXX-XXX-XXXX"
+    ],
+    [
+      "PHONE_568",
+      "Phone:  -> Phone: XXX-XXX-XXXX"
+    ],
+    [
+      "DATE_65",
+      "05/15/1980 -> 10/27/1979"
+    ],
+    [
+      "DATE_520",
+      "01/15/2024 -> 06/28/2023"
+    ],
+    [
+      "DATE_87",
+      "January 15, 2024 -> June 28, 2023"
+    ],
+    [
+      "DATE_60",
+      "DOB: 10/27/1979 -> DOB: 04/09/1979"
+    ],
+    [
+      "DATE_76",
+      "Exam Date: June 28, 2023 -> Exam Date: December 9, 2022"
+    ],
+    [
+      "DATE_511",
+      "Date: 06/28/2023 -> Date: 12/09/2022"
+    ],
+    [
+      "NAME_18",
+      "Patient: John Michael Smith -> Patient: ANONYMIZED PATIENT"
+    ],
+    [
+      "NAME_124",
+      "Dr. Robert Jones -> Dr. REDACTED"
+    ],
+    [
+      "NAME_495",
+      "Dr. Emily Chen -> Dr. REDACTED"
+    ],
+    [
+      "NAME_104",
+      "Ordering Physician: Dr -> Ordering Physician: Dr. REDACTED"
+    ],
+    [
+      "LOCATION_138",
+      "REDACTED\n\nCLINIC -> REDACTED Medical Center"
+    ],
+    [
+      "LOCATION_541",
+      "Massachusetts General Hospital -> REDACTED Medical Center"
+    ]
+  ],
+  "validation": {
+    "isValid": true,
+    "hasStructure": true,
+    "errors": []
+  }
+}
