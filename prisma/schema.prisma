@@ -38,6 +38,11 @@ model User {
   twoFactorVerifiedAt  DateTime?
   twoFactorBackupCodes String?
   
+  // Stripe billing fields
+  stripeCustomerId     String?            @map("stripe_customer_id")
+  planTier             String?            @default("FREE") @map("plan_tier")
+  subscriptionStatus   String?            @map("subscription_status")
+  
   // Link opcional para Tenant
   tenantId             String?
   xaseRole             XaseRole?

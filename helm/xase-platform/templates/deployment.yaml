@@ -1,0 +1,135 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "xase-platform.fullname" . }}
+  labels:
+    {{- include "xase-platform.labels" . | nindent 4 }}
+spec:
+  {{- if not .Values.autoscaling.enabled }}
+  replicas: {{ .Values.replicaCount }}
+  {{- end }}
+  selector:
+    matchLabels:
+      {{- include "xase-platform.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      {{- with .Values.podAnnotations }}
+      annotations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      labels:
+        {{- include "xase-platform.selectorLabels" . | nindent 8 }}
+    spec:
+      {{- with .Values.imagePullSecrets }}
+      imagePullSecrets:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      serviceAccountName: {{ include "xase-platform.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+      - name: {{ .Chart.Name }}
+        securityContext:
+          {{- toYaml .Values.securityContext | nindent 12 }}
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag | default .Chart.AppVersion }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        ports:
+        - name: http
+          containerPort: {{ .Values.service.targetPort }}
+          protocol: TCP
+        livenessProbe:
+          {{- toYaml .Values.livenessProbe | nindent 12 }}
+        readinessProbe:
+          {{- toYaml .Values.readinessProbe | nindent 12 }}
+        resources:
+          {{- toYaml .Values.resources | nindent 12 }}
+        env:
+        - name: NODE_ENV
+          value: {{ .Values.env.NODE_ENV | quote }}
+        - name: NEXTAUTH_URL
+          value: {{ .Values.env.NEXTAUTH_URL | quote }}
+        - name: NEXT_PUBLIC_APP_URL
+          value: {{ .Values.env.NEXT_PUBLIC_APP_URL | quote }}
+        - name: DATABASE_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: DATABASE_URL
+        - name: NEXTAUTH_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: NEXTAUTH_SECRET
+        - name: STRIPE_SECRET_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: STRIPE_SECRET_KEY
+        - name: STRIPE_WEBHOOK_SECRET
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: STRIPE_WEBHOOK_SECRET
+        - name: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+        - name: SMTP_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: SMTP_HOST
+        - name: SMTP_PORT
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: SMTP_PORT
+        - name: SMTP_USER
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: SMTP_USER
+        - name: SMTP_PASS
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: SMTP_PASS
+        - name: EMAIL_FROM_ADDRESS
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: EMAIL_FROM_ADDRESS
+        - name: REDIS_URL
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: REDIS_URL
+        - name: CLICKHOUSE_HOST
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: CLICKHOUSE_HOST
+        - name: ENCRYPTION_KEY
+          valueFrom:
+            secretKeyRef:
+              name: {{ include "xase-platform.fullname" . }}-secrets
+              key: ENCRYPTION_KEY
+        volumeMounts:
+        - name: tmp
+          mountPath: /tmp
+      volumes:
+      - name: tmp
+        emptyDir: {}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}

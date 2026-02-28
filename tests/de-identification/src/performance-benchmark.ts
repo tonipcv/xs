@@ -505,4 +505,5 @@ if (require.main === module) {
   runPerformanceBenchmarks().catch(console.error);
 }
 
-export { runPerformanceBenchmarks, BenchmarkResult, StressTestResult };
+export { runPerformanceBenchmarks };
+export type { BenchmarkResult, StressTestResult };

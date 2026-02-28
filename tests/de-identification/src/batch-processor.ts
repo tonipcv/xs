@@ -334,4 +334,4 @@ if (require.main === module) {
   main().catch(console.error);
 }
 
-export { BatchConfig, BatchProgress, BatchResult };
+export type { BatchConfig, BatchProgress, BatchResult };

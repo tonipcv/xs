@@ -1,0 +1,57 @@
+name: Publish JavaScript SDK to npm
+
+on:
+  push:
+    tags:
+      - 'js-v*'
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish (e.g., 0.1.1)'
+        required: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        registry-url: 'https://registry.npmjs.org'
+    
+    - name: Install dependencies
+      working-directory: packages/sdk-js
+      run: npm ci
+    
+    - name: Build package
+      working-directory: packages/sdk-js
+      run: npm run build
+    
+    - name: Publish to npm (dry-run)
+      if: github.event_name == 'workflow_dispatch'
+      working-directory: packages/sdk-js
+      run: npm publish --dry-run
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Publish to npm
+      if: startsWith(github.ref, 'refs/tags/')
+      working-directory: packages/sdk-js
+      run: npm publish --access public
+      env:
+        NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+    
+    - name: Create GitHub Release
+      if: startsWith(github.ref, 'refs/tags/')
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: ${{ github.ref }}
+        release_name: JavaScript SDK ${{ github.ref }}
+        draft: false
+        prerelease: false

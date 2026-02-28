@@ -1,0 +1,777 @@
+openapi: 3.0.3
+info:
+  title: XASE API
+  description: |
+    XASE - Secure Data Marketplace for Healthcare and Financial AI
+    
+    This API provides comprehensive access to XASE's data governance, marketplace, 
+    and compliance features. All endpoints require authentication via API Key or JWT.
+    
+    ## Authentication
+    
+    XASE supports two authentication methods:
+    - **API Key**: Pass via `X-API-Key` header
+    - **JWT Token**: Pass via `Authorization: Bearer <token>` header
+    
+    ## Rate Limiting
+    
+    API requests are rate-limited based on your subscription tier:
+    - Free: 100 requests/hour
+    - Iniciante: 1,000 requests/hour
+    - Pro: 10,000 requests/hour
+    
+  version: 1.0.0
+  contact:
+    name: XASE Support
+    email: support@xase.ai
+    url: https://xase.ai
+  license:
+    name: Proprietary
+    url: https://xase.ai/terms
+
+servers:
+  - url: https://xase.ai/api/v1
+    description: Production server
+  - url: http://localhost:3000/api/v1
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: User authentication and registration
+  - name: Datasets
+    description: Dataset management and publishing
+  - name: Policies
+    description: Governance policy management
+  - name: Leases
+    description: Data access lease management
+  - name: Marketplace
+    description: Data marketplace and offers
+  - name: Billing
+    description: Usage tracking and billing
+  - name: Sidecar
+    description: Sidecar authentication and streaming
+  - name: Health
+    description: System health checks
+
+security:
+  - ApiKeyAuth: []
+  - BearerAuth: []
+
+paths:
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Check API health status
+      security: []
+      responses:
+        '200':
+          description: API is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: healthy
+                  timestamp:
+                    type: string
+                    format: date-time
+
+  /auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: Register new user
+      description: Create a new user account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - email
+                - password
+                - region
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: SecurePass123!
+                region:
+                  type: string
+                  enum: [US, EU, BR, OTHER]
+                  example: US
+      responses:
+        '201':
+          description: User created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login user
+      description: Authenticate user and receive JWT token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  format: password
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/forgot-password:
+    post:
+      tags:
+        - Authentication
+      summary: Request password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Password reset email sent
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /datasets:
+    get:
+      tags:
+        - Datasets
+      summary: List datasets
+      description: Retrieve all datasets accessible to the authenticated user
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+        - name: dataType
+          in: query
+          schema:
+            type: string
+            enum: [AUDIO, IMAGE, TEXT, TIMESERIES, TABULAR]
+      responses:
+        '200':
+          description: List of datasets
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Dataset'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags:
+        - Datasets
+      summary: Create dataset
+      description: Create a new dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - dataType
+              properties:
+                name:
+                  type: string
+                  example: Medical Audio Dataset
+                description:
+                  type: string
+                  example: De-identified patient consultation recordings
+                dataType:
+                  type: string
+                  enum: [AUDIO, IMAGE, TEXT, TIMESERIES, TABULAR]
+                metadata:
+                  type: object
+                  additionalProperties: true
+      responses:
+        '201':
+          description: Dataset created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '400':
+          $ref: '#/components/responses/BadRequest'
+
+  /datasets/{id}:
+    get:
+      tags:
+        - Datasets
+      summary: Get dataset by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dataset details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /policies:
+    get:
+      tags:
+        - Policies
+      summary: List policies
+      responses:
+        '200':
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Policy'
+
+    post:
+      tags:
+        - Policies
+      summary: Create policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - datasetId
+                - rules
+              properties:
+                name:
+                  type: string
+                datasetId:
+                  type: string
+                rules:
+                  type: object
+                  properties:
+                    allowedPurposes:
+                      type: array
+                      items:
+                        type: string
+                        enum: [RESEARCH, TRAINING, ANALYTICS, INFERENCE]
+                    dataRetentionDays:
+                      type: integer
+                    geographicRestrictions:
+                      type: array
+                      items:
+                        type: string
+                expiresAt:
+                  type: string
+                  format: date-time
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+
+  /policies/{id}:
+    delete:
+      tags:
+        - Policies
+      summary: Revoke policy
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy revoked
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /leases:
+    post:
+      tags:
+        - Leases
+      summary: Create lease
+      description: Request a new data access lease
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - datasetId
+                - policyId
+                - duration
+              properties:
+                datasetId:
+                  type: string
+                policyId:
+                  type: string
+                duration:
+                  type: integer
+                  description: Duration in seconds
+                  example: 3600
+                purpose:
+                  type: string
+                  enum: [RESEARCH, TRAINING, ANALYTICS, INFERENCE]
+      responses:
+        '201':
+          description: Lease created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lease'
+
+  /leases/{id}:
+    get:
+      tags:
+        - Leases
+      summary: Get lease by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lease details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lease'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /marketplace/offers:
+    get:
+      tags:
+        - Marketplace
+      summary: List marketplace offers
+      parameters:
+        - name: dataType
+          in: query
+          schema:
+            type: string
+            enum: [AUDIO, IMAGE, TEXT, TIMESERIES, TABULAR]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+
+  /access-offers:
+    get:
+      tags:
+        - Marketplace
+      summary: List access offers
+      responses:
+        '200':
+          description: List of access offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessOffer'
+
+  /access-offers/{offerId}/execute:
+    post:
+      tags:
+        - Marketplace
+      summary: Execute access offer
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                duration:
+                  type: integer
+                purpose:
+                  type: string
+      responses:
+        '200':
+          description: Offer executed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lease'
+
+  /billing/usage:
+    post:
+      tags:
+        - Billing
+      summary: Record usage event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leaseId
+                - bytesProcessed
+                - duration
+              properties:
+                leaseId:
+                  type: string
+                bytesProcessed:
+                  type: integer
+                  minimum: 0
+                duration:
+                  type: integer
+                  minimum: 0
+                eventType:
+                  type: string
+                  enum: [STREAM, BATCH, QUERY]
+      responses:
+        '201':
+          description: Usage recorded
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+
+  /billing/dashboard:
+    get:
+      tags:
+        - Billing
+      summary: Get billing dashboard
+      responses:
+        '200':
+          description: Billing dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  usage:
+                    type: object
+                    properties:
+                      current:
+                        type: number
+                      limit:
+                        type: number
+                      percentage:
+                        type: number
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+
+  /sidecar/auth:
+    post:
+      tags:
+        - Sidecar
+      summary: Authenticate sidecar
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - leaseId
+                - token
+              properties:
+                leaseId:
+                  type: string
+                token:
+                  type: string
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sessionId:
+                    type: string
+                  expiresAt:
+                    type: string
+                    format: date-time
+
+  /users/me:
+    get:
+      tags:
+        - Authentication
+      summary: Get current user
+      responses:
+        '200':
+          description: Current user details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+          format: email
+        region:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Dataset:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        dataType:
+          type: string
+          enum: [AUDIO, IMAGE, TEXT, TIMESERIES, TABULAR]
+        metadata:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        datasetId:
+          type: string
+        rules:
+          type: object
+        status:
+          type: string
+          enum: [ACTIVE, EXPIRED, REVOKED]
+        expiresAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    Lease:
+      type: object
+      properties:
+        id:
+          type: string
+        leaseId:
+          type: string
+        datasetId:
+          type: string
+        policyId:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, EXPIRED, REVOKED]
+        token:
+          type: string
+        issuedAt:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+        datasetId:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+        dataType:
+          type: string
+
+    AccessOffer:
+      type: object
+      properties:
+        id:
+          type: string
+        datasetId:
+          type: string
+        terms:
+          type: object
+        pricing:
+          type: object
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+        details:
+          type: object
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Unauthorized:
+      description: Unauthorized
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

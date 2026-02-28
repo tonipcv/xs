@@ -333,4 +333,4 @@ if (require.main === module) {
   runScenarioTests().catch(console.error);
 }
 
-export { ScenarioTestResult };
+export type { ScenarioTestResult };

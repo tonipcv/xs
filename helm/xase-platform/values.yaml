@@ -1,0 +1,238 @@
+# Default values for xase-platform
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 2
+
+image:
+  repository: xase/platform
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+podAnnotations: {}
+
+podSecurityContext:
+  fsGroup: 2000
+
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 1000
+
+service:
+  type: ClusterIP
+  port: 3000
+  targetPort: 3000
+
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: xase.ai
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: xase-tls
+      hosts:
+        - xase.ai
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 1000m
+    memory: 2Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity:
+  podAntiAffinity:
+    preferredDuringSchedulingIgnoredDuringExecution:
+      - weight: 100
+        podAffinityTerm:
+          labelSelector:
+            matchExpressions:
+              - key: app.kubernetes.io/name
+                operator: In
+                values:
+                  - xase-platform
+          topologyKey: kubernetes.io/hostname
+
+# Environment variables
+env:
+  NODE_ENV: production
+  NEXTAUTH_URL: https://xase.ai
+  NEXT_PUBLIC_APP_URL: https://xase.ai
+
+# Secrets (should be created separately)
+secrets:
+  # Database
+  DATABASE_URL: ""
+  
+  # NextAuth
+  NEXTAUTH_SECRET: ""
+  
+  # Stripe
+  STRIPE_SECRET_KEY: ""
+  STRIPE_WEBHOOK_SECRET: ""
+  NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ""
+  
+  # SMTP
+  SMTP_HOST: ""
+  SMTP_PORT: "465"
+  SMTP_SECURE: "true"
+  SMTP_USER: ""
+  SMTP_PASS: ""
+  EMAIL_FROM_ADDRESS: ""
+  EMAIL_FROM_NAME: "XASE"
+  
+  # Redis
+  REDIS_URL: ""
+  
+  # AWS/KMS
+  AWS_REGION: "us-east-1"
+  AWS_ACCESS_KEY_ID: ""
+  AWS_SECRET_ACCESS_KEY: ""
+  KMS_KEY_ID: ""
+  
+  # ClickHouse
+  CLICKHOUSE_HOST: ""
+  CLICKHOUSE_PORT: "8123"
+  CLICKHOUSE_USER: ""
+  CLICKHOUSE_PASSWORD: ""
+  CLICKHOUSE_DATABASE: "xase"
+  
+  # Encryption
+  ENCRYPTION_KEY: ""
+
+# PostgreSQL dependency
+postgresql:
+  enabled: true
+  auth:
+    username: xase
+    password: changeme
+    database: xase
+  primary:
+    persistence:
+      enabled: true
+      size: 50Gi
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+
+# Redis dependency
+redis:
+  enabled: true
+  auth:
+    enabled: true
+    password: changeme
+  master:
+    persistence:
+      enabled: true
+      size: 10Gi
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+
+# ClickHouse dependency
+clickhouse:
+  enabled: true
+  auth:
+    username: xase
+    password: changeme
+  persistence:
+    enabled: true
+    size: 100Gi
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+    requests:
+      cpu: 2000m
+      memory: 4Gi
+
+# Sidecar Rust component
+sidecar:
+  enabled: true
+  replicaCount: 3
+  image:
+    repository: xase/sidecar
+    tag: "latest"
+  resources:
+    limits:
+      cpu: 4000m
+      memory: 8Gi
+    requests:
+      cpu: 2000m
+      memory: 4Gi
+  service:
+    type: ClusterIP
+    port: 8080
+
+# Monitoring
+monitoring:
+  enabled: true
+  prometheus:
+    enabled: true
+  grafana:
+    enabled: true
+
+# Backup
+backup:
+  enabled: true
+  schedule: "0 2 * * *"
+  retention: 30
+
+# Health checks
+livenessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+readinessProbe:
+  httpGet:
+    path: /api/health
+    port: 3000
+  initialDelaySeconds: 10
+  periodSeconds: 5
+  timeoutSeconds: 3
+  failureThreshold: 3

@@ -344,4 +344,4 @@ if (require.main === module) {
   runAdvancedEdgeCaseTests().catch(console.error);
 }
 
-export { EdgeCaseTest };
+export type { EdgeCaseTest };

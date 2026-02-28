@@ -502,4 +502,4 @@ if (require.main === module) {
   main().catch(console.error);
 }
 
-export { DashboardMetrics };
+export type { DashboardMetrics };

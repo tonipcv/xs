@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
-import { sendEmail } from '@/lib/email'
+import { sendPasswordResetEmail } from '@/lib/email'
 
 export async function POST(request: Request) {
   try {
@@ -32,14 +32,14 @@ export async function POST(request: Request) {
 
     const user = await prisma.user.findUnique({
       where: { email },
-      select: { id: true, email: true }
+      select: { id: true, name: true, email: true }
     })
 
     if (!user) {
       return new NextResponse(
-        JSON.stringify({ error: 'Usuário não encontrado' }),
+        JSON.stringify({ success: true }),
         { 
-          status: 404,
+          status: 200,
           headers: { 'Content-Type': 'application/json' }
         }
       )
@@ -61,18 +61,10 @@ export async function POST(request: Request) {
                    'https://xase.ai'
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
 
-    await sendEmail({
-      to: email,
-      subject: 'Xase - Recuperação de Senha',
-      html: `
-        <h1>Xase - Recuperação de Senha</h1>
-        <p>Você solicitou a recuperação de senha. Clique no link abaixo para definir uma nova senha:</p>
-        <a href="${resetUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px;">
-          Redefinir Senha
-        </a>
-        <p>Se você não solicitou a recuperação de senha, ignore este email.</p>
-        <p>Este link é válido por 1 hora.</p>
-      `
+    await sendPasswordResetEmail(email, {
+      name: user.name || 'User',
+      resetUrl,
+      expiresIn: '1 hour',
     })
 
     return new NextResponse(

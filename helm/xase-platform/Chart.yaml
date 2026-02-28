@@ -1,0 +1,20 @@
+apiVersion: v2
+name: xase-platform
+description: XASE - Secure Data Marketplace for Healthcare and Financial AI
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - xase
+  - data-marketplace
+  - healthcare
+  - ai
+  - governance
+  - compliance
+home: https://xase.ai
+sources:
+  - https://github.com/xase/xase-sheets
+maintainers:
+  - name: XASE Team
+    email: support@xase.ai
+icon: https://xase.ai/logo.png

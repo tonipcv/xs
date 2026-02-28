@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { hash } from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
-import { sendEmail } from '@/lib/email';
+import { sendWelcomeEmail, sendEmailVerification } from '@/lib/email';
 import crypto from 'crypto';
 import { type Region } from '@/lib/prices';
 
@@ -69,29 +69,26 @@ export async function POST(req: Request) {
         }
       });
 
-      // Enviar email de confirmação
+      // Send welcome and verification emails
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
                      process.env.NEXTAUTH_URL || 
                      'https://xase.ai';
-      const confirmationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
+      const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`;
 
       try {
-        await sendEmail({
-          to: email,
-          subject: 'Confirme seu email - Xase',
-          html: `
-            <h1>Bem-vindo ao Xase!</h1>
-            <p>Olá ${name},</p>
-            <p>Obrigado por se cadastrar. Por favor, confirme seu email clicando no botão abaixo:</p>
-            <a href="${confirmationUrl}" style="display: inline-block; padding: 12px 24px; background-color: #3b82f6; color: white; text-decoration: none; border-radius: 6px;">
-              Confirmar Email
-            </a>
-            <p>Se você não criou esta conta, por favor ignore este email.</p>
-          `
-        });
+        await Promise.all([
+          sendWelcomeEmail(email, {
+            name,
+            email,
+            verificationUrl,
+          }),
+          sendEmailVerification(email, {
+            name,
+            verificationUrl,
+          }),
+        ]);
       } catch (emailError) {
-        console.error('Erro ao enviar email:', emailError);
-        // Continua com o registro mesmo se o email falhar
+        console.error('Error sending registration emails:', emailError);
       }
 
       return NextResponse.json({

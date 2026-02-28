@@ -1,65 +1,99 @@
-# 📚 Xase Documentation
+# 📚 XASE Sheets - Documentação Técnica
 
-> **Documentação completa do Xase Dashboard - AI Evidence Layer & WhatsApp Automation**
+**Versão:** 3.0.0  
+**Última Atualização:** 27 de Fevereiro de 2024
 
-Esta pasta contém toda a documentação técnica, guias de setup, material de vendas e compliance do sistema Xase.
+> **Documentação completa do XASE Sheets - Plataforma de Gestão de Dados Médicos**
+
+Esta pasta contém toda a documentação técnica, arquitetura, guias de implementação e compliance do sistema XASE Sheets.
 
 ---
 
 ## 🗂️ Estrutura da Documentação
 
-A documentação está organizada em **6 categorias principais**:
+A documentação está organizada em **7 categorias principais**:
 
-### 📁 [Setup & Configuration](./setup/)
-Guias de instalação e configuração inicial
-- AI Agent WhatsApp setup
-- Xase Core setup
-- Deployment guides
-- Testing guides
-- Configurações específicas (KMS, MinIO, ngrok, AWS)
+### 📁 Raiz (21 arquivos)
 
-### 📁 [Architecture & Technical](./architecture/)
-Arquitetura técnica e design do sistema
+**Arquitetura (4 arquivos):**
+- [ARCHITECTURE_DIAGRAMS.md](./ARCHITECTURE_DIAGRAMS.md) - Diagramas de arquitetura
+- [BACKEND_ARCHITECTURE.md](./BACKEND_ARCHITECTURE.md) - Arquitetura do backend
+- [FRONTEND_ARCHITECTURE.md](./FRONTEND_ARCHITECTURE.md) - Arquitetura do frontend
+- [SYSTEM_ARCHITECTURE.md](./SYSTEM_ARCHITECTURE.md) - Arquitetura do sistema
+
+**Sidecar (3 arquivos):**
+- [SIDECAR_COMPLETE_ARCHITECTURE.md](./SIDECAR_COMPLETE_ARCHITECTURE.md) - Arquitetura completa
+- [SIDECAR_DEPLOYMENT_COMPLETE_GUIDE.md](./SIDECAR_DEPLOYMENT_COMPLETE_GUIDE.md) - Guia de deployment
+- [SIDECAR_QUICKSTART.md](./SIDECAR_QUICKSTART.md) - Quick start
+
+**Billing (2 arquivos):**
+- [BILLING_HYBRID_SYSTEM.md](./BILLING_HYBRID_SYSTEM.md) - Sistema híbrido
+- [BILLING_SETUP_QUICKSTART.md](./BILLING_SETUP_QUICKSTART.md) - Setup rápido
+
+**Documentação Técnica (4 arquivos):**
+- [TECHNICAL_DOCUMENTATION.md](./TECHNICAL_DOCUMENTATION.md) - Documentação técnica
+- [XASE_COMPLETE_SYSTEM_DOCUMENTATION.md](./XASE_COMPLETE_SYSTEM_DOCUMENTATION.md) - Sistema completo
+- [LEGAL_DOCUMENTATION.md](./LEGAL_DOCUMENTATION.md) - Documentação legal
+- [README.md](./README.md) - Este arquivo
+
+**Testing (2 arquivos):**
+- [FRONTEND_TESTING_GUIDE.md](./FRONTEND_TESTING_GUIDE.md) - Guia de testes frontend
+- [GUIA_TESTE_VISUAL_CONTRASTE.md](./GUIA_TESTE_VISUAL_CONTRASTE.md) - Testes visuais
+
+**Outros (6 arquivos):**
+- [PRODUCT_ROADMAP_2026.md](./PRODUCT_ROADMAP_2026.md) - Roadmap 2026
+- [PRODUCTION_DEPLOYMENT_CHECKLIST.md](./PRODUCTION_DEPLOYMENT_CHECKLIST.md) - Checklist de deployment
+- [SOC2_GAP_ANALYSIS.md](./SOC2_GAP_ANALYSIS.md) - Análise SOC2
+- [CLOUD_BROWSE_API.md](./CLOUD_BROWSE_API.md) - API Cloud Browse
+- [INVARIANTS.md](./INVARIANTS.md) - Invariantes do sistema
+- [curl-examples.md](./curl-examples.md) - Exemplos de curl
+
+### 📁 [architecture/](./architecture/) - Arquitetura do Sistema
+Documentação detalhada da arquitetura
 - Guia completo de arquitetura
 - Visão técnica detalhada
 - Security architecture
 - Evidence bundles
 - External API
 
-### 📁 [Implementation & Status](./implementation/)
+### 📁 [implementation/](./implementation/) - Implementação e Status
 Status de implementação e features
-- Resumos de implementação
 - Features completas
 - Frontend implementation
 - HITL (Human-in-the-Loop)
-- SDKs (Python, JavaScript)
+- SDKs (Python)
+- Sidecar hospital
 
-### 📁 [Planning & Roadmap](./planning/)
+### 📁 [planning/](./planning/) - Planejamento e Roadmap
 Planejamento estratégico e roadmap
 - Plano de execução Q1 2026
 - Product roadmap EU AI Act
 - MVP status
-- Próximos passos
+- Insurance adaptation
 
-### 📁 [Sales & Business](./sales/)
+### 📁 [sales/](./sales/) - Vendas e Business
 Material de vendas e análises de mercado
 - Sales playbook
 - Enterprise analysis
-- Vendability analysis
-- Legal grade
 - User guides
 
-### 📁 [Security & Compliance](./security/)
+### 📁 [security/](./security/) - Segurança e Compliance
 Segurança, compliance e políticas
 - Security policy
-- Incident response plan
 - Evidence of controls
 - Auditor Q&A
-- DPA (Data Processing Agreement)
 - SLO (Service Level Objectives)
 
-### 📁 [Archived](./archived/)
-Documentos antigos e deprecados (mantidos para histórico)
+### 📁 [setup/](./setup/) - Setup e Configuração
+Guias de instalação e configuração
+- Xase setup guide
+- Deployment guides
+- KMS setup
+- MinIO storage setup
+- AI Agent setup
+
+### 📁 [technical/](./technical/) - Documentação Técnica
+Documentação técnica detalhada
 
 ---
 

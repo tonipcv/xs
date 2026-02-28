@@ -466,4 +466,4 @@ if (require.main === module) {
   main().catch(console.error);
 }
 
-export { QualityMetrics };
+export type { QualityMetrics };
