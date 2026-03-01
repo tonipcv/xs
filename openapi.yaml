@@ -50,6 +50,34 @@ tags:
     description: Just-in-time access provisioning
   - name: Break-glass
     description: Emergency access
+  - name: Billing
+    description: Billing and invoicing
+  - name: Compliance
+    description: GDPR and regulatory compliance
+  - name: Integrations
+    description: Cloud storage integrations
+  - name: Audit
+    description: Audit log management
+  - name: Analytics
+    description: Analytics and metrics
+  - name: Consent
+    description: Consent management
+  - name: Evidence
+    description: Evidence bundles
+  - name: GraphQL
+    description: GraphQL API
+  - name: Marketplace
+    description: Data marketplace and offers
+  - name: Notifications
+    description: User notifications
+  - name: Webhooks
+    description: Webhook management
+  - name: Usage
+    description: Usage tracking and reporting
+  - name: Tenants
+    description: Tenant management
+  - name: Users
+    description: User management
 
 security:
   - ApiKeyAuth: []
@@ -567,3 +595,1499 @@ components:
         expiresAt:
           type: string
           format: date-time
+
+  # Additional endpoints
+  /api/v1/datasets/{datasetId}:
+    get:
+      tags: [Datasets]
+      summary: Get dataset details
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Dataset details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+    
+    put:
+      tags: [Datasets]
+      summary: Update dataset
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DatasetUpdate'
+      responses:
+        '200':
+          description: Dataset updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Dataset'
+    
+    delete:
+      tags: [Datasets]
+      summary: Delete dataset
+      parameters:
+        - name: datasetId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Dataset deleted
+
+  /api/v1/leases/{leaseId}:
+    get:
+      tags: [Leases]
+      summary: Get lease details
+      parameters:
+        - name: leaseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Lease details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Lease'
+    
+    delete:
+      tags: [Leases]
+      summary: Revoke lease
+      parameters:
+        - name: leaseId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Lease revoked
+
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register new user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                password:
+                  type: string
+                  minLength: 8
+                name:
+                  type: string
+      responses:
+        '201':
+          description: User registered
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  userId:
+                    type: string
+                  email:
+                    type: string
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request password reset
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+              properties:
+                email:
+                  type: string
+                  format: email
+      responses:
+        '200':
+          description: Reset email sent
+
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - token
+                - password
+              properties:
+                token:
+                  type: string
+                password:
+                  type: string
+                  minLength: 8
+      responses:
+        '200':
+          description: Password reset successful
+
+  /api/auth/2fa/setup:
+    post:
+      tags: [Auth]
+      summary: Setup 2FA
+      responses:
+        '200':
+          description: 2FA setup information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MFASetup'
+
+  /api/auth/2fa/verify:
+    post:
+      tags: [Auth]
+      summary: Verify 2FA code
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - code
+              properties:
+                code:
+                  type: string
+                  pattern: '^\d{6}$'
+      responses:
+        '200':
+          description: Code verified
+
+  /api/billing/invoices:
+    get:
+      tags: [Billing]
+      summary: List invoices
+      parameters:
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of invoices
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  invoices:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Invoice'
+                  total:
+                    type: integer
+
+  /api/compliance/gdpr/dsar:
+    post:
+      tags: [Compliance]
+      summary: Submit GDPR data subject access request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - subjectId
+              properties:
+                subjectId:
+                  type: string
+                requestType:
+                  type: string
+                  enum: [ACCESS, ERASURE, PORTABILITY]
+      responses:
+        '201':
+          description: DSAR submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                  status:
+                    type: string
+
+  /api/compliance/gdpr/breach:
+    post:
+      tags: [Compliance]
+      summary: Report GDPR data breach
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - description
+                - severity
+              properties:
+                description:
+                  type: string
+                severity:
+                  type: string
+                  enum: [LOW, MEDIUM, HIGH, CRITICAL]
+                affectedRecords:
+                  type: integer
+      responses:
+        '201':
+          description: Breach reported
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  breachId:
+                    type: string
+                  reportedAt:
+                    type: string
+                    format: date-time
+
+  /api/cloud-integrations:
+    get:
+      tags: [Integrations]
+      summary: List cloud integrations
+      responses:
+        '200':
+          description: List of integrations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CloudIntegration'
+    
+    post:
+      tags: [Integrations]
+      summary: Create cloud integration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudIntegrationCreate'
+      responses:
+        '201':
+          description: Integration created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudIntegration'
+
+  /api/cloud-integrations/{id}:
+    get:
+      tags: [Integrations]
+      summary: Get integration details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Integration details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CloudIntegration'
+    
+    delete:
+      tags: [Integrations]
+      summary: Delete integration
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Integration deleted
+
+  /api/cloud-integrations/{id}/scan:
+    post:
+      tags: [Integrations]
+      summary: Scan cloud storage
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Scan initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  scanId:
+                    type: string
+                  status:
+                    type: string
+
+  /api/audit/export:
+    get:
+      tags: [Audit]
+      summary: Export audit logs
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: format
+          in: query
+          schema:
+            type: string
+            enum: [JSON, CSV, PDF]
+            default: JSON
+      responses:
+        '200':
+          description: Audit logs export
+          content:
+            application/json:
+              schema:
+                type: object
+            text/csv:
+              schema:
+                type: string
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /api/dashboard/metrics:
+    get:
+      tags: [Analytics]
+      summary: Get dashboard metrics
+      parameters:
+        - name: period
+          in: query
+          schema:
+            type: string
+            enum: [DAY, WEEK, MONTH, YEAR]
+            default: WEEK
+      responses:
+        '200':
+          description: Dashboard metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DashboardMetrics'
+
+  /api/analytics/advanced:
+    post:
+      tags: [Analytics]
+      summary: Run advanced analytics
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - datasetId
+                - analysisType
+              properties:
+                datasetId:
+                  type: string
+                analysisType:
+                  type: string
+                  enum: [STATISTICAL, QUALITY, BIAS, DRIFT]
+                parameters:
+                  type: object
+      responses:
+        '200':
+          description: Analysis results
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/consent/revoke:
+    post:
+      tags: [Consent]
+      summary: Revoke consent
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - consentId
+              properties:
+                consentId:
+                  type: string
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Consent revoked
+
+  /api/evidence/{bundleId}:
+    get:
+      tags: [Evidence]
+      summary: Get evidence bundle
+      parameters:
+        - name: bundleId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Evidence bundle
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvidenceBundle'
+
+  /api/graphql:
+    post:
+      tags: [GraphQL]
+      summary: GraphQL endpoint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - query
+              properties:
+                query:
+                  type: string
+                variables:
+                  type: object
+                operationName:
+                  type: string
+      responses:
+        '200':
+          description: GraphQL response
+          content:
+            application/json:
+              schema:
+                type: object
+
+  /api/marketplace/offers:
+    get:
+      tags: [Marketplace]
+      summary: List marketplace offers
+      parameters:
+        - name: dataType
+          in: query
+          schema:
+            type: string
+            enum: [AUDIO, IMAGE, VIDEO, TEXT, DICOM]
+        - name: minPrice
+          in: query
+          schema:
+            type: number
+        - name: maxPrice
+          in: query
+          schema:
+            type: number
+      responses:
+        '200':
+          description: List of offers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Offer'
+    
+    post:
+      tags: [Marketplace]
+      summary: Create marketplace offer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferCreate'
+      responses:
+        '201':
+          description: Offer created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+
+  /api/marketplace/offers/{offerId}:
+    get:
+      tags: [Marketplace]
+      summary: Get offer details
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Offer details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+    
+    put:
+      tags: [Marketplace]
+      summary: Update offer
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OfferUpdate'
+      responses:
+        '200':
+          description: Offer updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Offer'
+    
+    delete:
+      tags: [Marketplace]
+      summary: Delete offer
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Offer deleted
+
+  /api/marketplace/offers/{offerId}/negotiate:
+    post:
+      tags: [Marketplace]
+      summary: Negotiate offer terms
+      parameters:
+        - name: offerId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - proposedPrice
+              properties:
+                proposedPrice:
+                  type: number
+                proposedTerms:
+                  type: object
+                message:
+                  type: string
+      responses:
+        '200':
+          description: Negotiation initiated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  negotiationId:
+                    type: string
+                  status:
+                    type: string
+
+  /api/marketplace/access-requests:
+    get:
+      tags: [Marketplace]
+      summary: List access requests
+      responses:
+        '200':
+          description: List of access requests
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AccessRequest'
+    
+    post:
+      tags: [Marketplace]
+      summary: Create access request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AccessRequestCreate'
+      responses:
+        '201':
+          description: Access request created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AccessRequest'
+
+  /api/marketplace/access-requests/{requestId}/approve:
+    post:
+      tags: [Marketplace]
+      summary: Approve access request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Request approved
+
+  /api/marketplace/access-requests/{requestId}/reject:
+    post:
+      tags: [Marketplace]
+      summary: Reject access request
+      parameters:
+        - name: requestId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason:
+                  type: string
+      responses:
+        '200':
+          description: Request rejected
+
+  /api/notifications:
+    get:
+      tags: [Notifications]
+      summary: List notifications
+      parameters:
+        - name: unreadOnly
+          in: query
+          schema:
+            type: boolean
+            default: false
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: List of notifications
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Notification'
+
+  /api/notifications/{notificationId}/read:
+    post:
+      tags: [Notifications]
+      summary: Mark notification as read
+      parameters:
+        - name: notificationId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Notification marked as read
+
+  /api/webhooks:
+    get:
+      tags: [Webhooks]
+      summary: List webhooks
+      responses:
+        '200':
+          description: List of webhooks
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Webhook'
+    
+    post:
+      tags: [Webhooks]
+      summary: Create webhook
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookCreate'
+      responses:
+        '201':
+          description: Webhook created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+
+  /api/webhooks/{webhookId}:
+    get:
+      tags: [Webhooks]
+      summary: Get webhook details
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Webhook details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    
+    put:
+      tags: [Webhooks]
+      summary: Update webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WebhookUpdate'
+      responses:
+        '200':
+          description: Webhook updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook'
+    
+    delete:
+      tags: [Webhooks]
+      summary: Delete webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Webhook deleted
+
+  /api/webhooks/{webhookId}/test:
+    post:
+      tags: [Webhooks]
+      summary: Test webhook
+      parameters:
+        - name: webhookId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Test webhook sent
+
+  /api/usage/report:
+    get:
+      tags: [Usage]
+      summary: Get usage report
+      parameters:
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date
+        - name: granularity
+          in: query
+          schema:
+            type: string
+            enum: [HOURLY, DAILY, WEEKLY, MONTHLY]
+            default: DAILY
+      responses:
+        '200':
+          description: Usage report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UsageReport'
+
+  /api/tenants:
+    get:
+      tags: [Tenants]
+      summary: List tenants
+      responses:
+        '200':
+          description: List of tenants
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Tenant'
+    
+    post:
+      tags: [Tenants]
+      summary: Create tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantCreate'
+      responses:
+        '201':
+          description: Tenant created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+
+  /api/tenants/{tenantId}:
+    get:
+      tags: [Tenants]
+      summary: Get tenant details
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Tenant details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+    
+    put:
+      tags: [Tenants]
+      summary: Update tenant
+      parameters:
+        - name: tenantId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TenantUpdate'
+      responses:
+        '200':
+          description: Tenant updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Tenant'
+
+  /api/users:
+    get:
+      tags: [Users]
+      summary: List users
+      parameters:
+        - name: tenantId
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of users
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/User'
+
+  /api/users/{userId}:
+    get:
+      tags: [Users]
+      summary: Get user details
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+    
+    put:
+      tags: [Users]
+      summary: Update user
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdate'
+      responses:
+        '200':
+          description: User updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+
+  /api/policies:
+    get:
+      tags: [Policies]
+      summary: List policies
+      responses:
+        '200':
+          description: List of policies
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Policy'
+    
+    post:
+      tags: [Policies]
+      summary: Create policy
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreate'
+      responses:
+        '201':
+          description: Policy created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+
+  /api/policies/{policyId}:
+    get:
+      tags: [Policies]
+      summary: Get policy details
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Policy details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    
+    put:
+      tags: [Policies]
+      summary: Update policy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyUpdate'
+      responses:
+        '200':
+          description: Policy updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Policy'
+    
+    delete:
+      tags: [Policies]
+      summary: Delete policy
+      parameters:
+        - name: policyId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Policy deleted
+
+components:
+  schemas:
+    DatasetUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        metadata:
+          type: object
+
+    Invoice:
+      type: object
+      properties:
+        id:
+          type: string
+        amount:
+          type: number
+        currency:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, PAID, FAILED]
+        createdAt:
+          type: string
+          format: date-time
+
+    CloudIntegration:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        provider:
+          type: string
+          enum: [AWS, GCP, AZURE]
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, ERROR]
+        createdAt:
+          type: string
+          format: date-time
+
+    CloudIntegrationCreate:
+      type: object
+      required:
+        - name
+        - provider
+        - credentials
+      properties:
+        name:
+          type: string
+        provider:
+          type: string
+          enum: [AWS, GCP, AZURE]
+        credentials:
+          type: object
+
+    DashboardMetrics:
+      type: object
+      properties:
+        totalDatasets:
+          type: integer
+        activeLeases:
+          type: integer
+        dataVolume:
+          type: number
+        apiCalls:
+          type: integer
+        complianceScore:
+          type: number
+
+    EvidenceBundle:
+      type: object
+      properties:
+        bundleId:
+          type: string
+        datasetId:
+          type: string
+        leaseId:
+          type: string
+        evidence:
+          type: object
+        createdAt:
+          type: string
+          format: date-time
+
+    Offer:
+      type: object
+      properties:
+        id:
+          type: string
+        datasetId:
+          type: string
+        sellerId:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+          default: USD
+        dataType:
+          type: string
+          enum: [AUDIO, IMAGE, VIDEO, TEXT, DICOM]
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE, SOLD]
+        createdAt:
+          type: string
+          format: date-time
+
+    OfferCreate:
+      type: object
+      required:
+        - datasetId
+        - price
+      properties:
+        datasetId:
+          type: string
+        price:
+          type: number
+        currency:
+          type: string
+          default: USD
+        terms:
+          type: object
+
+    OfferUpdate:
+      type: object
+      properties:
+        price:
+          type: number
+        status:
+          type: string
+          enum: [ACTIVE, INACTIVE]
+        terms:
+          type: object
+
+    AccessRequest:
+      type: object
+      properties:
+        id:
+          type: string
+        requesterId:
+          type: string
+        datasetId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, APPROVED, REJECTED]
+        reason:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    AccessRequestCreate:
+      type: object
+      required:
+        - datasetId
+        - reason
+      properties:
+        datasetId:
+          type: string
+        reason:
+          type: string
+        requestedPermissions:
+          type: array
+          items:
+            type: string
+
+    Notification:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        type:
+          type: string
+          enum: [INFO, WARNING, ERROR, SUCCESS]
+        title:
+          type: string
+        message:
+          type: string
+        read:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    Webhook:
+      type: object
+      properties:
+        id:
+          type: string
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+        secret:
+          type: string
+        createdAt:
+          type: string
+          format: date-time
+
+    WebhookCreate:
+      type: object
+      required:
+        - url
+        - events
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        secret:
+          type: string
+
+    WebhookUpdate:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+        events:
+          type: array
+          items:
+            type: string
+        active:
+          type: boolean
+
+    UsageReport:
+      type: object
+      properties:
+        period:
+          type: object
+          properties:
+            start:
+              type: string
+              format: date-time
+            end:
+              type: string
+              format: date-time
+        metrics:
+          type: object
+          properties:
+            apiCalls:
+              type: integer
+            dataTransferred:
+              type: number
+            activeLeases:
+              type: integer
+            costs:
+              type: number
+
+    Tenant:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        plan:
+          type: string
+          enum: [FREE, STARTER, PRO, ENTERPRISE]
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED, DELETED]
+        createdAt:
+          type: string
+          format: date-time
+
+    TenantCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        plan:
+          type: string
+          enum: [FREE, STARTER, PRO, ENTERPRISE]
+          default: FREE
+
+    TenantUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        plan:
+          type: string
+          enum: [FREE, STARTER, PRO, ENTERPRISE]
+        status:
+          type: string
+          enum: [ACTIVE, SUSPENDED]
+
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        email:
+          type: string
+          format: email
+        name:
+          type: string
+        tenantId:
+          type: string
+        role:
+          type: string
+          enum: [OWNER, ADMIN, VIEWER]
+        createdAt:
+          type: string
+          format: date-time
+
+    UserUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        role:
+          type: string
+          enum: [OWNER, ADMIN, VIEWER]
+
+    Policy:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        rules:
+          type: object
+        active:
+          type: boolean
+        createdAt:
+          type: string
+          format: date-time
+
+    PolicyCreate:
+      type: object
+      required:
+        - name
+        - rules
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        rules:
+          type: object
+
+    PolicyUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        rules:
+          type: object
+        active:
+          type: boolean

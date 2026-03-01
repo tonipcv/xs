@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Integration tests for consent propagation
  * 

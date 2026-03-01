@@ -50,6 +50,11 @@ model User {
   accounts             Account[]
   sessions             Session[]
   tenant               Tenant?            @relation(fields: [tenantId], references: [id])
+  // Marketplace relations
+  offersSold           Offer[]            @relation("OfferSeller")
+  negotiationsAsBuyer  Negotiation[]      @relation("NegotiationBuyer")
+  negotiationsAsSeller Negotiation[]      @relation("NegotiationSeller")
+  notifications        Notification[]
   
   @@index([tenantId])
   @@map("users")
@@ -325,6 +330,8 @@ model Dataset {
   dataAssets          DataAsset[]
   leases              AccessLease[]
   accessOffers        AccessOffer[]
+  // Marketplace offers mapped to Offer table
+  offers              Offer[]
   
   @@index([tenantId])
   @@index([status])
@@ -560,6 +567,83 @@ model AccessLog {
   @@index([clientTenantId])
   @@index([timestamp])
   @@map("xase_access_logs")
+}
+
+// ========================================
+// MARKETPLACE: Offers, Negotiations, Notifications
+// ========================================
+
+model Offer {
+  id         String   @id
+  datasetId  String   @map("datasetId")
+  sellerId   String   @map("sellerId")
+  price      Decimal  @db.Decimal(10, 2)
+  currency   String   @default("USD")
+  dataType   String?
+  status     String   @default("ACTIVE")
+  terms      Json?
+  createdAt  DateTime @default(now()) @map("createdAt")
+  updatedAt  DateTime @updatedAt @map("updatedAt")
+
+  // Relations
+  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  seller  User    @relation("OfferSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  negotiations Negotiation[]
+
+  @@index([datasetId])
+  @@index([sellerId])
+  @@index([status])
+  @@map("Offer")
+}
+
+model Negotiation {
+  id            String   @id
+  offerId       String   @map("offerId")
+  buyerId       String   @map("buyerId")
+  sellerId      String   @map("sellerId")
+  initialPrice  Decimal  @db.Decimal(10, 2) @map("initialPrice")
+  proposedPrice Decimal  @db.Decimal(10, 2) @map("proposedPrice")
+  counterPrice  Decimal? @db.Decimal(10, 2) @map("counterPrice")
+  finalPrice    Decimal? @db.Decimal(10, 2) @map("finalPrice")
+  status        String   @default("PENDING")
+  proposedTerms Json?    @map("proposedTerms")
+  counterTerms  Json?    @map("counterTerms")
+  message       String?
+  counterMessage String? @map("counterMessage")
+  rejectionReason String? @map("rejectionReason")
+  expiresAt     DateTime? @map("expiresAt")
+  acceptedAt    DateTime? @map("acceptedAt")
+  rejectedAt    DateTime? @map("rejectedAt")
+  createdAt     DateTime  @default(now()) @map("createdAt")
+  updatedAt     DateTime  @updatedAt @map("updatedAt")
+
+  // Relations
+  offer  Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  buyer  User  @relation("NegotiationBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
+  seller User  @relation("NegotiationSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([status])
+  @@map("Negotiation")
+}
+
+model Notification {
+  id        String   @id
+  userId    String   @map("userId")
+  type      String   @default("INFO")
+  title     String
+  message   String?
+  read      Boolean  @default(false)
+  metadata  Json?
+  createdAt DateTime @default(now()) @map("createdAt")
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("Notification")
 }
 
 // ========================================
@@ -1222,4 +1306,51 @@ model BillingSnapshot {
   @@index([tenantId, period])
   @@index([snapshotDate])
   @@map("billing_snapshots")
+}
+
+// ========================================
+// WEBHOOKS
+// ========================================
+
+model Webhook {
+  id          String   @id @default(cuid())
+  tenantId    String   @map("tenant_id")
+  url         String
+  secret      String
+  events      String[] // Array of event types
+  isActive    Boolean  @default(true) @map("is_active")
+  description String?
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+  
+  deliveries  WebhookDelivery[]
+  
+  @@index([tenantId])
+  @@index([isActive])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id             String   @id @default(cuid())
+  webhookId      String   @map("webhook_id")
+  eventType      String   @map("event_type")
+  payload        String   @db.Text
+  status         String   @default("pending") // pending, success, failed
+  attempts       Int      @default(0)
+  lastAttemptAt  DateTime? @map("last_attempt_at")
+  nextRetryAt    DateTime? @map("next_retry_at")
+  responseStatus Int?     @map("response_status")
+  responseBody   String?  @db.Text @map("response_body")
+  error          String?  @db.Text
+  
+  createdAt      DateTime @default(now()) @map("created_at")
+  
+  webhook        Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
+  
+  @@index([webhookId])
+  @@index([status])
+  @@index([nextRetryAt])
+  @@index([createdAt])
+  @@map("webhook_deliveries")
 }

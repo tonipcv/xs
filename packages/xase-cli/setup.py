@@ -6,7 +6,7 @@ long_description = readme_path.read_text(encoding="utf-8") if readme_path.exists
 
 setup(
     name='xase-ai',
-    version='2.0.2',
+    version='2.0.4',
     description='Enterprise-grade CLI for the Xase AI Lab (governed AI training datasets)',
     long_description=long_description,
     long_description_content_type='text/markdown',

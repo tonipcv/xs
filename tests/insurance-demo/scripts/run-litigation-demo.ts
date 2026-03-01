@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  Litigation/contestability demo:
  - Pick a denied claim and find a similar approved claim (same type, similar amount)

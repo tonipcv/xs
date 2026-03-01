@@ -1,7 +1,7 @@
 {
-  "name": "@xase/sdk-js",
+  "name": "@xase-ai/sdk-js",
   "version": "0.1.0",
-  "description": "Official Xase SDK for Node.js - Evidence Layer for AI Agents",
+  "description": "Official XASE SDK for Node.js - Evidence Layer for AI Agents",
   "main": "./dist/index.js",
   "module": "./dist/index.mjs",
   "types": "./dist/index.d.ts",

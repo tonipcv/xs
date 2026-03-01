@@ -2,6 +2,14 @@
 name = "xase-sidecar"
 version = "0.1.0"
 edition = "2021"
+description = "XASE AI Sidecar: high-performance evidence and data processing sidecar (audio/image/DICOM/NLP) with S3, Redis, JWT auth, and metrics"
+license = "MIT"
+repository = "https://github.com/xaseai/xase-sheets"
+homepage = "https://xase.ai"
+readme = "README.md"
+keywords = ["xase", "sidecar", "ai", "dicom", "nlp"]
+categories = ["command-line-utilities", "science", "data-structures", "web-programming::http-server"]
+authors = ["XASE AI <support@xase.ai>"]
 
 [dependencies]
 tokio = { version = "1.35", features = ["full"] }

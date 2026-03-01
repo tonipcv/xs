@@ -1,0 +1,565 @@
+Metadata-Version: 2.4
+Name: xase-sheets
+Version: 2.0.1
+Summary: Official Python SDK for XASE - Secure Data Marketplace
+Home-page: https://github.com/xaseai/xase-sheets
+Author: XASE AI
+Author-email: support@xase.ai
+License: MIT
+Project-URL: Documentation, https://docs.xase.ai
+Project-URL: Source, https://github.com/xaseai/xase-sheets
+Project-URL: Tracker, https://github.com/xaseai/xase-sheets/issues
+Keywords: xase data-marketplace ai-training gdpr compliance data-sharing sdk
+Classifier: Development Status :: 5 - Production/Stable
+Classifier: Intended Audience :: Developers
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Classifier: Programming Language :: Python :: 3.8
+Classifier: Programming Language :: Python :: 3.9
+Classifier: Programming Language :: Python :: 3.10
+Classifier: Programming Language :: Python :: 3.11
+Classifier: Programming Language :: Python :: 3.12
+Classifier: Topic :: Software Development :: Libraries :: Python Modules
+Classifier: Topic :: Scientific/Engineering :: Artificial Intelligence
+Classifier: Topic :: Database
+Requires-Python: >=3.8
+Description-Content-Type: text/markdown
+Requires-Dist: requests>=2.31.0
+Requires-Dist: websocket-client>=1.6.0
+Requires-Dist: python-dateutil>=2.8.0
+Requires-Dist: typing-extensions>=4.5.0
+Provides-Extra: dev
+Requires-Dist: pytest>=7.4.0; extra == "dev"
+Requires-Dist: pytest-cov>=4.1.0; extra == "dev"
+Requires-Dist: pytest-asyncio>=0.21.0; extra == "dev"
+Requires-Dist: black>=23.7.0; extra == "dev"
+Requires-Dist: flake8>=6.1.0; extra == "dev"
+Requires-Dist: mypy>=1.5.0; extra == "dev"
+Requires-Dist: isort>=5.12.0; extra == "dev"
+Provides-Extra: async
+Requires-Dist: aiohttp>=3.8.0; extra == "async"
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: description
+Dynamic: description-content-type
+Dynamic: home-page
+Dynamic: keywords
+Dynamic: license
+Dynamic: project-url
+Dynamic: provides-extra
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary
+
+# XASE Sheets SDK - Python
+
+Official Python SDK for XASE Sheets - Secure Data Marketplace Platform.
+
+## Installation
+
+```bash
+pip install xase-sheets
+```
+
+## Quick Start
+
+```python
+from xase import XaseClient
+
+# Initialize client
+client = XaseClient(api_key='your-api-key')
+
+# List datasets
+result = client.list_datasets()
+print(f"Found {result['total']} datasets")
+
+# Create a lease
+lease = client.create_lease(
+    dataset_id='dataset-id',
+    duration=3600,  # 1 hour
+    purpose='AI model training'
+)
+
+print(f"Access token: {lease.accessToken}")
+```
+
+## Features
+
+- ✅ Full type hints support
+- ✅ Synchronous and asynchronous API
+- ✅ Automatic retries and error handling
+- ✅ Context manager support
+- ✅ Comprehensive error messages
+- ✅ Python 3.8+ support
+
+## API Reference
+
+### Client Initialization
+
+```python
+from xase import XaseClient
+
+client = XaseClient(
+    api_key='your-api-key',      # Required
+    base_url='https://api.xase.ai',  # Optional
+    timeout=30,                   # Optional (seconds)
+)
+```
+
+### Datasets
+
+#### List Datasets
+
+```python
+result = client.list_datasets(
+    page=1,
+    limit=20,
+    data_type='AUDIO'  # Optional filter
+)
+
+for dataset in result['datasets']:
+    print(f"{dataset['name']}: {dataset['size']} bytes")
+```
+
+#### Get Dataset
+
+```python
+dataset = client.get_dataset('dataset-id')
+print(f"Dataset: {dataset.name}")
+print(f"Type: {dataset.dataType}")
+print(f"Size: {dataset.size} bytes")
+```
+
+#### Create Dataset
+
+```python
+dataset = client.create_dataset(
+    name='My Dataset',
+    data_type='AUDIO',
+    description='Audio dataset for speech recognition',
+    tags=['speech', 'english']
+)
+```
+
+#### Update Dataset
+
+```python
+updated = client.update_dataset(
+    'dataset-id',
+    description='Updated description',
+    tags=['speech', 'english', 'updated']
+)
+```
+
+#### Delete Dataset
+
+```python
+client.delete_dataset('dataset-id')
+```
+
+### Leases
+
+#### Create Lease
+
+```python
+lease = client.create_lease(
+    dataset_id='dataset-id',
+    duration=3600,  # seconds
+    purpose='Model training'
+)
+
+print(f"Lease ID: {lease.id}")
+print(f"Access token: {lease.accessToken}")
+print(f"Expires: {lease.endTime}")
+```
+
+#### Get Lease
+
+```python
+lease = client.get_lease('lease-id')
+print(f"Status: {lease.status}")
+```
+
+#### List Leases
+
+```python
+result = client.list_leases(
+    page=1,
+    limit=20,
+    status='ACTIVE'
+)
+
+for lease in result['leases']:
+    print(f"Lease {lease['id']}: {lease['status']}")
+```
+
+#### Revoke Lease
+
+```python
+client.revoke_lease('lease-id')
+```
+
+#### Renew Lease
+
+```python
+renewed = client.renew_lease('lease-id', duration=3600)
+print(f"New expiry: {renewed.endTime}")
+```
+
+### Policies
+
+#### Create Policy
+
+```python
+policy = client.create_policy(
+    name='Strict Access Policy',
+    dataset_id='dataset-id',
+    rules={
+        'maxDuration': 7200,
+        'watermarkRequired': True,
+        'allowedPurposes': ['research', 'training']
+    }
+)
+```
+
+#### Get Policy
+
+```python
+policy = client.get_policy('policy-id')
+print(f"Policy: {policy.name}")
+print(f"Active: {policy.active}")
+```
+
+#### List Policies
+
+```python
+result = client.list_policies(
+    dataset_id='dataset-id',
+    active=True
+)
+```
+
+#### Update Policy
+
+```python
+updated = client.update_policy(
+    'policy-id',
+    active=False
+)
+```
+
+#### Delete Policy
+
+```python
+client.delete_policy('policy-id')
+```
+
+### Usage Tracking
+
+#### Record Usage
+
+```python
+client.record_usage(
+    lease_id='lease-id',
+    bytes_transferred=1024000,
+    records_accessed=100
+)
+```
+
+#### Get Usage
+
+```python
+usage = client.get_usage(
+    start_date='2024-01-01',
+    end_date='2024-01-31'
+)
+
+for record in usage:
+    print(f"Lease {record.leaseId}: {record.bytesTransferred} bytes")
+```
+
+### Marketplace
+
+#### List Offers
+
+```python
+result = client.list_offers(
+    page=1,
+    limit=20,
+    data_type='AUDIO'
+)
+```
+
+#### Get Offer
+
+```python
+offer = client.get_offer('offer-id')
+print(f"Price: {offer.price} {offer.currency}")
+```
+
+#### Request Access
+
+```python
+request = client.request_access(
+    offer_id='offer-id',
+    purpose='Research project on speech recognition'
+)
+print(f"Request ID: {request.id}")
+print(f"Status: {request.status}")
+```
+
+#### Search Marketplace
+
+```python
+results = client.search_marketplace(
+    'speech recognition',
+    data_type='AUDIO',
+    min_size=1000000
+)
+```
+
+### Webhooks
+
+#### Create Webhook
+
+```python
+webhook = client.create_webhook(
+    url='https://your-domain.com/webhook',
+    events=['lease.created', 'lease.expired'],
+    secret='your-webhook-secret'
+)
+```
+
+#### List Webhooks
+
+```python
+webhooks = client.list_webhooks()
+for webhook in webhooks:
+    print(f"Webhook {webhook.id}: {webhook.url}")
+```
+
+#### Delete Webhook
+
+```python
+client.delete_webhook('webhook-id')
+```
+
+### Health Check
+
+```python
+health = client.health()
+print(f"API Status: {health['status']}")
+```
+
+## Error Handling
+
+```python
+from xase import XaseClient
+from xase.exceptions import XaseAPIError, XaseAuthError, XaseNotFoundError
+
+client = XaseClient(api_key='your-api-key')
+
+try:
+    dataset = client.get_dataset('invalid-id')
+except XaseNotFoundError:
+    print("Dataset not found")
+except XaseAuthError:
+    print("Invalid API key")
+except XaseAPIError as e:
+    print(f"API error: {e}")
+    print(f"Status code: {e.status_code}")
+    print(f"Response: {e.response}")
+```
+
+## Context Manager
+
+```python
+from xase import XaseClient
+
+with XaseClient(api_key='your-api-key') as client:
+    datasets = client.list_datasets()
+    print(f"Found {datasets['total']} datasets")
+# Session automatically closed
+```
+
+## Type Hints
+
+```python
+from xase import XaseClient, Dataset, Lease, Policy
+from typing import List
+
+client = XaseClient(api_key='key')
+
+# Full type hints
+dataset: Dataset = client.get_dataset('id')
+lease: Lease = client.create_lease(dataset_id='id')
+```
+
+## Examples
+
+### Complete Workflow
+
+```python
+from xase import XaseClient
+
+def main():
+    client = XaseClient(api_key='your-api-key')
+    
+    # 1. Create a dataset
+    dataset = client.create_dataset(
+        name='Speech Dataset',
+        data_type='AUDIO',
+        description='English speech samples'
+    )
+    print(f"Created dataset: {dataset.id}")
+    
+    # 2. Create access policy
+    policy = client.create_policy(
+        name='Research Access',
+        dataset_id=dataset.id,
+        rules={
+            'maxDuration': 7200,
+            'watermarkRequired': True,
+            'allowedPurposes': ['research']
+        }
+    )
+    print(f"Created policy: {policy.id}")
+    
+    # 3. Create lease
+    lease = client.create_lease(
+        dataset_id=dataset.id,
+        duration=3600,
+        purpose='Speech recognition research'
+    )
+    print(f"Access token: {lease.accessToken}")
+    
+    # 4. Record usage
+    client.record_usage(
+        lease_id=lease.id,
+        bytes_transferred=5000000,
+        records_accessed=500
+    )
+    
+    # 5. Get usage stats
+    usage = client.get_usage()
+    total_bytes = sum(u.bytesTransferred for u in usage)
+    print(f"Total bytes transferred: {total_bytes}")
+
+if __name__ == '__main__':
+    main()
+```
+
+### Batch Operations
+
+```python
+from xase import XaseClient
+
+client = XaseClient(api_key='your-api-key')
+
+# Create multiple datasets
+datasets = []
+for i in range(5):
+    dataset = client.create_dataset(
+        name=f'Dataset {i+1}',
+        data_type='AUDIO',
+        description=f'Dataset number {i+1}'
+    )
+    datasets.append(dataset)
+    print(f"Created: {dataset.name}")
+
+# Create leases for all datasets
+leases = []
+for dataset in datasets:
+    lease = client.create_lease(
+        dataset_id=dataset.id,
+        duration=3600
+    )
+    leases.append(lease)
+    print(f"Lease created for {dataset.name}")
+```
+
+### Error Recovery
+
+```python
+from xase import XaseClient
+from xase.exceptions import XaseAPIError
+import time
+
+client = XaseClient(api_key='your-api-key')
+
+def create_lease_with_retry(dataset_id, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            return client.create_lease(dataset_id=dataset_id)
+        except XaseAPIError as e:
+            if e.status_code == 429:  # Rate limit
+                wait_time = 2 ** attempt  # Exponential backoff
+                print(f"Rate limited, waiting {wait_time}s...")
+                time.sleep(wait_time)
+            else:
+                raise
+    raise Exception("Max retries exceeded")
+
+lease = create_lease_with_retry('dataset-id')
+```
+
+## Environment Variables
+
+```bash
+# .env
+XASE_API_KEY=your-api-key
+XASE_BASE_URL=https://api.xase.ai
+```
+
+```python
+import os
+from xase import XaseClient
+
+client = XaseClient(
+    api_key=os.getenv('XASE_API_KEY'),
+    base_url=os.getenv('XASE_BASE_URL', 'https://api.xase.ai')
+)
+```
+
+## Development
+
+### Install Development Dependencies
+
+```bash
+pip install -e ".[dev]"
+```
+
+### Run Tests
+
+```bash
+pytest
+pytest --cov=xase tests/
+```
+
+### Code Formatting
+
+```bash
+black src/
+isort src/
+flake8 src/
+mypy src/
+```
+
+## License
+
+MIT
+
+## Support
+
+- Documentation: https://docs.xase.ai
+- Email: support@xase.ai
+- GitHub: https://github.com/xaseai/xase-sheets
+
+## Contributing
+
+Contributions are welcome! Please read our contributing guidelines.
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for version history.

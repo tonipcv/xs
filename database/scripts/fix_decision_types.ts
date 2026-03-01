@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
   Normalize legacy decisionType values to the current enum set.
   Safe default: map unknowns to 'OTHER'. Adjust mapping below as needed.

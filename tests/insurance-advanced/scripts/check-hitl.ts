@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  Quick check for advanced dataset:
  - Confirms InsuranceDecision overlays exist and are populated

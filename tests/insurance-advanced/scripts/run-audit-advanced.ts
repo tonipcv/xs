@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  Advanced audit demo:
  - Reads recent claims from advanced tenant

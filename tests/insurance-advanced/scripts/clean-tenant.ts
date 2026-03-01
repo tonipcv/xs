@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  Clean advanced tenant data for fresh seed
  

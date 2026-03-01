@@ -1,0 +1,15 @@
+README.md
+setup.py
+src/xase/__init__.py
+src/xase/client.py
+src/xase/exceptions.py
+src/xase/sidecar.py
+src/xase/types.py
+src/xase_ai.egg-info/PKG-INFO
+src/xase_ai.egg-info/SOURCES.txt
+src/xase_ai.egg-info/dependency_links.txt
+src/xase_ai.egg-info/not-zip-safe
+src/xase_ai.egg-info/requires.txt
+src/xase_ai.egg-info/top_level.txt
+tests/test_client.py
+tests/test_sidecar.py

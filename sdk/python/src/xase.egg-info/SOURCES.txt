@@ -1,0 +1,13 @@
+README.md
+setup.py
+src/xase/__init__.py
+src/xase/client.py
+src/xase/exceptions.py
+src/xase/types.py
+src/xase.egg-info/PKG-INFO
+src/xase.egg-info/SOURCES.txt
+src/xase.egg-info/dependency_links.txt
+src/xase.egg-info/not-zip-safe
+src/xase.egg-info/requires.txt
+src/xase.egg-info/top_level.txt
+tests/test_client.py

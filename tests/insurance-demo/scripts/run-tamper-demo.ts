@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  Tamper detection demo:
  - Pick a recent record

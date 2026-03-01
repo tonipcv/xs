@@ -9,7 +9,6 @@
    npm run demo2:seed
 */
 
-// @ts-nocheck
 import { prisma } from '../../../src/lib/prisma'
 import { hashObject, chainHash, generateTransactionId } from '../../../src/lib/xase/crypto'
 import { DecisionType, InsuranceClaimType, DecisionConsumerImpact, InterventionAction, SnapshotType } from '@prisma/client'

@@ -1,0 +1,18 @@
+apiVersion: v2
+name: xase-sheets
+description: XASE Sheets - Secure Data Marketplace Platform
+type: application
+version: 1.0.0
+appVersion: "2.0.0"
+keywords:
+  - data-marketplace
+  - gdpr
+  - compliance
+  - ai-training
+home: https://xase.ai
+sources:
+  - https://github.com/xaseai/xase-sheets
+maintainers:
+  - name: XASE Team
+    email: support@xase.ai
+icon: https://xase.ai/logo.png

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  Simulate an FCA audit: select 50 random claims from the last 90 days
  for the demo tenant and generate a court-ready summary manifest.

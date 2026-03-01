@@ -1,4 +1,3 @@
-// @ts-nocheck
 /*
  Seed 1000 realistic insurance claims for a dedicated demo tenant.
  Usage:
