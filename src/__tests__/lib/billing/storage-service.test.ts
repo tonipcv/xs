@@ -22,6 +22,7 @@ vi.mock('@/lib/prisma', () => ({
 }))
 
 vi.mock('@/lib/redis', () => ({
+  // Mantém compatibilidade caso algum código use getRedisClient diretamente
   getRedisClient: vi.fn(() => ({
     set: vi.fn(),
     get: vi.fn(),
@@ -29,6 +30,14 @@ vi.mock('@/lib/redis', () => ({
     zrangebyscore: vi.fn(() => []),
     expire: vi.fn(),
   })),
+  // Mock do wrapper de compatibilidade exportado como `redis` e usado pelo StorageService
+  redis: {
+    setex: vi.fn(),
+    get: vi.fn(),
+    zAdd: vi.fn(),
+    zRangeByScore: vi.fn(() => []),
+    expire: vi.fn(),
+  },
 }))
 
 describe('StorageService', () => {

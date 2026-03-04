@@ -8,7 +8,16 @@ import { StorageService } from '@/lib/billing/storage-service'
 import { BillingService } from '@/lib/billing/billing-service'
 
 vi.mock('@/lib/prisma')
-vi.mock('@/lib/redis')
+vi.mock('@/lib/redis', () => ({
+  // Minimal mock to satisfy StorageService's usage
+  redis: {
+    setex: vi.fn(),
+    get: vi.fn(),
+    zAdd: vi.fn(),
+    zRangeByScore: vi.fn(() => []),
+    expire: vi.fn(),
+  },
+}))
 
 describe('Billing Integration Flow', () => {
   const tenantId = 'tenant_integration_test'

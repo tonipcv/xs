@@ -78,10 +78,31 @@ tags:
     description: Tenant management
   - name: Users
     description: User management
+  - name: OAuth
+    description: OAuth2 and OIDC flows
+  - name: Executions
+    description: Workflow execution management
+  - name: Ingestion
+    description: Data ingestion pipelines
+  - name: Watermarking
+    description: Digital watermarking for datasets
+  - name: Teams
+    description: Team and role management
+  - name: HIPAA
+    description: HIPAA compliance endpoints
+  - name: LGPD
+    description: LGPD compliance (Brazil)
+  - name: FCA
+    description: FCA compliance (UK Financial)
+  - name: BaFin
+    description: BaFin compliance (Germany Financial)
+  - name: CLI
+    description: CLI authentication and operations
 
 security:
   - ApiKeyAuth: []
   - BearerAuth: []
+  - OAuth2: []
 
 paths:
   /api/health:
@@ -362,6 +383,995 @@ paths:
               schema:
                 $ref: '#/components/schemas/BreakGlassSession'
 
+  /oauth/authorize:
+    get:
+      tags: [OAuth]
+      summary: OAuth2 authorization endpoint
+      description: Initiate OAuth2 authorization code flow
+      security: []
+      parameters:
+        - name: client_id
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: redirect_uri
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: response_type
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [code, token]
+        - name: scope
+          in: query
+          schema:
+            type: string
+        - name: state
+          in: query
+          schema:
+            type: string
+      responses:
+        '302':
+          description: Redirect to authorization page
+
+  /oauth/token:
+    post:
+      tags: [OAuth]
+      summary: OAuth2 token endpoint
+      description: Exchange authorization code for access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - grant_type
+                - client_id
+                - client_secret
+              properties:
+                grant_type:
+                  type: string
+                  enum: [authorization_code, refresh_token, client_credentials]
+                code:
+                  type: string
+                redirect_uri:
+                  type: string
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+                refresh_token:
+                  type: string
+                scope:
+                  type: string
+      responses:
+        '200':
+          description: Access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthTokenResponse'
+
+  /oauth/refresh:
+    post:
+      tags: [OAuth]
+      summary: Refresh OAuth2 token
+      description: Refresh an expired access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - grant_type
+                - refresh_token
+                - client_id
+                - client_secret
+              properties:
+                grant_type:
+                  type: string
+                  enum: [refresh_token]
+                refresh_token:
+                  type: string
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        '200':
+          description: Token refreshed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthTokenResponse'
+
+  /oauth/revoke:
+    post:
+      tags: [OAuth]
+      summary: Revoke OAuth2 token
+      description: Revoke an access or refresh token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - token
+                - client_id
+                - client_secret
+              properties:
+                token:
+                  type: string
+                token_type_hint:
+                  type: string
+                  enum: [access_token, refresh_token]
+                client_id:
+                  type: string
+                client_secret:
+                  type: string
+      responses:
+        '200':
+          description: Token revoked
+
+  /oauth/introspect:
+    post:
+      tags: [OAuth]
+      summary: Introspect OAuth2 token
+      description: Get token metadata and validation status
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required:
+                - token
+              properties:
+                token:
+                  type: string
+                token_type_hint:
+                  type: string
+      responses:
+        '200':
+          description: Token introspection result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthIntrospectionResponse'
+
+  /oidc/.well-known/openid-configuration:
+    get:
+      tags: [OAuth]
+      summary: OIDC discovery endpoint
+      description: OpenID Connect discovery metadata
+      security: []
+      responses:
+        '200':
+          description: OIDC configuration
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OIDCConfiguration'
+
+  /oidc/userinfo:
+    get:
+      tags: [OAuth]
+      summary: OIDC UserInfo endpoint
+      description: Get authenticated user information
+      responses:
+        '200':
+          description: User information
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OIDCUserInfo'
+
+  /api/v1/executions:
+    get:
+      tags: [Executions]
+      summary: List workflow executions
+      description: Get list of workflow executions
+      parameters:
+        - name: workflowId
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [PENDING, RUNNING, COMPLETED, FAILED, CANCELLED]
+        - name: limit
+          in: query
+          schema:
+            type: integer
+            default: 50
+        - name: offset
+          in: query
+          schema:
+            type: integer
+            default: 0
+      responses:
+        '200':
+          description: List of executions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  executions:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Execution'
+                  total:
+                    type: integer
+
+  /api/v1/executions/{executionId}:
+    get:
+      tags: [Executions]
+      summary: Get execution details
+      description: Get detailed information about a workflow execution
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Execution details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+
+  /api/v1/executions/{executionId}/cancel:
+    post:
+      tags: [Executions]
+      summary: Cancel execution
+      description: Cancel a running workflow execution
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Execution cancelled
+
+  /api/v1/executions/{executionId}/retry:
+    post:
+      tags: [Executions]
+      summary: Retry failed execution
+      description: Retry a failed workflow execution
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Execution retried
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Execution'
+
+  /api/v1/executions/{executionId}/logs:
+    get:
+      tags: [Executions]
+      summary: Get execution logs
+      description: Get logs for a workflow execution
+      parameters:
+        - name: executionId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: level
+          in: query
+          schema:
+            type: string
+            enum: [DEBUG, INFO, WARN, ERROR]
+      responses:
+        '200':
+          description: Execution logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ExecutionLog'
+
+  /api/v1/ingestion/pipelines:
+    get:
+      tags: [Ingestion]
+      summary: List ingestion pipelines
+      description: Get list of data ingestion pipelines
+      responses:
+        '200':
+          description: List of pipelines
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/IngestionPipeline'
+    post:
+      tags: [Ingestion]
+      summary: Create ingestion pipeline
+      description: Create a new data ingestion pipeline
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestionPipelineCreate'
+      responses:
+        '201':
+          description: Pipeline created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionPipeline'
+
+  /api/v1/ingestion/pipelines/{pipelineId}:
+    get:
+      tags: [Ingestion]
+      summary: Get pipeline details
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pipeline details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionPipeline'
+    put:
+      tags: [Ingestion]
+      summary: Update pipeline
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/IngestionPipelineUpdate'
+      responses:
+        '200':
+          description: Pipeline updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionPipeline'
+    delete:
+      tags: [Ingestion]
+      summary: Delete pipeline
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Pipeline deleted
+
+  /api/v1/ingestion/pipelines/{pipelineId}/start:
+    post:
+      tags: [Ingestion]
+      summary: Start pipeline
+      description: Start data ingestion pipeline
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pipeline started
+
+  /api/v1/ingestion/pipelines/{pipelineId}/stop:
+    post:
+      tags: [Ingestion]
+      summary: Stop pipeline
+      description: Stop running ingestion pipeline
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pipeline stopped
+
+  /api/v1/ingestion/pipelines/{pipelineId}/metrics:
+    get:
+      tags: [Ingestion]
+      summary: Get pipeline metrics
+      description: Get ingestion pipeline performance metrics
+      parameters:
+        - name: pipelineId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Pipeline metrics
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IngestionMetrics'
+
+  /api/v1/watermarking/embed:
+    post:
+      tags: [Watermarking]
+      summary: Embed watermark
+      description: Embed digital watermark in dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatermarkEmbedRequest'
+      responses:
+        '200':
+          description: Watermark embedded
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatermarkResult'
+
+  /api/v1/watermarking/detect:
+    post:
+      tags: [Watermarking]
+      summary: Detect watermark
+      description: Detect and verify watermark in dataset
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/WatermarkDetectRequest'
+      responses:
+        '200':
+          description: Watermark detection result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatermarkDetectionResult'
+
+  /api/v1/watermarking/verify:
+    post:
+      tags: [Watermarking]
+      summary: Verify watermark integrity
+      description: Verify watermark has not been tampered with
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - datasetId
+                - watermarkId
+              properties:
+                datasetId:
+                  type: string
+                watermarkId:
+                  type: string
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  valid:
+                    type: boolean
+                  confidence:
+                    type: number
+                  tamperedRegions:
+                    type: array
+                    items:
+                      type: object
+
+  /api/v1/teams:
+    get:
+      tags: [Teams]
+      summary: List teams
+      description: Get list of teams in organization
+      responses:
+        '200':
+          description: List of teams
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Team'
+    post:
+      tags: [Teams]
+      summary: Create team
+      description: Create a new team
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamCreate'
+      responses:
+        '201':
+          description: Team created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+
+  /api/v1/teams/{teamId}:
+    get:
+      tags: [Teams]
+      summary: Get team details
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Team details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+    put:
+      tags: [Teams]
+      summary: Update team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamUpdate'
+      responses:
+        '200':
+          description: Team updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Team'
+    delete:
+      tags: [Teams]
+      summary: Delete team
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Team deleted
+
+  /api/v1/teams/{teamId}/members:
+    get:
+      tags: [Teams]
+      summary: List team members
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of team members
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamMember'
+    post:
+      tags: [Teams]
+      summary: Add team member
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TeamMemberAdd'
+      responses:
+        '201':
+          description: Member added
+
+  /api/v1/teams/{teamId}/members/{userId}:
+    delete:
+      tags: [Teams]
+      summary: Remove team member
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Member removed
+
+  /api/v1/teams/{teamId}/roles:
+    get:
+      tags: [Teams]
+      summary: List team roles
+      parameters:
+        - name: teamId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of roles
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TeamRole'
+
+  /api/v1/compliance/hipaa/audit:
+    post:
+      tags: [HIPAA]
+      summary: HIPAA audit log
+      description: Log HIPAA-compliant access event
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HIPAAAuditLog'
+      responses:
+        '201':
+          description: Audit log created
+
+  /api/v1/compliance/hipaa/phi-access:
+    get:
+      tags: [HIPAA]
+      summary: Get PHI access logs
+      description: Retrieve Protected Health Information access logs
+      parameters:
+        - name: patientId
+          in: query
+          schema:
+            type: string
+        - name: startDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+        - name: endDate
+          in: query
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: PHI access logs
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PHIAccessLog'
+
+  /api/v1/compliance/hipaa/breach-notification:
+    post:
+      tags: [HIPAA]
+      summary: HIPAA breach notification
+      description: Submit HIPAA breach notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HIPAABreachNotification'
+      responses:
+        '201':
+          description: Breach notification submitted
+
+  /api/v1/compliance/hipaa/baa:
+    get:
+      tags: [HIPAA]
+      summary: Get Business Associate Agreement
+      description: Retrieve BAA documentation
+      responses:
+        '200':
+          description: BAA document
+          content:
+            application/pdf:
+              schema:
+                type: string
+                format: binary
+
+  /api/v1/compliance/lgpd/consent:
+    post:
+      tags: [LGPD]
+      summary: Record LGPD consent
+      description: Record data subject consent under LGPD
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LGPDConsent'
+      responses:
+        '201':
+          description: Consent recorded
+
+  /api/v1/compliance/lgpd/data-subject-request:
+    post:
+      tags: [LGPD]
+      summary: LGPD data subject request
+      description: Submit LGPD data subject access/deletion request
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LGPDDataSubjectRequest'
+      responses:
+        '201':
+          description: Request submitted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  requestId:
+                    type: string
+                  status:
+                    type: string
+
+  /api/v1/compliance/lgpd/impact-assessment:
+    post:
+      tags: [LGPD]
+      summary: LGPD impact assessment
+      description: Submit data protection impact assessment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LGPDImpactAssessment'
+      responses:
+        '201':
+          description: Assessment submitted
+
+  /api/v1/compliance/fca/transaction-reporting:
+    post:
+      tags: [FCA]
+      summary: FCA transaction reporting
+      description: Submit FCA-compliant transaction report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FCATransactionReport'
+      responses:
+        '201':
+          description: Report submitted
+
+  /api/v1/compliance/fca/market-abuse:
+    post:
+      tags: [FCA]
+      summary: Report market abuse
+      description: Submit market abuse report to FCA
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FCAMarketAbuseReport'
+      responses:
+        '201':
+          description: Report submitted
+
+  /api/v1/compliance/fca/client-assets:
+    get:
+      tags: [FCA]
+      summary: FCA client assets report
+      description: Generate FCA client assets segregation report
+      parameters:
+        - name: reportDate
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        '200':
+          description: Client assets report
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/FCAClientAssetsReport'
+
+  /api/v1/compliance/bafin/mifid-reporting:
+    post:
+      tags: [BaFin]
+      summary: BaFin MiFID reporting
+      description: Submit MiFID II transaction reporting to BaFin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaFinMiFIDReport'
+      responses:
+        '201':
+          description: Report submitted
+
+  /api/v1/compliance/bafin/wphg-notification:
+    post:
+      tags: [BaFin]
+      summary: BaFin WpHG notification
+      description: Submit securities trading notification
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaFinWpHGNotification'
+      responses:
+        '201':
+          description: Notification submitted
+
+  /api/v1/compliance/bafin/risk-report:
+    post:
+      tags: [BaFin]
+      summary: BaFin risk report
+      description: Submit risk management report
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BaFinRiskReport'
+      responses:
+        '201':
+          description: Report submitted
+
+  /api/v1/cli/auth/login:
+    post:
+      tags: [CLI]
+      summary: CLI authentication
+      description: Authenticate CLI client
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - apiKey
+              properties:
+                apiKey:
+                  type: string
+                deviceId:
+                  type: string
+                deviceName:
+                  type: string
+      responses:
+        '200':
+          description: CLI authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CLIAuthResponse'
+
+  /api/v1/cli/auth/device-code:
+    post:
+      tags: [CLI]
+      summary: CLI device code flow
+      description: Initiate device code authentication flow
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - clientId
+              properties:
+                clientId:
+                  type: string
+                scope:
+                  type: string
+      responses:
+        '200':
+          description: Device code issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeviceCodeResponse'
+
+  /api/v1/cli/auth/device-token:
+    post:
+      tags: [CLI]
+      summary: Poll for device token
+      description: Poll for device code authorization completion
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - deviceCode
+                - clientId
+              properties:
+                deviceCode:
+                  type: string
+                clientId:
+                  type: string
+      responses:
+        '200':
+          description: Token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OAuthTokenResponse'
+        '400':
+          description: Authorization pending or denied
+
 components:
   securitySchemes:
     ApiKeyAuth:
@@ -372,6 +1382,23 @@ components:
       type: http
       scheme: bearer
       bearerFormat: JWT
+    OAuth2:
+      type: oauth2
+      flows:
+        authorizationCode:
+          authorizationUrl: https://api.xase.ai/oauth/authorize
+          tokenUrl: https://api.xase.ai/oauth/token
+          refreshUrl: https://api.xase.ai/oauth/refresh
+          scopes:
+            read:datasets: Read dataset information
+            write:datasets: Create and modify datasets
+            read:leases: Read lease information
+            write:leases: Create and manage leases
+            admin: Full administrative access
+        clientCredentials:
+          tokenUrl: https://api.xase.ai/oauth/token
+          scopes:
+            api:access: API access for service accounts
 
   schemas:
     Dataset:
@@ -1715,8 +2742,6 @@ components:
         '204':
           description: Policy deleted
 
-components:
-  schemas:
     DatasetUpdate:
       type: object
       properties:
@@ -2091,3 +3116,650 @@ components:
           type: object
         active:
           type: boolean
+
+    OAuthTokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: Bearer
+        expires_in:
+          type: integer
+        refresh_token:
+          type: string
+        scope:
+          type: string
+
+    OAuthIntrospectionResponse:
+      type: object
+      properties:
+        active:
+          type: boolean
+        scope:
+          type: string
+        client_id:
+          type: string
+        username:
+          type: string
+        token_type:
+          type: string
+        exp:
+          type: integer
+        iat:
+          type: integer
+        sub:
+          type: string
+
+    OIDCConfiguration:
+      type: object
+      properties:
+        issuer:
+          type: string
+        authorization_endpoint:
+          type: string
+        token_endpoint:
+          type: string
+        userinfo_endpoint:
+          type: string
+        jwks_uri:
+          type: string
+        response_types_supported:
+          type: array
+          items:
+            type: string
+        subject_types_supported:
+          type: array
+          items:
+            type: string
+        id_token_signing_alg_values_supported:
+          type: array
+          items:
+            type: string
+
+    OIDCUserInfo:
+      type: object
+      properties:
+        sub:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        email_verified:
+          type: boolean
+        picture:
+          type: string
+
+    Execution:
+      type: object
+      properties:
+        id:
+          type: string
+        workflowId:
+          type: string
+        status:
+          type: string
+          enum: [PENDING, RUNNING, COMPLETED, FAILED, CANCELLED]
+        startedAt:
+          type: string
+          format: date-time
+        completedAt:
+          type: string
+          format: date-time
+        duration:
+          type: number
+        input:
+          type: object
+        output:
+          type: object
+        error:
+          type: string
+
+    ExecutionLog:
+      type: object
+      properties:
+        timestamp:
+          type: string
+          format: date-time
+        level:
+          type: string
+          enum: [DEBUG, INFO, WARN, ERROR]
+        message:
+          type: string
+        metadata:
+          type: object
+
+    IngestionPipeline:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        sourceType:
+          type: string
+          enum: [S3, GCS, AZURE_BLOB, SFTP, HTTP]
+        destinationDatasetId:
+          type: string
+        schedule:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, PAUSED, FAILED]
+        lastRunAt:
+          type: string
+          format: date-time
+        createdAt:
+          type: string
+          format: date-time
+
+    IngestionPipelineCreate:
+      type: object
+      required:
+        - name
+        - sourceType
+        - destinationDatasetId
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        sourceType:
+          type: string
+          enum: [S3, GCS, AZURE_BLOB, SFTP, HTTP]
+        sourceConfig:
+          type: object
+        destinationDatasetId:
+          type: string
+        schedule:
+          type: string
+        transformations:
+          type: array
+          items:
+            type: object
+
+    IngestionPipelineUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        schedule:
+          type: string
+        status:
+          type: string
+          enum: [ACTIVE, PAUSED]
+
+    IngestionMetrics:
+      type: object
+      properties:
+        totalRecordsProcessed:
+          type: integer
+        successfulRecords:
+          type: integer
+        failedRecords:
+          type: integer
+        avgProcessingTime:
+          type: number
+        lastRunStatus:
+          type: string
+        throughput:
+          type: number
+
+    WatermarkEmbedRequest:
+      type: object
+      required:
+        - datasetId
+        - watermarkData
+      properties:
+        datasetId:
+          type: string
+        watermarkData:
+          type: string
+        strength:
+          type: number
+          minimum: 0
+          maximum: 1
+          default: 0.5
+        method:
+          type: string
+          enum: [LSB, DCT, DWT, SPREAD_SPECTRUM]
+          default: DCT
+
+    WatermarkDetectRequest:
+      type: object
+      required:
+        - datasetId
+      properties:
+        datasetId:
+          type: string
+        expectedWatermarkId:
+          type: string
+
+    WatermarkResult:
+      type: object
+      properties:
+        watermarkId:
+          type: string
+        datasetId:
+          type: string
+        embeddedAt:
+          type: string
+          format: date-time
+        strength:
+          type: number
+        method:
+          type: string
+
+    WatermarkDetectionResult:
+      type: object
+      properties:
+        detected:
+          type: boolean
+        watermarkId:
+          type: string
+        confidence:
+          type: number
+        strength:
+          type: number
+        tamperedRegions:
+          type: array
+          items:
+            type: object
+
+    Team:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        tenantId:
+          type: string
+        memberCount:
+          type: integer
+        createdAt:
+          type: string
+          format: date-time
+
+    TeamCreate:
+      type: object
+      required:
+        - name
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    TeamUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    TeamMember:
+      type: object
+      properties:
+        userId:
+          type: string
+        email:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [OWNER, ADMIN, MEMBER, VIEWER]
+        joinedAt:
+          type: string
+          format: date-time
+
+    TeamMemberAdd:
+      type: object
+      required:
+        - userId
+        - role
+      properties:
+        userId:
+          type: string
+        role:
+          type: string
+          enum: [ADMIN, MEMBER, VIEWER]
+
+    TeamRole:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        permissions:
+          type: array
+          items:
+            type: string
+
+    HIPAAAuditLog:
+      type: object
+      required:
+        - userId
+        - action
+        - resourceType
+        - resourceId
+      properties:
+        userId:
+          type: string
+        action:
+          type: string
+          enum: [ACCESS, MODIFY, DELETE, EXPORT]
+        resourceType:
+          type: string
+          enum: [PHI, PATIENT_RECORD, MEDICAL_IMAGE]
+        resourceId:
+          type: string
+        patientId:
+          type: string
+        reason:
+          type: string
+        ipAddress:
+          type: string
+
+    PHIAccessLog:
+      type: object
+      properties:
+        id:
+          type: string
+        userId:
+          type: string
+        userName:
+          type: string
+        patientId:
+          type: string
+        action:
+          type: string
+        resourceType:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        ipAddress:
+          type: string
+        reason:
+          type: string
+
+    HIPAABreachNotification:
+      type: object
+      required:
+        - description
+        - discoveredAt
+        - affectedPatients
+      properties:
+        description:
+          type: string
+        discoveredAt:
+          type: string
+          format: date-time
+        affectedPatients:
+          type: integer
+        breachType:
+          type: string
+          enum: [UNAUTHORIZED_ACCESS, THEFT, LOSS, IMPROPER_DISPOSAL, HACKING]
+        mitigationSteps:
+          type: string
+        notificationSent:
+          type: boolean
+
+    LGPDConsent:
+      type: object
+      required:
+        - subjectId
+        - purpose
+        - consentGiven
+      properties:
+        subjectId:
+          type: string
+        purpose:
+          type: string
+        consentGiven:
+          type: boolean
+        consentDate:
+          type: string
+          format: date-time
+        expiresAt:
+          type: string
+          format: date-time
+        dataCategories:
+          type: array
+          items:
+            type: string
+
+    LGPDDataSubjectRequest:
+      type: object
+      required:
+        - subjectId
+        - requestType
+      properties:
+        subjectId:
+          type: string
+        requestType:
+          type: string
+          enum: [ACCESS, RECTIFICATION, DELETION, PORTABILITY, OBJECTION]
+        description:
+          type: string
+        urgency:
+          type: string
+          enum: [NORMAL, HIGH, URGENT]
+
+    LGPDImpactAssessment:
+      type: object
+      required:
+        - processingActivity
+        - dataCategories
+        - riskLevel
+      properties:
+        processingActivity:
+          type: string
+        dataCategories:
+          type: array
+          items:
+            type: string
+        riskLevel:
+          type: string
+          enum: [LOW, MEDIUM, HIGH, CRITICAL]
+        mitigationMeasures:
+          type: array
+          items:
+            type: string
+        assessmentDate:
+          type: string
+          format: date-time
+        assessor:
+          type: string
+
+    FCATransactionReport:
+      type: object
+      required:
+        - transactionId
+        - instrumentId
+        - quantity
+        - price
+        - timestamp
+      properties:
+        transactionId:
+          type: string
+        instrumentId:
+          type: string
+        instrumentType:
+          type: string
+        quantity:
+          type: number
+        price:
+          type: number
+        currency:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+        venue:
+          type: string
+        buyerLEI:
+          type: string
+        sellerLEI:
+          type: string
+
+    FCAMarketAbuseReport:
+      type: object
+      required:
+        - suspectedAbuse
+        - description
+        - evidence
+      properties:
+        suspectedAbuse:
+          type: string
+          enum: [INSIDER_DEALING, MARKET_MANIPULATION, UNLAWFUL_DISCLOSURE]
+        description:
+          type: string
+        evidence:
+          type: array
+          items:
+            type: object
+        involvedParties:
+          type: array
+          items:
+            type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    FCAClientAssetsReport:
+      type: object
+      properties:
+        reportDate:
+          type: string
+          format: date
+        totalClientAssets:
+          type: number
+        segregatedAssets:
+          type: number
+        firmAssets:
+          type: number
+        reconciliationStatus:
+          type: string
+          enum: [RECONCILED, DISCREPANCY, PENDING]
+        discrepancies:
+          type: array
+          items:
+            type: object
+
+    BaFinMiFIDReport:
+      type: object
+      required:
+        - transactionId
+        - instrumentISIN
+        - quantity
+        - price
+      properties:
+        transactionId:
+          type: string
+        instrumentISIN:
+          type: string
+        quantity:
+          type: number
+        price:
+          type: number
+        currency:
+          type: string
+        tradingVenue:
+          type: string
+        executionTime:
+          type: string
+          format: date-time
+        buyerLEI:
+          type: string
+        sellerLEI:
+          type: string
+        investmentDecisionPerson:
+          type: string
+
+    BaFinWpHGNotification:
+      type: object
+      required:
+        - notificationType
+        - issuer
+        - votingRights
+      properties:
+        notificationType:
+          type: string
+          enum: [ACQUISITION, DISPOSAL, THRESHOLD_CROSSING]
+        issuer:
+          type: string
+        votingRights:
+          type: number
+        threshold:
+          type: number
+        notificationDate:
+          type: string
+          format: date-time
+        holderName:
+          type: string
+
+    BaFinRiskReport:
+      type: object
+      required:
+        - reportingPeriod
+        - riskCategories
+      properties:
+        reportingPeriod:
+          type: string
+        riskCategories:
+          type: array
+          items:
+            type: object
+            properties:
+              category:
+                type: string
+                enum: [MARKET_RISK, CREDIT_RISK, OPERATIONAL_RISK, LIQUIDITY_RISK]
+              exposure:
+                type: number
+              mitigation:
+                type: string
+        totalRiskExposure:
+          type: number
+        capitalRequirement:
+          type: number
+
+    CLIAuthResponse:
+      type: object
+      properties:
+        token:
+          type: string
+        expiresIn:
+          type: integer
+        refreshToken:
+          type: string
+        deviceId:
+          type: string
+
+    DeviceCodeResponse:
+      type: object
+      properties:
+        device_code:
+          type: string
+        user_code:
+          type: string
+        verification_uri:
+          type: string
+        verification_uri_complete:
+          type: string
+        expires_in:
+          type: integer
+        interval:
+          type: integer

@@ -76,6 +76,14 @@ export class StorageService {
       hoursInPeriod = 1.0,
     } = params
 
+    // Basic input validation
+    if (!tenantId || typeof tenantId !== 'string' || tenantId.trim() === '') {
+      throw new Error('Invalid tenantId')
+    }
+    if (typeof storageBytes !== 'bigint' || storageBytes < BigInt(0)) {
+      throw new Error('Invalid storageBytes')
+    }
+
     const now = new Date()
     const period = billingPeriod || this.getBillingPeriod(now)
     const storageGb = Number(storageBytes) / this.BYTES_PER_GB
