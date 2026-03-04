@@ -3,10 +3,8 @@
  * Send webhooks to external services for integrations
  */
 
-import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export type WebhookEvent = 
   | 'dataset.created'
@@ -242,10 +240,12 @@ export function verifyWebhookSignature(
   secret: string
 ): boolean {
   const expectedSignature = generateWebhookSignature(payload, secret);
-  return crypto.timingSafeEqual(
-    Buffer.from(signature),
-    Buffer.from(expectedSignature)
-  );
+  const provided = Buffer.from(signature);
+  const expected = Buffer.from(expectedSignature);
+  if (provided.length !== expected.length) {
+    return false;
+  }
+  return crypto.timingSafeEqual(provided, expected);
 }
 
 /**
@@ -298,10 +298,12 @@ export async function listWebhooks(): Promise<WebhookConfig[]> {
     },
   });
 
-  return logs.map(log => {
+  const validLogs = logs.filter(log => !!log.resourceId);
+
+  return validLogs.map(log => {
     const metadata = JSON.parse(log.metadata as string);
     return {
-      id: log.resourceId,
+      id: log.resourceId as string,
       url: metadata.url,
       events: metadata.events,
       secret: metadata.secret || '',

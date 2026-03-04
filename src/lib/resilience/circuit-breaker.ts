@@ -3,10 +3,9 @@
  * Prevent cascading failures in distributed systems
  */
 
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
 import Redis from 'ioredis';
 
-const prisma = new PrismaClient();
 const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
 
 export type CircuitState = 'closed' | 'open' | 'half-open';

@@ -1,7 +1,11 @@
 /**
- * BAFIN COMPLIANCE MODULE (Bundesanstalt für Finanzdienstleistungsaufsicht - Germany)
+ * BAFIN COMPLIANCE HELPER MODULE (Bundesanstalt für Finanzdienstleistungsaufsicht - Germany)
  * 
- * Implements BaFin requirements for AI/ML in financial services:
+ * DISCLAIMER: This module provides tools to help assess compliance with BaFin requirements.
+ * It does NOT constitute official BaFin certification or legal compliance advice.
+ * Users must obtain proper legal counsel and official certification for regulatory compliance.
+ * 
+ * Implements helper functions for BaFin requirements in AI/ML financial services:
  * - MaRisk (Minimum Requirements for Risk Management)
  * - BAIT (Supervisory Requirements for IT in Financial Institutions)
  * - AI Risk Assessment

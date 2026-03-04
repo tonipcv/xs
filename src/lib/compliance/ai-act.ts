@@ -1,12 +1,16 @@
 /**
- * AI Act Article 10 Compliance Report Generator
+ * AI Act Article 10 Compliance Helper Module
  * 
- * EU AI Act exige:
- * - Provenance tracking (origem dos dados)
+ * DISCLAIMER: This module provides tools to help assess compliance with EU AI Act requirements.
+ * It does NOT constitute official EU AI Act certification or legal compliance advice.
+ * Users must obtain proper legal counsel and official certification for regulatory compliance.
+ * 
+ * EU AI Act requirements:
+ * - Provenance tracking (data origin)
  * - Data governance documentation
  * - Transparency reports
  * 
- * Este módulo gera relatórios automáticos de compliance.
+ * This module generates automated compliance assessment reports.
  */
 
 import { prisma } from '@/lib/prisma';

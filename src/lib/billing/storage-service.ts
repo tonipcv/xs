@@ -80,6 +80,10 @@ export class StorageService {
     if (!tenantId || typeof tenantId !== 'string' || tenantId.trim() === '') {
       throw new Error('Invalid tenantId')
     }
+    // Validate tenant ID format (alphanumeric, hyphens, underscores only)
+    if (!/^[a-zA-Z0-9_-]+$/.test(tenantId)) {
+      throw new Error('Invalid tenantId format')
+    }
     if (typeof storageBytes !== 'bigint' || storageBytes < BigInt(0)) {
       throw new Error('Invalid storageBytes')
     }

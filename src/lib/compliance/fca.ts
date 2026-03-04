@@ -1,7 +1,11 @@
 /**
- * FCA COMPLIANCE MODULE (Financial Conduct Authority - UK)
+ * FCA COMPLIANCE HELPER MODULE (Financial Conduct Authority - UK)
  * 
- * Implements FCA requirements for AI/ML in financial services:
+ * DISCLAIMER: This module provides tools to help assess compliance with FCA requirements.
+ * It does NOT constitute official FCA certification or legal compliance advice.
+ * Users must obtain proper legal counsel and official certification for regulatory compliance.
+ * 
+ * Implements helper functions for FCA requirements in AI/ML financial services:
  * - Model Risk Management (SR 11-7)
  * - Consumer Duty (July 2023)
  * - Algorithmic Trading Controls

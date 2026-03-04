@@ -120,7 +120,7 @@ describe('Billing Error Handling', () => {
         new Date('2024-01-01')
       )
 
-      expect(usage.usage.bytesProcessed).toBe('0')
+      expect(usage.usage.bytesProcessed).toBe(BigInt(0))
       expect(usage.usage.computeHours).toBe(0)
       expect(usage.costs.total).toBe(0)
     })

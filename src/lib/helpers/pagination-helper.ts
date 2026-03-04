@@ -143,15 +143,15 @@ export class PaginationHelper {
   } {
     const errors: string[] = []
 
-    if (params.page && params.page < 1) {
+    if (params.page !== undefined && params.page !== null && params.page < 1) {
       errors.push('Page must be >= 1')
     }
 
-    if (params.limit && params.limit < 1) {
+    if (params.limit !== undefined && params.limit !== null && params.limit < 1) {
       errors.push('Limit must be >= 1')
     }
 
-    if (params.limit && params.limit > 100) {
+    if (params.limit !== undefined && params.limit !== null && params.limit > 100) {
       errors.push('Limit must be <= 100')
     }
 

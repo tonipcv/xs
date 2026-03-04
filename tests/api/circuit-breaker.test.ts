@@ -3,7 +3,26 @@
  * Test circuit breaker pattern implementation
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Mock prisma and redis before importing module
+vi.mock('@/lib/prisma', () => ({
+  prisma: {
+    auditLog: {
+      create: vi.fn(async () => ({})),
+    },
+  },
+}));
+
+vi.mock('ioredis', () => {
+  class MockRedis {
+    async setex() { return 'OK'; }
+    async get() { return null; }
+    async del() { return 1; }
+  }
+  return { default: MockRedis };
+});
+
 import { CircuitBreaker, getCircuitBreaker, executeWithCircuitBreaker } from '@/lib/resilience/circuit-breaker';
 
 describe('Circuit Breaker', () => {

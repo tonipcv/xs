@@ -201,9 +201,8 @@ export class CircuitBreakerManager {
    * Reset all breakers
    */
   static resetAll(): void {
-    for (const breaker of this.breakers.values()) {
-      breaker.reset()
-    }
+    // Clear registry to ensure fresh state across tests/usages
+    this.breakers.clear()
   }
 
   /**

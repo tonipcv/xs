@@ -96,7 +96,7 @@ module "vpc" {
   public_subnets  = ["10.0.101.0/24", "10.0.102.0/24", "10.0.103.0/24"]
 
   enable_nat_gateway   = true
-  single_nat_gateway   = false
+  single_nat_gateway   = true
   enable_dns_hostnames = true
   enable_dns_support   = true
 
@@ -188,7 +188,7 @@ module "rds" {
   password = var.db_password
   port     = 5432
 
-  multi_az               = true
+  multi_az               = false
   db_subnet_group_name   = module.vpc.database_subnet_group_name
   vpc_security_group_ids = [aws_security_group.rds.id]
 
@@ -230,8 +230,8 @@ module "redis" {
   subnet_group_name        = module.vpc.elasticache_subnet_group_name
   security_group_ids       = [aws_security_group.redis.id]
 
-  automatic_failover_enabled = true
-  multi_az_enabled           = true
+  automatic_failover_enabled = false
+  multi_az_enabled           = false
 
   snapshot_retention_limit = 7
   snapshot_window          = "03:00-05:00"

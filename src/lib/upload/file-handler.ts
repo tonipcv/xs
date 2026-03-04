@@ -50,15 +50,7 @@ export class FileHandler {
       }
     }
 
-    // Check type
-    if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
-      return {
-        valid: false,
-        error: `File type ${file.type} not allowed`,
-      }
-    }
-
-    // Check extension
+    // If specific extensions are required, validate extension first
     if (options.allowedExtensions) {
       const ext = this.getExtension(file.name)
       if (!options.allowedExtensions.includes(ext)) {
@@ -66,6 +58,14 @@ export class FileHandler {
           valid: false,
           error: `File extension .${ext} not allowed`,
         }
+      }
+    }
+
+    // Check type (after extension to provide clearer messaging when extensions are constrained)
+    if (allowedTypes.length > 0 && !allowedTypes.includes(file.type)) {
+      return {
+        valid: false,
+        error: `File type ${file.type} not allowed`,
       }
     }
 

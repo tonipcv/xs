@@ -3,7 +3,30 @@
  * Test webhook registration, delivery, and management
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
+
+// Mock prisma before importing the module under test
+vi.mock('@/lib/prisma', () => {
+  const mockAuditLog = {
+    create: vi.fn(async () => ({})),
+    findFirst: vi.fn(async () => ({
+      metadata: JSON.stringify({
+        url: 'https://example.com/webhook',
+        events: ['dataset.created'],
+        secret: 'test_secret_key',
+        active: true,
+      }),
+      resourceId: 'webhook_test',
+    })),
+    findMany: vi.fn(async () => []),
+  };
+  return {
+    prisma: {
+      auditLog: mockAuditLog,
+    },
+  };
+});
+
 import {
   registerWebhook,
   sendWebhook,

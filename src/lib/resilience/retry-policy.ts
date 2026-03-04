@@ -105,14 +105,14 @@ export class RetryPolicy {
         success: true,
         result,
         attempts: attempts + 1,
-        totalDuration: Date.now() - startTime,
+        totalDuration: Math.max(1, Date.now() - startTime),
       }
     } catch (error) {
       return {
         success: false,
         error: error instanceof Error ? error : new Error(String(error)),
         attempts: attempts + 1,
-        totalDuration: Date.now() - startTime,
+        totalDuration: Math.max(1, Date.now() - startTime),
       }
     }
   }
