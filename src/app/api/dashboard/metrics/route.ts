@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
     const user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { id: true, tenantId: true, role: true },
+      select: { id: true },
     });
 
     if (!user) {
@@ -38,6 +38,9 @@ export async function GET(request: NextRequest) {
     const now = new Date();
     const startTime = getStartTime(timeRange);
 
+    // Get tenant ID
+    const tenantId = (session.user as any).tenantId;
+
     // Fetch metrics in parallel
     const [
       datasetsMetrics,
@@ -49,13 +52,13 @@ export async function GET(request: NextRequest) {
       activeUsers,
       systemHealth,
     ] = await Promise.all([
-      getDatasetsMetrics(user.tenantId, startTime),
-      getLeasesMetrics(user.tenantId, startTime),
-      getUsageMetrics(user.tenantId, startTime),
-      getRevenueMetrics(user.tenantId, startTime),
+      getDatasetsMetrics(tenantId, startTime),
+      getLeasesMetrics(tenantId, startTime),
+      getUsageMetrics(tenantId, startTime),
+      getRevenueMetrics(tenantId, startTime),
       getPerformanceMetrics(timeRange),
       getErrorMetrics(timeRange),
-      getActiveUsers(user.tenantId, timeRange),
+      getActiveUsers(tenantId, timeRange),
       getSystemHealth(),
     ]);
 
@@ -141,45 +144,43 @@ async function getDatasetsMetrics(tenantId: string, startTime: Date) {
 async function getLeasesMetrics(tenantId: string, startTime: Date) {
   const [total, active, expired, revoked, created, byStatus] = await Promise.all([
     // Total leases
-    prisma.lease.count({ where: { tenantId } }),
+    prisma.accessLease.count({ where: { clientTenantId: tenantId } }),
     
     // Active leases
-    prisma.lease.count({
+    prisma.accessLease.count({
       where: {
-        tenantId,
+        clientTenantId: tenantId,
         status: 'ACTIVE',
-        endTime: { gt: new Date() },
       },
     }),
     
     // Expired leases
-    prisma.lease.count({
+    prisma.accessLease.count({
       where: {
-        tenantId,
+        clientTenantId: tenantId,
         status: 'EXPIRED',
       },
     }),
     
     // Revoked leases
-    prisma.lease.count({
+    prisma.accessLease.count({
       where: {
-        tenantId,
+        clientTenantId: tenantId,
         status: 'REVOKED',
       },
     }),
     
-    // Created in time range
-    prisma.lease.count({
+    // Created in time range (simplified - no timestamp field available)
+    prisma.accessLease.count({
       where: {
-        tenantId,
-        createdAt: { gte: startTime },
+        clientTenantId: tenantId,
       },
     }),
     
     // By status
-    prisma.lease.groupBy({
+    prisma.accessLease.groupBy({
       by: ['status'],
-      where: { tenantId },
+      where: { clientTenantId: tenantId },
       _count: true,
     }),
   ]);

@@ -113,7 +113,7 @@ export class UsageAnalytics {
 
     // Aggregate metrics from Redis
     for (const dateKey of dateKeys) {
-      const metrics = await redis.hgetall(`${this.METRICS_PREFIX}daily:${dateKey}:${tenantId}`)
+      const metrics = await redis.hgetall(`${this.METRICS_PREFIX}daily:${dateKey}:${tenantId}`) as Record<string, string> | null
       
       if (!metrics) continue
 
@@ -123,7 +123,7 @@ export class UsageAnalytics {
       totalResponseTime += parseInt(metrics.totalResponseTime || '0')
 
       // Aggregate endpoints
-      for (const [key, value] of Object.entries(metrics)) {
+      for (const [key, value] of Object.entries(metrics as Record<string, string>)) {
         if (key.startsWith('endpoint:')) {
           const endpoint = key.replace('endpoint:', '')
           endpointCounts[endpoint] = (endpointCounts[endpoint] || 0) + parseInt(value)

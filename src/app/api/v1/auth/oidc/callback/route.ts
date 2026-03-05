@@ -79,8 +79,8 @@ export async function GET(req: NextRequest) {
         data: {
           email: user.email,
           name: user.name,
-          tenantId: user.tenant_id || 'default',
-          emailVerified: user.email_verified ? new Date() : null,
+          tenantId: (user as any).tenant_id || 'default',
+          emailVerified: (user as any).email_verified ? new Date() : null,
         },
       })
     }
@@ -92,11 +92,7 @@ export async function GET(req: NextRequest) {
 
     const session = await SessionManager.createSession(
       dbUser.id,
-      dbUser.tenantId || 'default',
-      deviceId,
-      'Web Browser',
-      ipAddress,
-      userAgent
+      { tenantId: dbUser.tenantId || 'default', deviceId, ipAddress, userAgent }
     )
 
     // Return session token
@@ -112,7 +108,7 @@ export async function GET(req: NextRequest) {
       tokens: {
         accessToken: tokens.access_token,
         refreshToken: tokens.refresh_token,
-        expiresIn: tokens.expires_in,
+        expiresIn: (tokens as any).expires_in || 3600,
       },
     })
   } catch (error) {

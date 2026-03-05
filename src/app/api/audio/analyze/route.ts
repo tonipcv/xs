@@ -44,7 +44,7 @@ export async function POST(request: NextRequest) {
       const metrics = await getAudioMetrics(tempFilePath);
 
       // Validate if thresholds provided
-      let validation = { valid: true, issues: [] };
+      let validation: { valid: boolean; issues: string[] } = { valid: true, issues: [] };
       if (thresholdsJson) {
         const thresholds = JSON.parse(thresholdsJson);
         validation = validateAudioQuality(metrics, thresholds);

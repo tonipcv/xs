@@ -162,17 +162,17 @@ export class AlertManager {
     })
 
     return logs.map(log => {
-      const metadata = JSON.parse(log.metadata as string || '{}')
+      const metadata = JSON.parse((log.metadata as string) || '{}')
       return {
-        id: log.resourceId,
-        tenantId: log.tenantId,
-        category: metadata.category,
-        severity: metadata.severity,
-        title: metadata.title,
-        message: metadata.message,
-        metadata: metadata,
+        id: log.resourceId || `alert_${log.id}`,
+        tenantId: log.tenantId || tenantId,
+        category: metadata.category as AlertCategory,
+        severity: metadata.severity as AlertSeverity,
+        title: metadata.title ?? 'Alert',
+        message: metadata.message ?? '',
+        metadata,
         createdAt: log.timestamp,
-      }
+      } as Alert
     }).filter(alert => {
       if (category && alert.category !== category) return false
       if (severity && alert.severity !== severity) return false

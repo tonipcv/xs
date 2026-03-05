@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     await trackEvent({
       eventType,
       userId: session.user.id,
-      tenantId: session.user.tenantId,
+      tenantId: (session.user as any).tenantId,
       metadata,
     });
 
@@ -89,7 +89,7 @@ export async function GET(request: NextRequest) {
           startDate: start,
           endDate: end,
           eventTypes,
-          tenantId: session.user.tenantId,
+          tenantId: (session.user as any).tenantId,
           groupBy,
         });
 
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
 
       case 'realtime': {
         const data = await getRealtimeAnalytics(
-          session.user.tenantId,
+          (session.user as any).tenantId,
           session.user.id
         );
         return NextResponse.json(data);
@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
           steps,
           start,
           end,
-          session.user.tenantId
+          (session.user as any).tenantId
         );
 
         return NextResponse.json(result);
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
         const result = await getCohortAnalysis(
           new Date(cohortDate),
           retentionDays,
-          session.user.tenantId
+          (session.user as any).tenantId
         );
 
         return NextResponse.json(result);
@@ -172,7 +172,7 @@ export async function GET(request: NextRequest) {
           toEvent,
           start,
           end,
-          session.user.tenantId
+          (session.user as any).tenantId
         );
 
         return NextResponse.json(result);

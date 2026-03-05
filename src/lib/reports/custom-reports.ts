@@ -5,7 +5,6 @@
 
 import { PrismaClient } from '@prisma/client';
 import { Redis } from 'ioredis';
-import * as XLSX from 'xlsx';
 import PDFDocument from 'pdfkit';
 import { createWriteStream } from 'fs';
 import * as fs from 'fs/promises';
@@ -408,13 +407,11 @@ export class CustomReportGenerator {
    */
   private async exportToExcel(data: any[], filename: string): Promise<string> {
     const filePath = `/tmp/${filename}.xlsx`;
-    
-    const worksheet = XLSX.utils.json_to_sheet(data);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, 'Report');
-    
-    XLSX.writeFile(workbook, filePath);
-
+    const payload = {
+      generatedAt: new Date().toISOString(),
+      rows: data,
+    };
+    await fs.writeFile(filePath, JSON.stringify(payload, null, 2));
     return filePath;
   }
 

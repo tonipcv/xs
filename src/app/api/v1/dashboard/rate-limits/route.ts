@@ -23,10 +23,24 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const period = searchParams.get('period') || '24h'
+    // Map period to hours
+    const hours = (() => {
+      switch (period) {
+        case '1h': return 1
+        case '6h': return 6
+        case '24h': return 24
+        case '7d': return 7 * 24
+        case '30d': return 30 * 24
+        default: {
+          const n = parseInt(period, 10)
+          return Number.isFinite(n) && n > 0 ? n : 24
+        }
+      }
+    })()
 
     const [stats, timeline, topBlocked] = await Promise.all([
-      RateLimitMonitor.getStats(protection.tenantId!, period),
-      RateLimitMonitor.getTimeline(protection.tenantId!, period),
+      RateLimitMonitor.getStats(protection.tenantId!, hours),
+      RateLimitMonitor.getTimeline(protection.tenantId!, hours),
       RateLimitMonitor.getTopBlockedIPs(protection.tenantId!, 10),
     ])
 

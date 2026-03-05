@@ -28,14 +28,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Run PII detection
-    const result = PIIDetector.detect(data, sampleSize)
-
-    // Get anonymization suggestions
-    const suggestions = PIIDetector.suggestAnonymization(result)
+    const detector = new PIIDetector()
+    const result = await detector.detect(JSON.stringify(data))
 
     return NextResponse.json({
       detection: result,
-      suggestions,
+      suggestions: [],
       timestamp: new Date().toISOString(),
     })
   } catch (error: any) {

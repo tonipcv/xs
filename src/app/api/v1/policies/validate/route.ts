@@ -19,15 +19,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing YAML policy in body' }, { status: 400 })
     }
 
-    const result = validatePolicy(yamlSource)
+    const result = await validatePolicy(yamlSource)
     if (!result.valid) {
       return NextResponse.json({ valid: false, errors: result.errors }, { status: 422 })
     }
 
+    const r: any = result
     return NextResponse.json({
       valid: true,
-      policy: result.policy,
-      plan: result.plan,
+      policy: r.policy,
+      plan: r.plan,
     })
   } catch (err: any) {
     console.error('[PolicyValidate] Error:', err)

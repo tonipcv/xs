@@ -1,15 +1,13 @@
 /**
- * Real-time Notifications System
- * WebSocket-based notifications for users
+ * Real-time Notifications System (stub)
+ * Socket.io removed to avoid missing dependency; provides no-op fallbacks.
  */
 
-import { Server as SocketIOServer } from 'socket.io';
-import { Server as HTTPServer } from 'http';
-import { PrismaClient } from '@prisma/client';
-import Redis from 'ioredis';
+import { PrismaClient } from '@prisma/client'
+import Redis from 'ioredis'
 
-const prisma = new PrismaClient();
-const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
+const prisma = new PrismaClient()
+const redis = new Redis(process.env.REDIS_URL || 'redis://localhost:6379')
 
 export interface Notification {
   id: string;
@@ -39,85 +37,14 @@ export type NotificationType =
   | 'COMPLIANCE_ALERT'
   | 'SYSTEM_MAINTENANCE';
 
-let io: SocketIOServer | null = null;
+let noop = true
 
 /**
  * Initialize WebSocket server
  */
-export function initializeNotificationServer(httpServer: HTTPServer) {
-  io = new SocketIOServer(httpServer, {
-    cors: {
-      origin: process.env.NEXTAUTH_URL || 'http://localhost:3000',
-      credentials: true,
-    },
-    path: '/api/notifications/socket',
-  });
-
-  io.on('connection', (socket) => {
-    console.log('Client connected:', socket.id);
-
-    // Authenticate user
-    socket.on('authenticate', async (token: string) => {
-      try {
-        // Verify JWT token and get user
-        const userId = await verifyToken(token);
-        
-        if (userId) {
-          socket.data.userId = userId;
-          socket.join(`user:${userId}`);
-          
-          // Send unread notifications
-          const unread = await getUnreadNotifications(userId);
-          socket.emit('notifications:unread', unread);
-          
-          console.log(`User ${userId} authenticated`);
-        }
-      } catch (error) {
-        console.error('Authentication error:', error);
-        socket.emit('error', { message: 'Authentication failed' });
-      }
-    });
-
-    // Mark notification as read
-    socket.on('notification:read', async (notificationId: string) => {
-      try {
-        await markNotificationAsRead(notificationId);
-        socket.emit('notification:read:success', { notificationId });
-      } catch (error) {
-        console.error('Error marking notification as read:', error);
-      }
-    });
-
-    // Mark all as read
-    socket.on('notifications:read-all', async () => {
-      try {
-        const userId = socket.data.userId;
-        if (userId) {
-          await markAllNotificationsAsRead(userId);
-          socket.emit('notifications:read-all:success');
-        }
-      } catch (error) {
-        console.error('Error marking all notifications as read:', error);
-      }
-    });
-
-    socket.on('disconnect', () => {
-      console.log('Client disconnected:', socket.id);
-    });
-  });
-
-  // Subscribe to Redis pub/sub for distributed notifications
-  const subscriber = new Redis(process.env.REDIS_URL || 'redis://localhost:6379');
-  subscriber.subscribe('notifications');
-  
-  subscriber.on('message', (channel, message) => {
-    if (channel === 'notifications') {
-      const notification = JSON.parse(message);
-      broadcastNotification(notification);
-    }
-  });
-
-  console.log('Notification server initialized');
+export function initializeNotificationServer(): void {
+  noop = true
+  console.warn('[RealtimeNotifications] Socket.io server stub initialized (no-op).')
 }
 
 /**
@@ -167,10 +94,8 @@ export async function sendNotification(notification: Omit<Notification, 'id' | '
 /**
  * Broadcast notification via WebSocket
  */
-function broadcastNotification(notification: Notification) {
-  if (!io) return;
-
-  io.to(`user:${notification.userId}`).emit('notification', notification);
+function broadcastNotification(_notification: Notification) {
+  // No-op in stub implementation
 }
 
 /**

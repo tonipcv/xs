@@ -15,20 +15,21 @@ export async function GET(req: NextRequest, context: any) {
   try {
     const { params } = context as { params: Promise<{ policyId: string }> }
     // Prefer Bearer (CLI), fallback to API key or session
-    const bearer = await validateBearer(req)
+    const authz = req.headers.get('authorization') || ''
+    const bearerToken = authz.startsWith('Bearer ')
+      ? authz.slice('Bearer '.length)
+      : ''
+    const bearer = await validateBearer(bearerToken)
     let tenantId: string | null = null
     let apiKeyId: string | undefined
     if (bearer.valid) {
       tenantId = bearer.tenantId || null
     } else {
-      const auth = await validateApiKey(req)
+      const apiKey = req.headers.get('x-api-key') || ''
+      const auth = await validateApiKey(apiKey)
       if (auth.valid && auth.tenantId) {
         tenantId = auth.tenantId
-        if (auth.apiKeyId) {
-          const rl = await checkApiRateLimit(auth.apiKeyId, 1200, 60)
-          if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-          apiKeyId = auth.apiKeyId
-        }
+        apiKeyId = apiKey || undefined
       } else {
         // Fallback to session-based auth for browser usage
         const session = await getServerSession(authOptions)
@@ -64,25 +65,26 @@ export async function GET(req: NextRequest, context: any) {
       action: 'POLICY_CHECK',
     })
 
-    const safeUsage = decision.usage ? {
-      hoursRemaining: Number.isFinite(decision.usage.hoursRemaining as any) ? decision.usage.hoursRemaining : null,
-      downloadsRemaining: Number.isFinite(decision.usage.downloadsRemaining as any) ? decision.usage.downloadsRemaining : null,
-      utilizationPercent: Number.isFinite(decision.usage.utilizationPercent as any) ? decision.usage.utilizationPercent : null,
+    const d: any = decision as any
+    const safeUsage = d.usage ? {
+      hoursRemaining: Number.isFinite(d.usage.hoursRemaining as any) ? d.usage.hoursRemaining : null,
+      downloadsRemaining: Number.isFinite(d.usage.downloadsRemaining as any) ? d.usage.downloadsRemaining : null,
+      utilizationPercent: Number.isFinite(d.usage.utilizationPercent as any) ? d.usage.utilizationPercent : null,
     } : undefined
 
     return NextResponse.json({
       allowed: decision.allowed,
       reason: decision.reason,
-      code: decision.code,
+      code: d.code,
       usage: safeUsage,
-      policy: decision.policy ? {
-        policyId: decision.policy.policyId,
-        status: decision.policy.status,
-        maxHours: decision.policy.maxHours,
-        hoursConsumed: decision.policy.hoursConsumed,
-        maxDownloads: decision.policy.maxDownloads,
-        downloadsCount: decision.policy.downloadsCount,
-        expiresAt: decision.policy.expiresAt,
+      policy: d.policy ? {
+        policyId: d.policy.policyId,
+        status: d.policy.status,
+        maxHours: d.policy.maxHours,
+        hoursConsumed: d.policy.hoursConsumed,
+        maxDownloads: d.policy.maxDownloads,
+        downloadsCount: d.policy.downloadsCount,
+        expiresAt: d.policy.expiresAt,
       } : undefined,
     })
   } catch (err: any) {

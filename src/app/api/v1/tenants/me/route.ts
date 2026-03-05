@@ -8,15 +8,13 @@ import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
  */
 export async function GET(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (auth.apiKeyId) {
-      const rl = await checkApiRateLimit(auth.apiKeyId, 1200, 60)
-      if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-    }
+    // Rate limiting stubbed
 
     const tenant = await prisma.tenant.findUnique({
       where: { id: auth.tenantId },

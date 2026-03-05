@@ -481,7 +481,7 @@ export class AuditViewer {
           { action: { contains: searchQuery, mode: 'insensitive' } },
           { resourceType: { contains: searchQuery, mode: 'insensitive' } },
           { resourceId: { contains: searchQuery, mode: 'insensitive' } },
-          { metadata: { path: '$', string_contains: searchQuery } },
+          { metadata: { contains: searchQuery, mode: 'insensitive' } },
         ],
       },
       orderBy: { timestamp: 'desc' },

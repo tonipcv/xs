@@ -24,7 +24,8 @@ export async function DELETE(
 
     const { memberId } = params;
 
-    await removeMember(memberId, session.user.email);
+    const tenantId = (session.user as any).tenantId;
+    await removeMember(memberId, session.user.email, tenantId);
 
     return NextResponse.json({ success: true, message: 'Member removed successfully' });
   } catch (error: any) {

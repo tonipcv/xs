@@ -347,12 +347,12 @@ export async function queryLogs(
       },
     });
 
-    return logs.map(log => {
+    const mapped = logs.map(log => {
       try {
-        const data = JSON.parse(log.metadata || '{}');
-        return {
-          level: data.level,
-          message: data.message,
+        const data: any = JSON.parse((log.metadata as unknown as string) || '{}');
+        const entry: LogEntry = {
+          level: (data.level as LogLevel) ?? LogLevel.INFO,
+          message: String(data.message ?? ''),
           timestamp: log.timestamp,
           context: {
             tenantId: log.tenantId || undefined,
@@ -360,14 +360,16 @@ export async function queryLogs(
             ipAddress: log.ipAddress || undefined,
             userAgent: log.userAgent || undefined,
           },
-          metadata: data.metadata,
-          error: data.error,
-          tags: data.tags,
+          metadata: data.metadata as Record<string, any> | undefined,
+          error: data.error as LogEntry['error'],
+          tags: data.tags as string[] | undefined,
         };
+        return entry;
       } catch {
-        return null;
+        return null as unknown as LogEntry;
       }
-    }).filter((entry): entry is LogEntry => entry !== null);
+    });
+    return mapped.filter((e): e is LogEntry => !!e);
   } catch (error) {
     console.error('Error querying logs:', error);
     return [];

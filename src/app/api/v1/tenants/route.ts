@@ -12,15 +12,13 @@ import { z } from 'zod'
  */
 export async function GET(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     let isAuthorized = false
     if (auth.valid) {
       // API key path
       isAuthorized = true
-      if (auth.apiKeyId) {
-        const rl = await checkApiRateLimit(auth.apiKeyId, 1200, 60)
-        if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-      }
+      // Rate limiting stubbed
     } else {
       // Fallback to session auth (any logged-in user)
       const session = await getServerSession(authOptions)

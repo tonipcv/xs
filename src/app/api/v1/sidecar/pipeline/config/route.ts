@@ -5,15 +5,13 @@ import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
 // Reflects environment-driven capabilities and transforms
 export async function GET(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
-    if (!auth.valid || !auth.tenantId || !auth.apiKeyId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
+    if (!auth.valid || !auth.tenantId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const rl = await checkApiRateLimit(auth.apiKeyId, 600, 60)
-    if (!rl.allowed) {
-      return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-    }
+    // Rate limiting stubbed
 
     // Read env flags (mirroring Sidecar config flags) to describe capabilities
     const audioDiar = process.env.AUDIO_ENABLE_DIARIZATION === 'true' || process.env.AUDIO_ENABLE_DIARIZATION === '1'

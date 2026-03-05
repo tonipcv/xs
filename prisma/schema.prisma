@@ -173,6 +173,7 @@ model Tenant {
   buyerReviews      AccessReview[] @relation("BuyerReviews")
   ropaRecords       ROPARecord[]
   billingSnapshots  BillingSnapshot[]
+  preparationJobs   PreparationJob[]
   
   @@map("xase_tenants")
 }
@@ -332,6 +333,7 @@ model Dataset {
   accessOffers        AccessOffer[]
   // Marketplace offers mapped to Offer table
   offers              Offer[]
+  preparationJobs     PreparationJob[]
   
   @@index([tenantId])
   @@index([status])
@@ -1353,4 +1355,42 @@ model WebhookDelivery {
   @@index([nextRetryAt])
   @@index([createdAt])
   @@map("webhook_deliveries")
+}
+
+// ========================================
+// DATA PREPARATION PIPELINE
+// ========================================
+
+model PreparationJob {
+  id           String   @id @default(cuid())
+  datasetId    String   @map("dataset_id")
+  tenantId     String   @map("tenant_id")
+  leaseId      String   @map("lease_id")
+  
+  task         String   // pre-training, fine-tuning, dpo, rag, eval
+  modality     String   // text, image, audio, multimodal
+  runtime      String   // hf, openai, megatron, mosaic, trl, pytorch, generic
+  format       String   // jsonl, parquet, bin, mds, webdataset
+  
+  config       String   @db.Text // JSON config
+  
+  status       String   @default("pending") // pending, normalizing, compiling, delivering, completed, failed
+  progress     Int      @default(0)
+  
+  outputPath   String?  @map("output_path")
+  manifestUrl  String?  @map("manifest_url")
+  error        String?  @db.Text
+  
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+  completedAt  DateTime? @map("completed_at")
+  
+  dataset      Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  
+  @@index([datasetId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("preparation_jobs")
 }

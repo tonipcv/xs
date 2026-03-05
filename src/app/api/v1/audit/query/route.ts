@@ -171,14 +171,8 @@ export async function POST(req: NextRequest) {
     // Order and limit
     query += ` ORDER BY timestamp DESC LIMIT {limit:UInt32} OFFSET {offset:UInt32}`;
 
-    // Execute query
-    const resultSet = await clickhouse.query({
-      query,
-      query_params: params,
-      format: 'JSONEachRow'
-    });
-
-    const events = await resultSet.json();
+    // Execute query (stub implementation returns empty array)
+    const events = await clickhouse.query(query, params);
 
     // Get total count
     let countQuery = '';
@@ -215,13 +209,7 @@ export async function POST(req: NextRequest) {
       countQuery += ` AND action = {action:String}`;
     }
 
-    const countResult = await clickhouse.query({
-      query: countQuery,
-      query_params: params,
-      format: 'JSONEachRow'
-    });
-
-    const countData: any = await countResult.json();
+    const countData = await clickhouse.query(countQuery, params) as any[];
     const total = countData[0]?.total || 0;
 
     return NextResponse.json({
@@ -294,17 +282,7 @@ export async function GET(req: NextRequest) {
       LIMIT {limit:UInt32} OFFSET {offset:UInt32}
     `;
 
-    const resultSet = await clickhouse.query({
-      query,
-      query_params: {
-        tenant_id: tenantId,
-        limit,
-        offset
-      },
-      format: 'JSONEachRow'
-    });
-
-    const events = await resultSet.json();
+    const events = await clickhouse.query(query, [tenantId, limit, offset]);
 
     return NextResponse.json({
       events,

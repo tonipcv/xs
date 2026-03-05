@@ -16,19 +16,19 @@ export async function GET(request: NextRequest) {
     const stats: any = {}
 
     if (category === 'all' || category === 'metrics') {
-      stats.metrics = MetricsCollector.getStatistics()
+      stats.metrics = MetricsCollector.getSummary()
     }
 
     if (category === 'all' || category === 'requests') {
-      stats.requests = RequestLogger.getStatistics()
+      stats.requests = { message: 'Request logging not implemented' }
     }
 
     if (category === 'all' || category === 'errors') {
-      stats.errors = ErrorHandler.getStatistics()
+      stats.errors = { message: 'Error tracking not implemented' }
     }
 
     if (category === 'all' || category === 'tasks') {
-      stats.tasks = TaskScheduler.getStatistics()
+      stats.tasks = { message: 'Task scheduling not implemented' }
     }
 
     return NextResponse.json({

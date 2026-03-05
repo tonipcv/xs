@@ -7,7 +7,8 @@ import { validateApiKey } from '@/lib/xase/auth'
 export async function GET(req: NextRequest) {
   try {
     // Tentar autenticação via API key primeiro
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     
     let tenantId: string | null = null
     

@@ -138,7 +138,7 @@ export class CacheWarmer {
       priority: 80,
       execute: async () => {
         const keys = await prisma.apiKey.findMany({
-          where: { revokedAt: null },
+          where: { isActive: true },
           take: 200,
           select: { id: true, keyHash: true, tenantId: true },
         })

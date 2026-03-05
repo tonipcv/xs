@@ -351,15 +351,6 @@ export async function listMembers(tenantId: string): Promise<Member[]> {
       resourceType: 'member',
       tenantId,
     },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-    },
     orderBy: {
       timestamp: 'desc',
     },
@@ -378,7 +369,7 @@ export async function listMembers(tenantId: string): Promise<Member[]> {
       invitedAt: meta.invitedAt ? new Date(meta.invitedAt) : undefined,
       joinedAt: meta.joinedAt ? new Date(meta.joinedAt) : log.timestamp,
       status: meta.status || 'active',
-      user: log.user || { id: '', name: null, email: '' },
+      user: meta.user || { id: log.userId || '', name: meta.user?.name ?? null, email: meta.user?.email ?? '' },
     };
   });
 

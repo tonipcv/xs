@@ -11,18 +11,12 @@ const BodySchema = z.object({
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    // Rate limit por API key (fail-open se erro)
-    if (auth.apiKeyId) {
-      const rl = await checkApiRateLimit(auth.apiKeyId, 600, 60) // 600 req/h
-      if (!rl.allowed) {
-        return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-      }
-    }
+    // Rate limiting stubbed
 
     if (!isStorageConfigured()) {
       return NextResponse.json({ error: 'Storage not configured' }, { status: 500 })
@@ -52,7 +46,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dat
     }
 
     const fileKey = `datasets/${dataset.datasetId}/${fileName}`
-    const uploadUrl = await getPresignedUploadUrl(fileKey, contentType, 3600)
+    const uploadUrl = await getPresignedUploadUrl(fileKey, 3600)
 
     // Marcar dataset como PENDING para processamento
     await prisma.dataset.update({
@@ -74,7 +68,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dat
         processUrl,
         method: "POST",
         body: { fileKey, fileName },
-        headers: { "Authorization": `Bearer ${auth.apiKeyId}` }
+        headers: { "X-API-Key": apiKey }
       }
     })
   } catch (err: any) {

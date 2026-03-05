@@ -176,7 +176,6 @@ export async function processConsentRevocation(
       },
       select: {
         id: true,
-        sessionId: true,
       },
     });
 
@@ -185,7 +184,7 @@ export async function processConsentRevocation(
     // Send kill switch to all active sessions
     if (activeSessions.length > 0) {
       await publishKillSwitch(
-        activeSessions.map(s => s.sessionId),
+        activeSessions.map(s => s.id),
         'Consent revoked'
       );
 
@@ -325,11 +324,12 @@ export async function startConsentPropagationConsumer(): Promise<void> {
           }
         );
 
-        if (messages && messages.length > 0) {
-          for (const stream of messages) {
-            for (const message of stream.messages) {
+        const streamsArr = (messages as any[]) || [];
+        if (Array.isArray(streamsArr) && streamsArr.length > 0) {
+          for (const stream of streamsArr as any[]) {
+            for (const message of (stream as any).messages || []) {
               try {
-                const eventData = message.message.event;
+                const eventData = (message as any).message?.event as string;
                 const event: ConsentRevocationEvent = JSON.parse(eventData);
 
                 console.log(`Processing event: ${event.eventId}`);
@@ -338,7 +338,7 @@ export async function startConsentPropagationConsumer(): Promise<void> {
                 await processConsentRevocation(event);
 
                 // Acknowledge the message
-                await redisClient.xAck(streamKey, consumerGroup, message.id);
+                await redisClient.xAck(streamKey, consumerGroup, (message as any).id as string);
 
                 console.log(`Acknowledged message: ${message.id}`);
               } catch (error) {
@@ -424,7 +424,7 @@ export async function cleanupOldMessages(maxAge: number = 86400000): Promise<voi
     const minTimestamp = Date.now() - maxAge;
 
     for (const stream of streams) {
-      await redisClient.xTrim(stream, 'MINID', `${minTimestamp}`);
+      await (redisClient as any).xTrim(stream, 'MINID', minTimestamp as any);
       console.log(`Cleaned up old messages from ${stream}`);
     }
   } catch (error) {

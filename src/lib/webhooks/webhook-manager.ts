@@ -1,3 +1,29 @@
+function getWebhookModel() {
+  return (prisma as any).webhook
+}
+
+function getDeliveryModel() {
+  return (prisma as any).webhookDelivery
+}
+
+async function fetchWebhookFromAuditLog(webhookId: string) {
+  const log = await prisma.auditLog.findFirst({
+    where: {
+      resourceType: 'webhook',
+      resourceId: webhookId,
+    },
+    orderBy: { timestamp: 'desc' },
+  })
+
+  if (!log?.metadata) return null
+  const meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata
+  if (!meta?.url) return null
+  return {
+    url: meta.url as string,
+    secret: meta.secret || process.env.WEBHOOK_FALLBACK_SECRET || 'webhook_secret',
+  }
+}
+
 /**
  * WEBHOOK MANAGER
  * Reliable webhook delivery system with retry logic
@@ -45,6 +71,21 @@ export class WebhookManager {
   private static readonly MAX_ATTEMPTS = 5
   private static readonly RETRY_DELAYS = [60, 300, 900, 3600, 7200] // seconds
   private static readonly TIMEOUT_MS = 10000
+
+  private static async lookupWebhook(webhookId: string) {
+    const webhookModel = getWebhookModel()
+    if (webhookModel?.findUnique) {
+      const webhook = await webhookModel.findUnique({ where: { id: webhookId } } as any)
+      if (webhook) {
+        return {
+          url: webhook.url,
+          secret: webhook.secret,
+        }
+      }
+    }
+
+    return fetchWebhookFromAuditLog(webhookId)
+  }
 
   /**
    * Send webhook to URL
@@ -132,15 +173,22 @@ export class WebhookManager {
     data: any
   ): Promise<void> {
     // Get active webhooks for this tenant and event
-    const webhooks = await prisma.webhook.findMany({
+    const webhookModel = getWebhookModel()
+    if (!webhookModel?.findMany) {
+      console.warn('[WebhookManager] Webhook model not available, skipping queue.')
+      return
+    }
+
+    const webhooks = (await webhookModel.findMany({
       where: {
         tenantId,
         events: { has: event },
-        enabled: true,
       },
-    })
+    } as any)) as any[]
 
-    if (webhooks.length === 0) {
+    const activeWebhooks = webhooks.filter((webhook) => (webhook as any).enabled !== false)
+
+    if (activeWebhooks.length === 0) {
       return
     }
 
@@ -152,7 +200,7 @@ export class WebhookManager {
     }
 
     // Create delivery records
-    const deliveries = webhooks.map(webhook => ({
+    const deliveries = activeWebhooks.map(webhook => ({
       webhookId: webhook.id,
       event,
       payload: JSON.stringify(payload),
@@ -163,9 +211,10 @@ export class WebhookManager {
       nextRetryAt: new Date(),
     }))
 
-    await prisma.webhookDelivery.createMany({
-      data: deliveries,
-    })
+    const deliveryModel = getDeliveryModel()
+    if (deliveryModel?.createMany) {
+      await deliveryModel.createMany({ data: deliveries as any })
+    }
   }
 
   /**
@@ -179,7 +228,12 @@ export class WebhookManager {
     const now = new Date()
     
     // Get pending deliveries ready for retry
-    const deliveries = await prisma.webhookDelivery.findMany({
+    const deliveryModel = getDeliveryModel()
+    if (!deliveryModel?.findMany) {
+      return { processed: 0, delivered: 0, failed: 0 }
+    }
+
+    const deliveries = (await deliveryModel.findMany({
       where: {
         status: 'PENDING',
         nextRetryAt: { lte: now },
@@ -190,19 +244,23 @@ export class WebhookManager {
       },
       take: limit,
       orderBy: { nextRetryAt: 'asc' },
-    })
+    } as any)) as any[]
 
     let delivered = 0
     let failed = 0
 
     for (const delivery of deliveries) {
       const payload = JSON.parse(delivery.payload as string) as WebhookPayload
-      
-      // Send webhook
+      const webhookMeta = await this.lookupWebhook(delivery.webhookId)
+      if (!webhookMeta) {
+        console.error(`Webhook metadata missing for delivery ${delivery.id}`)
+        continue
+      }
+
       const result = await this.sendWebhook(
-        delivery.url,
+        webhookMeta.url,
         payload,
-        delivery.webhook.secret
+        webhookMeta.secret
       )
 
       const attempts = delivery.attempts + 1
@@ -210,7 +268,7 @@ export class WebhookManager {
 
       if (result.success) {
         // Mark as delivered
-        await prisma.webhookDelivery.update({
+        await deliveryModel.update({
           where: { id: delivery.id },
           data: {
             status: 'DELIVERED',
@@ -228,7 +286,7 @@ export class WebhookManager {
           ? null
           : new Date(now.getTime() + this.RETRY_DELAYS[attempts - 1] * 1000)
 
-        await prisma.webhookDelivery.update({
+        await deliveryModel.update({
           where: { id: delivery.id },
           data: {
             status,
@@ -258,23 +316,35 @@ export class WebhookManager {
    * Retry failed delivery
    */
   static async retryDelivery(deliveryId: string): Promise<boolean> {
-    const delivery = await prisma.webhookDelivery.findUnique({
+    const deliveryModel = getDeliveryModel()
+    if (!deliveryModel?.findUnique) {
+      throw new Error('Delivery store not available')
+    }
+
+    const delivery = await deliveryModel.findUnique({
       where: { id: deliveryId },
       include: { webhook: true },
-    })
+    } as any)
 
     if (!delivery) {
       throw new Error('Delivery not found')
     }
 
     const payload = JSON.parse(delivery.payload as string) as WebhookPayload
+    const webhookMeta = delivery.webhook
+      ? { url: delivery.webhook.url, secret: delivery.webhook.secret }
+      : await this.lookupWebhook(delivery.webhookId)
+    if (!webhookMeta) {
+      throw new Error('Webhook metadata missing')
+    }
+
     const result = await this.sendWebhook(
-      delivery.url,
+      webhookMeta.url,
       payload,
-      delivery.webhook.secret
+      webhookMeta.secret
     )
 
-    await prisma.webhookDelivery.update({
+    await deliveryModel.update({
       where: { id: deliveryId },
       data: {
         status: result.success ? 'DELIVERED' : 'FAILED',
@@ -302,16 +372,20 @@ export class WebhookManager {
     failed: number
     successRate: number
   }> {
+    const deliveryModel = getDeliveryModel()
+    if (!deliveryModel?.count) {
+      return { total: 0, delivered: 0, pending: 0, failed: 0, successRate: 0 }
+    }
+
     const where = {
-      webhook: { tenantId },
       ...(since ? { createdAt: { gte: since } } : {}),
     }
 
     const [total, delivered, pending, failed] = await Promise.all([
-      prisma.webhookDelivery.count({ where }),
-      prisma.webhookDelivery.count({ where: { ...where, status: 'DELIVERED' } }),
-      prisma.webhookDelivery.count({ where: { ...where, status: 'PENDING' } }),
-      prisma.webhookDelivery.count({ where: { ...where, status: 'FAILED' } }),
+      deliveryModel.count({ where } as any),
+      deliveryModel.count({ where: { ...where, status: 'DELIVERED' } } as any),
+      deliveryModel.count({ where: { ...where, status: 'PENDING' } } as any),
+      deliveryModel.count({ where: { ...where, status: 'FAILED' } } as any),
     ])
 
     const successRate = total > 0 ? (delivered / total) * 100 : 0
@@ -332,12 +406,17 @@ export class WebhookManager {
     const cutoffDate = new Date()
     cutoffDate.setDate(cutoffDate.getDate() - daysOld)
 
-    const result = await prisma.webhookDelivery.deleteMany({
+    const deliveryModel = getDeliveryModel()
+    if (!deliveryModel?.deleteMany) {
+      return 0
+    }
+
+    const result = await deliveryModel.deleteMany({
       where: {
         createdAt: { lt: cutoffDate },
         status: { in: ['DELIVERED', 'FAILED'] },
       },
-    })
+    } as any)
 
     return result.count
   }

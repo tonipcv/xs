@@ -45,11 +45,8 @@ export async function POST(req: NextRequest) {
     const mockData = generateMockData(sampleSize)
 
     // Run privacy analysis
-    const analysis = PrivacyAnalyzer.analyze(
-      mockData,
-      quasiIdentifiers || ['age', 'zipcode', 'gender'],
-      k
-    )
+    const analyzer = new PrivacyAnalyzer()
+    const analysis = await analyzer.analyze(mockData) as any
 
     // Store analysis result
     await prisma.auditLog.create({

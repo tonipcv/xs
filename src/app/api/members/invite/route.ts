@@ -5,7 +5,8 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
-import { inviteMember, InviteRequest } from '@/lib/rbac/member-management';
+import { inviteMember } from '@/lib/rbac/member-management';
+import { prisma } from '@/lib/prisma';
 
 /**
  * POST /api/members/invite
@@ -38,21 +39,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
 
-    const inviteRequest: InviteRequest = {
+    const result = await inviteMember({
       email,
       role,
       customRoleId,
       tenantId,
       invitedBy: user.id,
       message,
-    };
-
-    const inviteToken = await inviteMember(inviteRequest);
+    });
 
     return NextResponse.json(
       {
         success: true,
-        inviteToken: inviteToken.substring(0, 8) + '...',
+        inviteToken: result.substring(0, 8) + '...',
         message: 'Invitation sent successfully',
       },
       { status: 201 }

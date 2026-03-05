@@ -15,7 +15,8 @@ export async function PUT(
   { params }: { params: Promise<{ policyId: string }> }
 ) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -85,7 +86,8 @@ export async function GET(
   { params }: { params: Promise<{ policyId: string }> }
 ) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

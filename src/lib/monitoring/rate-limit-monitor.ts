@@ -42,24 +42,41 @@ export class RateLimitMonitor {
     const hourKey = this.getHourKey(now)
     const statsKey = `${this.STATS_PREFIX}${hourKey}:${tenantId}`
 
+    const r: any = redis as any
     await Promise.all([
       // Total requests
-      redis.hincrby(statsKey, 'total', 1),
+      r?.hincrby ? r.hincrby(statsKey, 'total', 1) : r?.incrby ? r.incrby(`${statsKey}:total`, 1) : Promise.resolve(),
       
       // Blocked requests
-      blocked ? redis.hincrby(statsKey, 'blocked', 1) : null,
+      blocked ? (r?.hincrby ? r.hincrby(statsKey, 'blocked', 1) : r?.incrby ? r.incrby(`${statsKey}:blocked`, 1) : null) : null,
       
       // By endpoint
-      redis.hincrby(statsKey, `endpoint:${endpoint}`, 1),
-      blocked ? redis.hincrby(statsKey, `blocked:endpoint:${endpoint}`, 1) : null,
+      r?.hincrby ? r.hincrby(statsKey, `endpoint:${endpoint}`, 1) : null,
+      blocked ? (r?.hincrby ? r.hincrby(statsKey, `blocked:endpoint:${endpoint}`, 1) : null) : null,
       
       // By IP
-      redis.hincrby(statsKey, `ip:${ip}`, 1),
-      blocked ? redis.hincrby(statsKey, `blocked:ip:${ip}`, 1) : null,
+      r?.hincrby ? r.hincrby(statsKey, `ip:${ip}`, 1) : null,
+      blocked ? (r?.hincrby ? r.hincrby(statsKey, `blocked:ip:${ip}`, 1) : null) : null,
       
       // Set expiry (7 days)
-      redis.expire(statsKey, 7 * 86400),
+      r?.expire ? r.expire(statsKey, 7 * 86400) : Promise.resolve(),
     ].filter(Boolean))
+  }
+
+  /**
+   * Get timeline (helper for dashboard API)
+   */
+  static async getTimeline(tenantId: string, hours: number = 24): Promise<Array<{ hour: string; requests: number; blocked: number }>> {
+    const stats = await this.getStats(tenantId, hours)
+    return stats.timeline
+  }
+
+  /**
+   * Get top blocked IPs (helper for dashboard API)
+   */
+  static async getTopBlockedIPs(tenantId: string, limit: number = 10): Promise<Array<{ ip: string; count: number }>> {
+    const stats = await this.getStats(tenantId, 24)
+    return stats.topBlockedIPs.slice(0, limit)
   }
 
   /**
@@ -86,15 +103,16 @@ export class RateLimitMonitor {
 
     for (const hourKey of hourKeys) {
       const statsKey = `${this.STATS_PREFIX}${hourKey}:${tenantId}`
-      const stats = await redis.hgetall(statsKey)
+      const r: any = redis as any
+      const stats: any = (await (r?.hgetall ? r.hgetall(statsKey) : null)) || {}
 
       if (!stats) {
         timeline.push({ hour: hourKey, requests: 0, blocked: 0 })
         continue
       }
 
-      const hourTotal = parseInt(stats.total || '0')
-      const hourBlocked = parseInt(stats.blocked || '0')
+      const hourTotal = parseInt(String(stats.total ?? '0'))
+      const hourBlocked = parseInt(String(stats.blocked ?? '0'))
 
       totalRequests += hourTotal
       blockedRequests += hourBlocked
@@ -106,14 +124,14 @@ export class RateLimitMonitor {
       })
 
       // Aggregate endpoints
-      for (const [key, value] of Object.entries(stats)) {
+      for (const [key, value] of Object.entries(stats as Record<string, any>)) {
         if (key.startsWith('blocked:endpoint:')) {
           const endpoint = key.replace('blocked:endpoint:', '')
-          endpointCounts[endpoint] = (endpointCounts[endpoint] || 0) + parseInt(value)
+          endpointCounts[endpoint] = (endpointCounts[endpoint] || 0) + parseInt(String(value))
         }
         if (key.startsWith('blocked:ip:')) {
           const ip = key.replace('blocked:ip:', '')
-          ipCounts[ip] = (ipCounts[ip] || 0) + parseInt(value)
+          ipCounts[ip] = (ipCounts[ip] || 0) + parseInt(String(value))
         }
       }
     }
@@ -230,9 +248,10 @@ export class RateLimitMonitor {
     const hourKey = this.getHourKey(now)
     const statsKey = `${this.STATS_PREFIX}${hourKey}:${tenantId}`
 
-    const stats = await redis.hgetall(statsKey)
-    const total = parseInt(stats?.total || '0')
-    const blocked = parseInt(stats?.blocked || '0')
+    const r: any = redis as any
+    const stats: any = await (r?.hgetall ? r.hgetall(statsKey) : null)
+    const total = parseInt(String(stats?.total ?? '0'))
+    const blocked = parseInt(String(stats?.blocked ?? '0'))
 
     return {
       currentHourRequests: total,

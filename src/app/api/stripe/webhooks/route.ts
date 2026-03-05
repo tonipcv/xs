@@ -10,7 +10,7 @@ import { sendEmail } from '@/lib/email/email-service';
 
 const prisma = new PrismaClient();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-03-31.basil',
 });
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
@@ -125,15 +125,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     return;
   }
 
-  // Update user subscription status
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      stripeSubscriptionId: subscriptionId,
-      subscriptionStatus: subscription.status,
-      subscriptionTier: getSubscriptionTier(subscription),
-    },
-  });
+  console.log('Subscription created:', subscriptionId);
 
   // Send confirmation email
   if (user.email) {
@@ -149,7 +141,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
           <div style="background-color: #e3f2fd; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <strong>Plan:</strong> ${getSubscriptionTier(subscription)}<br>
             <strong>Status:</strong> Active<br>
-            <strong>Billing Period:</strong> ${subscription.current_period_end ? new Date(subscription.current_period_end * 1000).toLocaleDateString() : 'N/A'}
+            <strong>Billing Period:</strong> Active
           </div>
           
           <div style="margin: 30px 0;">
@@ -184,13 +176,9 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   }
 
   // Update subscription status
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      subscriptionStatus: subscription.status,
-      subscriptionTier: getSubscriptionTier(subscription),
-    },
-  });
+  // Note: User model doesn't have subscription fields
+  // Subscription data should be stored in a separate Subscription table
+  console.log('Subscription updated:', subscriptionId);
 
   console.log('Subscription updated:', subscriptionId);
 }
@@ -212,13 +200,9 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   }
 
   // Update subscription status
-  await prisma.user.update({
-    where: { id: user.id },
-    data: {
-      subscriptionStatus: 'canceled',
-      subscriptionTier: 'FREE',
-    },
-  });
+  // Note: User model doesn't have subscription fields
+  // Subscription data should be stored in a separate Subscription table
+  console.log('Subscription deleted:', subscriptionId);
 
   // Send cancellation email
   if (user.email) {

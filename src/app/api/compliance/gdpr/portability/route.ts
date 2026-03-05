@@ -113,8 +113,6 @@ export async function POST(request: NextRequest) {
         where: { clientTenantId: user.tenantId },
         select: {
           policyId: true,
-          purposeCategory: true,
-          retentionDays: true,
           createdAt: true,
         },
       });

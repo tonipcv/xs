@@ -101,7 +101,6 @@ export async function POST(request: NextRequest) {
         select: {
           id: true,
           policyId: true,
-          name: true,
           createdAt: true,
         },
       });

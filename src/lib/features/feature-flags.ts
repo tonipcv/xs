@@ -157,9 +157,12 @@ export async function getAllFeatureFlags(): Promise<FeatureFlag[]> {
     const latestFlags = new Map<string, FeatureFlag>();
     
     for (const flag of flags) {
-      if (!latestFlags.has(flag.resourceId) && flag.metadata) {
+      const id = flag.resourceId ?? ''
+      if (!id) continue
+      const meta = flag.metadata as unknown as string | null
+      if (!latestFlags.has(id) && meta) {
         try {
-          latestFlags.set(flag.resourceId, JSON.parse(flag.metadata));
+          latestFlags.set(id, JSON.parse(meta))
         } catch {
           // Skip invalid JSON
         }

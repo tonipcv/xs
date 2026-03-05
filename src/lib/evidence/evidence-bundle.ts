@@ -369,7 +369,7 @@ export async function listEvidenceBundles(leaseId: string): Promise<EvidenceBund
     );
 
     bundles.push({
-      bundleId: log.resourceId,
+      bundleId: (log.resourceId as string) || `bundle_${log.id}`,
       executionId: metadata.executionId,
       leaseId: metadata.leaseId,
       datasetId: metadata.datasetId,

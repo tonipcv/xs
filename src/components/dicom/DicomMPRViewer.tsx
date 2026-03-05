@@ -6,8 +6,6 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import * as cornerstone from '@cornerstonejs/core';
-import { RenderingEngine, Enums, volumeLoader } from '@cornerstonejs/core';
 
 interface DicomMPRViewerProps {
   volumeId: string;
@@ -26,7 +24,8 @@ export default function DicomMPRViewer({
   const sagittalRef = useRef<HTMLDivElement>(null);
   const coronalRef = useRef<HTMLDivElement>(null);
   const [isLoaded, setIsLoaded] = useState(false);
-  const [renderingEngine, setRenderingEngine] = useState<RenderingEngine | null>(null);
+  const [available, setAvailable] = useState(false);
+  const renderingEngineRef = useRef<any>(null);
 
   useEffect(() => {
     initializeMPR();
@@ -40,10 +39,16 @@ export default function DicomMPRViewer({
 
   const initializeMPR = async () => {
     try {
-      await cornerstone.init();
-      
-      const engine = new RenderingEngine('mprViewerEngine');
-      setRenderingEngine(engine);
+      // Try to load cornerstone dynamically if available
+      const cs: any = await import('@cornerstonejs/core').catch(() => null);
+      if (!cs) {
+        setAvailable(false);
+        return;
+      }
+      await cs.init?.();
+      const engine = new cs.RenderingEngine('mprViewerEngine');
+      renderingEngineRef.current = engine;
+      setAvailable(true);
     } catch (error) {
       console.error('Failed to initialize MPR viewer:', error);
       onError?.(error as Error);
@@ -51,57 +56,31 @@ export default function DicomMPRViewer({
   };
 
   const loadVolume = async () => {
-    if (!axialRef.current || !sagittalRef.current || !coronalRef.current || !renderingEngine) {
+    const renderingEngine = renderingEngineRef.current;
+    if (!axialRef.current || !sagittalRef.current || !coronalRef.current || !renderingEngine || !available) {
       return;
     }
 
     try {
-      // Load volume
-      const volume = await volumeLoader.createAndCacheVolume(volumeId, {
-        imageIds: seriesUrls,
-      });
+      const cs: any = await import('@cornerstonejs/core');
+      // Load volume (best-effort)
+      const volume = await cs.volumeLoader?.createAndCacheVolume?.(volumeId, { imageIds: seriesUrls });
+      await volume?.load?.();
 
-      await volume.load();
-
-      // Create viewports
       const viewportInputArray = [
-        {
-          viewportId: 'AXIAL',
-          element: axialRef.current,
-          type: Enums.ViewportType.ORTHOGRAPHIC,
-          defaultOptions: {
-            orientation: Enums.OrientationAxis.AXIAL,
-          },
-        },
-        {
-          viewportId: 'SAGITTAL',
-          element: sagittalRef.current,
-          type: Enums.ViewportType.ORTHOGRAPHIC,
-          defaultOptions: {
-            orientation: Enums.OrientationAxis.SAGITTAL,
-          },
-        },
-        {
-          viewportId: 'CORONAL',
-          element: coronalRef.current,
-          type: Enums.ViewportType.ORTHOGRAPHIC,
-          defaultOptions: {
-            orientation: Enums.OrientationAxis.CORONAL,
-          },
-        },
+        { viewportId: 'AXIAL', element: axialRef.current, type: cs.Enums?.ViewportType?.ORTHOGRAPHIC, defaultOptions: { orientation: cs.Enums?.OrientationAxis?.AXIAL } },
+        { viewportId: 'SAGITTAL', element: sagittalRef.current, type: cs.Enums?.ViewportType?.ORTHOGRAPHIC, defaultOptions: { orientation: cs.Enums?.OrientationAxis?.SAGITTAL } },
+        { viewportId: 'CORONAL', element: coronalRef.current, type: cs.Enums?.ViewportType?.ORTHOGRAPHIC, defaultOptions: { orientation: cs.Enums?.OrientationAxis?.CORONAL } },
       ];
 
-      renderingEngine.setViewports(viewportInputArray);
-
-      // Set volumes for each viewport
+      renderingEngine.setViewports?.(viewportInputArray);
       await Promise.all([
-        renderingEngine.getViewport('AXIAL').setVolumes([{ volumeId }]),
-        renderingEngine.getViewport('SAGITTAL').setVolumes([{ volumeId }]),
-        renderingEngine.getViewport('CORONAL').setVolumes([{ volumeId }]),
+        renderingEngine.getViewport?.('AXIAL')?.setVolumes?.([{ volumeId }]) ?? Promise.resolve(),
+        renderingEngine.getViewport?.('SAGITTAL')?.setVolumes?.([{ volumeId }]) ?? Promise.resolve(),
+        renderingEngine.getViewport?.('CORONAL')?.setVolumes?.([{ volumeId }]) ?? Promise.resolve(),
       ]);
 
-      // Render all viewports
-      renderingEngine.render();
+      renderingEngine.render?.();
 
       setIsLoaded(true);
       onLoad?.();
@@ -112,28 +91,27 @@ export default function DicomMPRViewer({
   };
 
   const syncViewports = () => {
+    const renderingEngine = renderingEngineRef.current;
     if (!renderingEngine) return;
 
-    const axialViewport = renderingEngine.getViewport('AXIAL');
-    const sagittalViewport = renderingEngine.getViewport('SAGITTAL');
-    const coronalViewport = renderingEngine.getViewport('CORONAL');
+    const axialViewport = renderingEngine.getViewport?.('AXIAL');
+    const sagittalViewport = renderingEngine.getViewport?.('SAGITTAL');
+    const coronalViewport = renderingEngine.getViewport?.('CORONAL');
 
-    // Sync camera positions
-    const axialCamera = axialViewport.getCamera();
-    sagittalViewport.setCamera(axialCamera);
-    coronalViewport.setCamera(axialCamera);
+    const axialCamera = axialViewport?.getCamera?.();
+    sagittalViewport?.setCamera?.(axialCamera);
+    coronalViewport?.setCamera?.(axialCamera);
 
-    renderingEngine.render();
+    renderingEngine.render?.();
   };
 
   const adjustWindowLevel = (width: number, center: number) => {
+    const renderingEngine = renderingEngineRef.current;
     if (!renderingEngine) return;
-
     const viewports = ['AXIAL', 'SAGITTAL', 'CORONAL'];
-    
     viewports.forEach(viewportId => {
-      const viewport = renderingEngine.getViewport(viewportId);
-      viewport.setProperties({
+      const viewport = renderingEngine.getViewport?.(viewportId);
+      viewport?.setProperties?.({
         voiRange: {
           lower: center - width / 2,
           upper: center + width / 2,
@@ -141,25 +119,29 @@ export default function DicomMPRViewer({
       });
     });
 
-    renderingEngine.render();
+    renderingEngine.render?.();
   };
 
   const resetAllViews = () => {
+    const renderingEngine = renderingEngineRef.current;
     if (!renderingEngine) return;
-
     const viewports = ['AXIAL', 'SAGITTAL', 'CORONAL'];
-    
     viewports.forEach(viewportId => {
-      const viewport = renderingEngine.getViewport(viewportId);
-      viewport.resetCamera();
-      viewport.resetProperties();
+      const viewport = renderingEngine.getViewport?.(viewportId);
+      viewport?.resetCamera?.();
+      viewport?.resetProperties?.();
     });
 
-    renderingEngine.render();
+    renderingEngine.render?.();
   };
 
   return (
     <div className="dicom-mpr-viewer">
+      {!available && (
+        <div className="p-4 bg-yellow-100 text-yellow-800 rounded mb-2">
+          DICOM MPR viewer unavailable: '@cornerstonejs/core' not installed. Rendering placeholder.
+        </div>
+      )}
       <div className="mpr-controls bg-gray-100 p-4 rounded-t-lg">
         <div className="flex gap-4 items-center">
           <button

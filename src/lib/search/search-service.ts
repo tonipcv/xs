@@ -159,33 +159,39 @@ export async function searchPolicies(
     ];
   }
 
-  const [items, total] = await Promise.all([
-    prisma.policy.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      skip,
-      take: limit,
-      select: {
-        id: true,
-        policyId: true,
-        description: true,
-        allowedRegions: true,
-        allowedPurposes: true,
-        maxDurationDays: true,
-        requiresApproval: true,
-        isActive: true,
-        createdAt: true,
-      },
-    }),
-    prisma.policy.count({ where }),
-  ]);
+  const policyLogs = await prisma.auditLog.findMany({
+    where: {
+      tenantId,
+      action: 'POLICY_CREATED',
+      resourceType: 'policy',
+      ...(where.OR ? { metadata: { contains: query || '' } } : {}),
+    },
+    orderBy: { timestamp: 'desc' },
+    skip,
+    take: limit,
+  });
+
+  const items = policyLogs.map((log) => {
+    const meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
+    return {
+      id: log.resourceId || '',
+      policyId: meta?.policyId || log.resourceId || '',
+      description: meta?.description || '',
+      allowedRegions: meta?.allowedRegions || [],
+      allowedPurposes: meta?.allowedPurposes || [],
+      maxDurationDays: meta?.maxDurationDays || null,
+      requiresApproval: meta?.requiresApproval ?? false,
+      isActive: meta?.isActive ?? true,
+      createdAt: log.timestamp,
+    };
+  });
 
   return {
     items,
-    total,
+    total: items.length,
     page,
     limit,
-    hasMore: skip + items.length < total,
+    hasMore: false,
   };
 }
 
@@ -295,7 +301,7 @@ export async function globalSearch(
     return { datasets: [], policies: [], leases: [], total: 0 };
   }
 
-  const [datasets, policies, leases] = await Promise.all([
+  const [datasets, policyLogs, leases] = await Promise.all([
     prisma.dataset.findMany({
       where: {
         tenantId,
@@ -313,20 +319,14 @@ export async function globalSearch(
         dataType: true,
       },
     }),
-    prisma.policy.findMany({
+    prisma.auditLog.findMany({
       where: {
         tenantId,
-        OR: [
-          { policyId: { contains: query, mode: 'insensitive' } },
-          { description: { contains: query, mode: 'insensitive' } },
-        ],
+        action: 'POLICY_CREATED',
+        resourceType: 'policy',
+        metadata: { contains: query },
       },
       take: limit,
-      select: {
-        id: true,
-        policyId: true,
-        description: true,
-      },
     }),
     prisma.accessLease.findMany({
       where: {
@@ -343,6 +343,15 @@ export async function globalSearch(
       },
     }),
   ]);
+
+  const policies = policyLogs.map((log) => {
+    const meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
+    return {
+      id: log.resourceId || '',
+      policyId: meta?.policyId || log.resourceId || '',
+      description: meta?.description || '',
+    };
+  });
 
   return {
     datasets,
@@ -375,11 +384,12 @@ async function calculateFacets(
   };
 
   for (const dataset of datasets) {
-    facets.dataType[dataset.dataType] = (facets.dataType[dataset.dataType] || 0) + 1;
-    if (dataset.language) {
-      facets.language[dataset.language] = (facets.language[dataset.language] || 0) + 1;
-    }
-    facets.status[dataset.status] = (facets.status[dataset.status] || 0) + 1;
+    const dataTypeKey = dataset.dataType || 'UNKNOWN'
+    const languageKey = dataset.language || 'UNKNOWN'
+    const statusKey = dataset.status || 'UNKNOWN'
+    facets.dataType[dataTypeKey] = (facets.dataType[dataTypeKey] || 0) + 1;
+    facets.language[languageKey] = (facets.language[languageKey] || 0) + 1;
+    facets.status[statusKey] = (facets.status[statusKey] || 0) + 1;
   }
 
   return facets;

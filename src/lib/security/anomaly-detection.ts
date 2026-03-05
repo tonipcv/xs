@@ -215,7 +215,7 @@ async function checkExpiredLeaseAccess(pattern: AccessPattern): Promise<AnomalyA
   }
 
   // Check if lease is expired
-  const lease = await prisma.lease.findUnique({
+  const lease = await prisma.accessLease.findFirst({
     where: { leaseId: pattern.resourceId },
   });
 
@@ -395,20 +395,13 @@ async function getAdminEmails(tenantId?: string): Promise<string[]> {
       resourceType: 'member',
       tenantId,
     },
-    include: {
-      user: {
-        select: {
-          email: true,
-        },
-      },
-    },
   });
 
   const emails: string[] = [];
   for (const log of adminLogs) {
     const meta = typeof log.metadata === 'string' ? JSON.parse(log.metadata) : log.metadata;
-    if ((meta.role === 'OWNER' || meta.role === 'ADMIN') && log.user?.email) {
-      emails.push(log.user.email);
+    if ((meta.role === 'OWNER' || meta.role === 'ADMIN') && meta.user?.email) {
+      emails.push(meta.user.email);
     }
   }
 

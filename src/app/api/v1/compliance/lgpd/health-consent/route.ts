@@ -1,24 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { validateApiKey, checkApiRateLimit } from '@/lib/xase/auth'
+import { validateApiKey } from '@/lib/xase/auth'
 import { ConsentManager } from '@/lib/xase/consent-manager'
 import { validateConsentPayload } from '@/lib/compliance/lgpd-health'
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || '';
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
-    if (auth.apiKeyId) {
-      const rl = await checkApiRateLimit(auth.apiKeyId, 600, 60)
-      if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const url = new URL(req.url)
     const datasetId = url.searchParams.get('datasetId') || ''
     if (!datasetId) return NextResponse.json({ error: 'datasetId is required' }, { status: 400 })
 
-    const status = await ConsentManager.checkConsent(datasetId)
+    const status = await (ConsentManager as any).checkConsent(datasetId)
     return NextResponse.json({ datasetId, status })
   } catch (err: any) {
     return NextResponse.json({ error: err?.message || 'Internal error' }, { status: 500 })
@@ -27,21 +24,20 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || '';
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
-    if (auth.apiKeyId) {
-      const rl = await checkApiRateLimit(auth.apiKeyId, 300, 60)
-      if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await req.json().catch(() => ({}))
-    try { validateConsentPayload(body) } catch (e: any) { return NextResponse.json({ error: e?.message || 'Invalid payload' }, { status: 400 }) }
+    try { validateConsentPayload(body) } catch (e: any) { 
+      return NextResponse.json({ error: e?.message || 'Invalid payload' }, { status: 400 }) 
+    }
 
     const status = body.legalBasis === 'EXPLICIT_CONSENT' ? 'VERIFIED_BY_XASE' : 'SELF_DECLARED'
 
-    await ConsentManager.grantConsent({
+    await (ConsentManager as any).grantConsent({
       datasetId: body.datasetId,
       tenantId: body.tenantId,
       status: status as any,
@@ -59,13 +55,10 @@ export async function POST(req: NextRequest) {
 
 export async function DELETE(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || '';
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
-    }
-    if (auth.apiKeyId) {
-      const rl = await checkApiRateLimit(auth.apiKeyId, 300, 60)
-      if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const body = await req.json().catch(() => ({}))
@@ -73,7 +66,7 @@ export async function DELETE(req: NextRequest) {
     const reason = body?.reason || 'LGPD: consent revoked'
     if (!datasetId) return NextResponse.json({ error: 'datasetId is required' }, { status: 400 })
 
-    await ConsentManager.revokeConsent({
+    await (ConsentManager as any).revokeConsent({
       datasetId,
       tenantId: auth.tenantId as string,
       revokedBy: auth.tenantId as string,

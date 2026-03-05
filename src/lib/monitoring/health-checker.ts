@@ -83,15 +83,11 @@ export class HealthChecker {
 
       const responseTime = Date.now() - startTime
 
-      // Check connection pool
-      const metrics = await prisma.$metrics.json()
-      const poolSize = metrics.counters.find((c: any) => c.key === 'prisma_pool_connections_open')?.value || 0
-
       return {
         status: responseTime < 100 ? 'healthy' : 'degraded',
         responseTime,
         details: {
-          poolSize,
+          poolSize: 'unknown',
           responseTime,
         },
       }

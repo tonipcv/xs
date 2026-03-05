@@ -37,9 +37,10 @@ interface S3Credentials {
 export async function POST(req: NextRequest) {
   try {
     // 1. Validar API key
-    const auth = await validateApiKey(req);
+    const apiKey = req.headers.get('x-api-key') || '';
+    const auth = await validateApiKey(apiKey);
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // 2. Parse body

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({
       budget,
-      warning: budget.remaining < budget.totalBudget * 0.2 
+      warning: budget.remaining < budget.total * 0.2 
         ? 'Budget is running low (< 20% remaining)'
         : null,
     });
@@ -77,14 +77,13 @@ export async function POST(req: NextRequest) {
         { 
           error: 'Budget exceeded',
           reason: check.reason,
-          remaining: check.remaining,
         },
         { status: 403 }
       );
     }
 
     // Consume budget
-    const budget = await tracker.consumeBudget(
+    const result = await tracker.consumeBudgetDetailed(
       tenantId,
       datasetId,
       epsilon,
@@ -96,10 +95,8 @@ export async function POST(req: NextRequest) {
     await tracker.close();
 
     return NextResponse.json({
-      success: true,
-      budget,
+      success: result.success,
       consumed: epsilon,
-      remaining: budget.remaining,
     });
 
   } catch (error: any) {

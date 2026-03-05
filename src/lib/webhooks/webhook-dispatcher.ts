@@ -467,8 +467,7 @@ export async function getWebhookDeliveries(
     where: {
       resourceType: 'webhook_delivery',
       metadata: {
-        path: ['webhookId'],
-        equals: webhookId,
+        contains: webhookId,
       },
     },
     orderBy: {

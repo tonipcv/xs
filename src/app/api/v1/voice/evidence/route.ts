@@ -15,7 +15,8 @@ export const dynamic = 'force-dynamic'
  */
 export async function GET(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }

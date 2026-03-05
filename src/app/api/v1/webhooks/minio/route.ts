@@ -64,15 +64,15 @@ export async function POST(req: NextRequest) {
       // MVP: processar síncrono (leve)
       await prisma.dataset.update({ where: { id: dataset.id }, data: { processingStatus: 'PROCESSING' } })
 
-      const result = await processAudioFile(rec.key, dataset.datasetId)
+      const result = await processAudioFile(rec.key)
       
-      if (result.success) {
-        await createDataAsset(dataset.datasetId, rec.key, result)
+      if ((result as any).success) {
+        await createDataAsset({ datasetId: dataset.datasetId, key: rec.key, result })
         await updateDatasetMetrics(dataset.datasetId, result)
       } else {
         await prisma.dataset.update({ 
           where: { id: dataset.id }, 
-          data: { processingStatus: 'FAILED', processingError: result.error } 
+          data: { processingStatus: 'FAILED', processingError: (result as any).error } 
         })
       }
       

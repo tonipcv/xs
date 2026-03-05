@@ -187,32 +187,49 @@ export async function notifyExpiringLeases(): Promise<void> {
         gte: new Date(),
       },
     },
-    include: {
-      clientTenant: {
-        include: {
-          users: {
-            where: {
-              xaseRole: {
-                in: ['ADMIN', 'OWNER'],
-              },
-            },
+    select: {
+      id: true,
+      leaseId: true,
+      expiresAt: true,
+      clientTenantId: true,
+    },
+  });
+
+  const tenantIds = Array.from(
+    new Set(expiringLeases.map(lease => lease.clientTenantId).filter((id): id is string => Boolean(id)))
+  );
+
+  const tenantContacts = await prisma.tenant.findMany({
+    where: { id: { in: tenantIds } },
+    select: {
+      id: true,
+      users: {
+        where: {
+          xaseRole: {
+            in: ['ADMIN', 'OWNER'],
           },
         },
+        select: { email: true },
       },
     },
   });
 
+  const tenantEmailMap = new Map<string, string[]>(
+    tenantContacts.map(t => [t.id, t.users.map(u => u.email).filter(Boolean) as string[]])
+  );
+
   for (const lease of expiringLeases) {
-    const recipients = lease.clientTenant.users.map(u => u.email).filter(Boolean) as string[];
+    if (!lease.clientTenantId) continue;
+    const recipients = tenantEmailMap.get(lease.clientTenantId) || [];
 
     if (recipients.length > 0) {
       await sendNotification({
         type: 'LEASE_EXPIRING',
         priority: 'HIGH',
         title: 'Data Access Lease Expiring Soon',
-        message: `Your data access lease (${lease.leaseId}) will expire in less than 3 days.`,
+        message: `Your data access lease (${(lease as any).leaseId || lease.id}) will expire in less than 3 days.`,
         data: {
-          leaseId: lease.leaseId,
+          leaseId: (lease as any).leaseId || lease.id,
           expiresAt: lease.expiresAt?.toISOString(),
         },
         channels: ['email', 'in-app'],

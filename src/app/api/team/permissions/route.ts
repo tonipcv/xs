@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
     const role = user.xaseRole || 'VIEWER';
     const permissions = PERMISSIONS[role as keyof typeof PERMISSIONS] || PERMISSIONS.VIEWER;
     const resourcePermissions = permissions[resource as keyof typeof permissions] || [];
-    const hasPermission = resourcePermissions.includes(action);
+    const hasPermission = (resourcePermissions as string[]).includes(action);
 
     return NextResponse.json({
       resource,

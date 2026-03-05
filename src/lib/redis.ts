@@ -172,6 +172,34 @@ export const redis = {
     const c = await getRedisClient();
     return c.get(key);
   },
+  async hIncrBy(key: string, field: string, increment: number) {
+    const c = await getRedisClient();
+    return c.hIncrBy(key, field, increment);
+  },
+  async hincrby(key: string, field: string, increment: number) {
+    // Backward-compat alias
+    return this.hIncrBy(key, field, increment);
+  },
+  async hGetAll(key: string) {
+    const c = await getRedisClient();
+    return c.hGetAll(key);
+  },
+  async hgetall(key: string) {
+    // Backward-compat alias
+    return this.hGetAll(key);
+  },
+  async hGet(key: string, field: string) {
+    const c = await getRedisClient();
+    return c.hGet(key, field);
+  },
+  async hget(key: string, field: string) {
+    // Backward-compat alias
+    return this.hGet(key, field);
+  },
+  async incrBy(key: string, increment: number) {
+    const c = await getRedisClient();
+    return c.incrBy(key, increment);
+  },
   async keys(pattern: string) {
     const c = await getRedisClient();
     return c.keys(pattern);

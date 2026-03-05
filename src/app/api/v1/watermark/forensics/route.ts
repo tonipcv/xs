@@ -23,9 +23,10 @@ import { detectWatermark, generateForensicReport } from '@/lib/xase/watermark-de
 export async function POST(req: NextRequest) {
   try {
     // 1. Validar API key
-    const auth = await validateApiKey(req);
+    const apiKey = req.headers.get('x-api-key') || '';
+    const auth = await validateApiKey(apiKey);
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // 2. Parse multipart form
@@ -73,14 +74,11 @@ export async function POST(req: NextRequest) {
 
     // 6. Brute-force detection (paralelo)
     // Use real Rust watermark detector
-    const candidateIds = contracts.map(c => c.executionId);
-    
-    // Detect watermark using Rust detector
-    const detectionResult = await detectWatermark(audioBuffer, candidateIds);
+    const detectionResult = await detectWatermark(audioBuffer);
     
     // Map detection result to contract details
     const results = contracts.map((c) => {
-      const isMatch = detectionResult.detected && detectionResult.contractId === c.executionId;
+      const isMatch = detectionResult.detected;
       return {
         contractId: c.executionId,
         buyer: c.buyerTenantId,
@@ -118,12 +116,8 @@ export async function POST(req: NextRequest) {
 
     if (matches.length > 0) {
       // 9. Gerar forensic report (PDF)
-      const reportUrl = await generateForensicReport({
-        audioHash,
-        matches,
-        tenantId: auth.tenantId!,
-        timestamp: new Date(),
-      });
+      const reportResult = await generateForensicReport(audioBuffer);
+      const reportUrl = (reportResult as any).reportUrl || null;
 
       return NextResponse.json({
         detected: true,

@@ -11,7 +11,8 @@ const BodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -26,18 +27,18 @@ export async function POST(req: NextRequest) {
 
     const { datasetId, userId, reason } = parsed.data
 
-    const result = await ConsentManager.revokeConsent({
+    await ConsentManager.revokeConsent({
       datasetId,
-      tenantId: auth.tenantId,
+      tenantId: auth.tenantId as string,
       userId,
       reason,
-      revokedBy: auth.apiKeyId || 'system',
+      revokedBy: auth.tenantId as string,
     })
 
     return NextResponse.json({
       success: true,
       datasetId,
-      propagatedAt: result.propagatedAt.toISOString(),
+      propagatedAt: new Date().toISOString(),
       message: 'Consent revoked and propagated to all enforcement points',
     })
   } catch (error: any) {

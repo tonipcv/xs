@@ -5,9 +5,10 @@ import { withTenantContext } from '@/lib/db/rls'
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const url = new URL(req.url)
@@ -15,10 +16,10 @@ export async function GET(req: NextRequest) {
     const limit = parseInt(url.searchParams.get('limit') || '50')
 
     // Use RLS for tenant isolation
-    const sessions = await withTenantContext(auth.tenantId as string, async () => {
+    const sessions = await withTenantContext(auth.tenantId!, async () => {
       return prisma.sidecarSession.findMany({
         where: {
-          clientTenantId: auth.tenantId as string,
+          clientTenantId: auth.tenantId!,
           ...(status && { status }),
           deletedAt: null, // Soft delete filter
         },

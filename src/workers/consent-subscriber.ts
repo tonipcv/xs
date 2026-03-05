@@ -7,11 +7,22 @@
  * Uso: node dist/workers/consent-subscriber.js
  */
 
-import { ConsentManager, ConsentRevocationEvent } from '../lib/xase/consent-manager'
-import { insertConsentEvent } from '../lib/xase/clickhouse-client'
+import { ConsentManager } from '../lib/xase/consent-manager'
+import { getClickHouseClient } from '../lib/xase/clickhouse-client'
 
 const CONSUMER_GROUP = 'pep-enforcement'
 const CONSUMER_NAME = `pep-worker-${process.pid}`
+const consentManager = new ConsentManager()
+const clickhouse = getClickHouseClient()
+
+type ConsentRevocationEvent = {
+  datasetId: string
+  tenantId: string
+  userId?: string
+  revokedBy?: string
+  reason?: string
+  timestamp: number
+}
 
 async function handleRevocation(event: ConsentRevocationEvent): Promise<void> {
   const startTime = Date.now()
@@ -20,23 +31,29 @@ async function handleRevocation(event: ConsentRevocationEvent): Promise<void> {
     console.log(`[ConsentWorker] Processing revocation for dataset ${event.datasetId}`)
     
     // 1. Invalidar cache local
-    await ConsentManager.invalidateCache(event.datasetId)
-    
+    if (typeof (consentManager as any).invalidateCache === 'function') {
+      await (consentManager as any).invalidateCache(event.datasetId)
+    }
+
     // 2. Registrar no ClickHouse para auditoria
-    await insertConsentEvent({
-      event_id: `consent_${event.datasetId}_${Date.now()}`,
-      tenant_id: event.tenantId,
-      dataset_id: event.datasetId,
-      user_id: event.userId || 'system',
-      consent_status: 'REVOKED',
-      consent_version: '',
-      reason: event.reason || 'User revoked consent',
-      changed_by: event.revokedBy,
-      event_timestamp: new Date(event.timestamp),
-    }).catch(err => {
-      console.error('[ConsentWorker] Failed to log to ClickHouse:', err)
-      // Não falhar o processamento se ClickHouse estiver indisponível
-    })
+    await clickhouse
+      .insert('consent_events', [
+        {
+          event_id: `consent_${event.datasetId}_${Date.now()}`,
+          tenant_id: event.tenantId,
+          dataset_id: event.datasetId,
+          user_id: event.userId || 'system',
+          consent_status: 'REVOKED',
+          consent_version: '',
+          reason: event.reason || 'User revoked consent',
+          changed_by: event.revokedBy,
+          event_timestamp: new Date(event.timestamp),
+        },
+      ])
+      .catch(err => {
+        console.error('[ConsentWorker] Failed to log to ClickHouse:', err)
+        // Não falhar o processamento se ClickHouse estiver indisponível
+      })
     
     const latency = Date.now() - startTime
     console.log(`[ConsentWorker] Revocation processed in ${latency}ms`)
@@ -67,11 +84,16 @@ async function main() {
   })
   
   // Subscribe to revocation events
-  await ConsentManager.subscribeToRevocations(
-    handleRevocation,
-    CONSUMER_GROUP,
-    CONSUMER_NAME
-  )
+  if (typeof (consentManager as any).subscribeToRevocations === 'function') {
+    await (consentManager as any).subscribeToRevocations(
+      handleRevocation,
+      CONSUMER_GROUP,
+      CONSUMER_NAME
+    )
+    return
+  }
+
+  console.warn('[ConsentWorker] Consent manager subscription not available; worker idle.')
 }
 
 // Start worker

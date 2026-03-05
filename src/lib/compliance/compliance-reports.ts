@@ -447,7 +447,7 @@ async function generateCompliancePDF(
 
   doc.end();
 
-  await new Promise((resolve) => stream.on('finish', resolve));
+  await new Promise<void>((resolve) => stream.on('finish', () => resolve()));
 
   const stats = require('fs').statSync(filePath);
   return { filePath, fileSize: stats.size };

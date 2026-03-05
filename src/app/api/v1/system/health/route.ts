@@ -7,16 +7,16 @@ import { HealthChecker } from '@/lib/monitoring/health-checker'
 
 export async function GET() {
   try {
-    const health = await HealthChecker.checkAll()
+    const health = await HealthChecker.checkHealth()
 
-    const status = health.healthy ? 200 : 503
+    const status = health.status === 'healthy' ? 200 : 503
 
     return NextResponse.json(health, { status })
   } catch (error) {
     console.error('[API] Health check error:', error)
     return NextResponse.json(
       {
-        healthy: false,
+        status: 'unhealthy',
         error: 'Health check failed',
       },
       { status: 503 }

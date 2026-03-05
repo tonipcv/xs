@@ -11,7 +11,7 @@ import { PrismaClient } from '@prisma/client';
 import { sendEmail } from '@/lib/email/email-service';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2024-11-20.acacia',
+  apiVersion: '2025-03-31.basil',
 });
 
 const prisma = new PrismaClient();
@@ -130,13 +130,12 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
     return;
   }
 
-  // Update user subscription status
+  // Update user subscription status (align with schema fields)
   await prisma.user.update({
     where: { id: user.id },
     data: {
-      stripeSubscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
-      subscriptionPlan: subscription.items.data[0]?.price.id,
+      planTier: subscription.items.data[0]?.price.id || user.planTier || 'FREE',
     },
   });
 
@@ -151,7 +150,6 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
         customerId,
         status: subscription.status,
         plan: subscription.items.data[0]?.price.id,
-        currentPeriodEnd: subscription.current_period_end,
       }),
       status: 'SUCCESS',
       timestamp: new Date(),
@@ -169,8 +167,7 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
           <p>Your XASE Sheets subscription has been successfully activated!</p>
           <div style="background-color: #e8f5e9; padding: 15px; border-radius: 5px; margin: 20px 0;">
             <strong>Subscription ID:</strong> ${subscription.id}<br>
-            <strong>Status:</strong> ${subscription.status}<br>
-            <strong>Billing Period:</strong> ${new Date(subscription.current_period_start * 1000).toLocaleDateString()} - ${new Date(subscription.current_period_end * 1000).toLocaleDateString()}
+            <strong>Status:</strong> ${subscription.status}
           </div>
           <p>You now have access to all premium features.</p>
           <div style="margin: 30px 0;">
@@ -191,10 +188,11 @@ async function handleSubscriptionCreated(subscription: Stripe.Subscription) {
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   console.log('Subscription updated:', subscription.id);
 
-  // Find user by subscription ID
+  // Find user by Stripe customer ID
+  const customerId = subscription.customer as string;
   const user = await prisma.user.findFirst({
     where: {
-      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: customerId,
     },
   });
 
@@ -203,12 +201,12 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
     return;
   }
 
-  // Update user subscription status
+  // Update user subscription status (align with schema)
   await prisma.user.update({
     where: { id: user.id },
     data: {
       subscriptionStatus: subscription.status,
-      subscriptionPlan: subscription.items.data[0]?.price.id,
+      planTier: subscription.items.data[0]?.price.id || user.planTier || 'FREE',
     },
   });
 
@@ -239,8 +237,7 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
           <h2 style="color: #ff9800;">Subscription Cancellation Scheduled</h2>
           <p>Your XASE Sheets subscription will be canceled at the end of the current billing period.</p>
           <div style="background-color: #fff3cd; padding: 15px; border-radius: 5px; margin: 20px 0;">
-            <strong>Cancellation Date:</strong> ${new Date(subscription.current_period_end * 1000).toLocaleDateString()}<br>
-            <strong>Access Until:</strong> ${new Date(subscription.current_period_end * 1000).toLocaleDateString()}
+            <strong>Cancellation scheduled at period end.</strong>
           </div>
           <p>You will continue to have access to premium features until the end of your billing period.</p>
           <p>Changed your mind? You can reactivate your subscription anytime.</p>
@@ -262,10 +259,11 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   console.log('Subscription deleted:', subscription.id);
 
-  // Find user by subscription ID
+  // Find user by Stripe customer ID
+  const customerId = subscription.customer as string;
   const user = await prisma.user.findFirst({
     where: {
-      stripeSubscriptionId: subscription.id,
+      stripeCustomerId: customerId,
     },
   });
 
@@ -274,13 +272,12 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
     return;
   }
 
-  // Update user subscription status
+  // Update user subscription status (align with schema)
   await prisma.user.update({
     where: { id: user.id },
     data: {
       subscriptionStatus: 'canceled',
-      stripeSubscriptionId: null,
-      subscriptionPlan: null,
+      planTier: null,
     },
   });
 
@@ -354,7 +351,7 @@ async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
       metadata: JSON.stringify({
         amount: invoice.amount_paid,
         currency: invoice.currency,
-        subscriptionId: invoice.subscription,
+        subscriptionId: (invoice as any).subscription || null,
         periodStart: invoice.period_start,
         periodEnd: invoice.period_end,
       }),

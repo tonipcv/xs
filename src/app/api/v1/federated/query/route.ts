@@ -13,7 +13,8 @@ const FEDERATED_AGENT_URL = process.env.FEDERATED_AGENT_URL || 'http://localhost
 export async function POST(req: NextRequest) {
   try {
     // Validate API key
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth || !auth.valid) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -29,7 +30,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Generate JWT token for federated agent
-    const token = generateFederatedToken(auth)
+    const token = generateFederatedToken(auth, apiKey)
 
     // Forward request to Go agent
     const response = await fetch(`${FEDERATED_AGENT_URL}/query`, {
@@ -44,7 +45,7 @@ export async function POST(req: NextRequest) {
         parameters,
         metadata: {
           tenantId: auth.tenantId,
-          userId: auth.apiKeyId, // API-key based identity for federated agent
+          userId: apiKey, // API-key based identity for federated agent
           ...(policyId ? { policyId } : {}),
           ...(datasetId ? { datasetId } : {}),
         },
@@ -75,7 +76,7 @@ export async function POST(req: NextRequest) {
   }
 }
 
-function generateFederatedToken(auth: any): string {
+function generateFederatedToken(auth: any, apiKey: string): string {
   const secret = process.env.FEDERATED_JWT_SECRET
   if (!secret) {
     throw new Error('FEDERATED_JWT_SECRET is not configured')
@@ -83,8 +84,8 @@ function generateFederatedToken(auth: any): string {
 
   const payload = {
     tenantId: auth.tenantId,
-    userId: auth.apiKeyId,
-    role: auth.role || 'user',
+    userId: apiKey,
+    role: 'user',
   }
 
   // Short-lived token (5m) to minimize blast radius

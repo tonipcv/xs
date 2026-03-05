@@ -6,9 +6,6 @@
  */
 
 import React, { useEffect, useRef, useState } from 'react';
-import * as cornerstone from '@cornerstonejs/core';
-import * as cornerstoneTools from '@cornerstonejs/tools';
-import { RenderingEngine, Enums } from '@cornerstonejs/core';
 
 interface DicomViewerProps {
   dicomUrl: string;
@@ -29,7 +26,8 @@ export default function DicomViewer({
   const [isLoaded, setIsLoaded] = useState(false);
   const [windowLevel, setWindowLevel] = useState({ width: 400, center: 40 });
   const [zoom, setZoom] = useState(1);
-  const [renderingEngine, setRenderingEngine] = useState<RenderingEngine | null>(null);
+  const renderingEngineRef = useRef<any>(null);
+  const [available, setAvailable] = useState(false);
 
   useEffect(() => {
     initializeCornerstone();
@@ -43,11 +41,18 @@ export default function DicomViewer({
 
   const initializeCornerstone = async () => {
     try {
-      await cornerstone.init();
-      cornerstoneTools.init();
+      const cs: any = await import('@cornerstonejs/core').catch(() => null);
+      const tools: any = await import('@cornerstonejs/tools').catch(() => null);
+      if (!cs || !tools) {
+        setAvailable(false);
+        return;
+      }
+      await cs.init?.();
+      tools.init?.();
 
-      const engine = new RenderingEngine('dicomViewerEngine');
-      setRenderingEngine(engine);
+      const engine = new cs.RenderingEngine('dicomViewerEngine');
+      renderingEngineRef.current = engine;
+      setAvailable(true);
     } catch (error) {
       console.error('Failed to initialize Cornerstone:', error);
       onError?.(error as Error);
@@ -55,22 +60,24 @@ export default function DicomViewer({
   };
 
   const loadDicomImage = async () => {
-    if (!viewportRef.current || !renderingEngine) return;
+    const renderingEngine = renderingEngineRef.current;
+    if (!viewportRef.current || !renderingEngine || !available) return;
 
     try {
+      const cs: any = await import('@cornerstonejs/core');
       const viewportId = 'DICOM_VIEWPORT';
       const viewportInput = {
         viewportId,
         element: viewportRef.current,
-        type: Enums.ViewportType.STACK,
+        type: cs.Enums?.ViewportType?.STACK,
       };
 
-      renderingEngine.enableElement(viewportInput);
+      renderingEngine.enableElement?.(viewportInput);
 
-      const viewport = renderingEngine.getViewport(viewportId);
+      const viewport = renderingEngine.getViewport?.(viewportId);
       
-      await viewport.setStack([dicomUrl]);
-      viewport.render();
+      await viewport?.setStack?.([dicomUrl]);
+      viewport?.render?.();
 
       setIsLoaded(true);
       onLoad?.();
@@ -83,16 +90,17 @@ export default function DicomViewer({
   const adjustWindowLevel = (width: number, center: number) => {
     setWindowLevel({ width, center });
     
+    const renderingEngine = renderingEngineRef.current;
     if (renderingEngine) {
-      const viewport = renderingEngine.getViewport('DICOM_VIEWPORT');
+      const viewport = renderingEngine.getViewport?.('DICOM_VIEWPORT');
       if (viewport) {
-        viewport.setProperties({
+        viewport.setProperties?.({
           voiRange: {
             lower: center - width / 2,
             upper: center + width / 2,
           },
         });
-        viewport.render();
+        viewport.render?.();
       }
     }
   };
@@ -100,11 +108,12 @@ export default function DicomViewer({
   const adjustZoom = (newZoom: number) => {
     setZoom(newZoom);
     
+    const renderingEngine = renderingEngineRef.current;
     if (renderingEngine) {
-      const viewport = renderingEngine.getViewport('DICOM_VIEWPORT');
+      const viewport = renderingEngine.getViewport?.('DICOM_VIEWPORT');
       if (viewport) {
-        viewport.setZoom(newZoom);
-        viewport.render();
+        viewport.setZoom?.(newZoom);
+        viewport.render?.();
       }
     }
   };
@@ -113,40 +122,48 @@ export default function DicomViewer({
     setZoom(1);
     setWindowLevel({ width: 400, center: 40 });
     
+    const renderingEngine = renderingEngineRef.current;
     if (renderingEngine) {
-      const viewport = renderingEngine.getViewport('DICOM_VIEWPORT');
+      const viewport = renderingEngine.getViewport?.('DICOM_VIEWPORT');
       if (viewport) {
-        viewport.resetCamera();
-        viewport.resetProperties();
-        viewport.render();
+        viewport.resetCamera?.();
+        viewport.resetProperties?.();
+        viewport.render?.();
       }
     }
   };
 
-  const enableMeasurementTool = (toolName: string) => {
-    const toolGroup = cornerstoneTools.ToolGroupManager.getToolGroup('dicomToolGroup');
+  const enableMeasurementTool = async (toolName: string) => {
+    const tools: any = await import('@cornerstonejs/tools').catch(() => null);
+    if (!tools) return;
+    const toolGroup = tools.ToolGroupManager.getToolGroup('dicomToolGroup');
     
     if (!toolGroup) {
-      const newToolGroup = cornerstoneTools.ToolGroupManager.createToolGroup('dicomToolGroup');
+      const newToolGroup = tools.ToolGroupManager.createToolGroup('dicomToolGroup');
       
-      newToolGroup?.addTool(cornerstoneTools.LengthTool.toolName);
-      newToolGroup?.addTool(cornerstoneTools.RectangleROITool.toolName);
-      newToolGroup?.addTool(cornerstoneTools.EllipticalROITool.toolName);
-      newToolGroup?.addTool(cornerstoneTools.PanTool.toolName);
-      newToolGroup?.addTool(cornerstoneTools.ZoomTool.toolName);
-      newToolGroup?.addTool(cornerstoneTools.WindowLevelTool.toolName);
+      newToolGroup?.addTool(tools.LengthTool?.toolName || 'Length');
+      newToolGroup?.addTool(tools.RectangleROITool?.toolName || 'RectangleROI');
+      newToolGroup?.addTool(tools.EllipticalROITool?.toolName || 'EllipticalROI');
+      newToolGroup?.addTool(tools.PanTool?.toolName || 'Pan');
+      newToolGroup?.addTool(tools.ZoomTool?.toolName || 'Zoom');
+      newToolGroup?.addTool(tools.WindowLevelTool?.toolName || 'WindowLevel');
       
       newToolGroup?.addViewport('DICOM_VIEWPORT', 'dicomViewerEngine');
     }
     
-    const activeToolGroup = cornerstoneTools.ToolGroupManager.getToolGroup('dicomToolGroup');
+    const activeToolGroup = tools.ToolGroupManager.getToolGroup('dicomToolGroup');
     activeToolGroup?.setToolActive(toolName, {
-      bindings: [{ mouseButton: cornerstoneTools.Enums.MouseBindings.Primary }],
+      bindings: [{ mouseButton: tools.Enums.MouseBindings.Primary }],
     });
   };
 
   return (
     <div className="dicom-viewer-container">
+      {!available && (
+        <div className="p-4 bg-yellow-100 text-yellow-800 rounded mb-2">
+          DICOM viewer unavailable: '@cornerstonejs/core' not installed. Rendering placeholder.
+        </div>
+      )}
       <div className="dicom-controls bg-gray-100 p-4 rounded-t-lg">
         <div className="flex gap-4 items-center flex-wrap">
           <div className="flex gap-2">
@@ -198,28 +215,28 @@ export default function DicomViewer({
 
           <div className="flex gap-2">
             <button
-              onClick={() => enableMeasurementTool(cornerstoneTools.LengthTool.toolName)}
+              onClick={() => enableMeasurementTool('Length')}
               className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
               title="Length Measurement"
             >
               📏
             </button>
             <button
-              onClick={() => enableMeasurementTool(cornerstoneTools.RectangleROITool.toolName)}
+              onClick={() => enableMeasurementTool('RectangleROI')}
               className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
               title="Rectangle ROI"
             >
               ▭
             </button>
             <button
-              onClick={() => enableMeasurementTool(cornerstoneTools.EllipticalROITool.toolName)}
+              onClick={() => enableMeasurementTool('EllipticalROI')}
               className="px-3 py-1 bg-green-500 text-white rounded hover:bg-green-600"
               title="Elliptical ROI"
             >
               ⬭
             </button>
             <button
-              onClick={() => enableMeasurementTool(cornerstoneTools.PanTool.toolName)}
+              onClick={() => enableMeasurementTool('Pan')}
               className="px-3 py-1 bg-purple-500 text-white rounded hover:bg-purple-600"
               title="Pan"
             >

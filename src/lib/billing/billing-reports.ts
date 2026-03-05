@@ -177,7 +177,7 @@ async function fetchBillingData(options: BillingReportOptions): Promise<any> {
  * Fetch usage records
  */
 async function fetchUsageRecords(where: any): Promise<UsageRecord[]> {
-  const leases = await prisma.lease.findMany({
+  const leases = await prisma.accessLease.findMany({
     where,
     include: {
       dataset: {
@@ -188,17 +188,17 @@ async function fetchUsageRecords(where: any): Promise<UsageRecord[]> {
       },
     },
     orderBy: {
-      createdAt: 'desc',
+      issuedAt: 'desc',
     },
   });
 
   return leases.map((lease) => ({
-    date: lease.createdAt,
-    datasetId: lease.datasetId,
+    date: lease.issuedAt,
+    datasetId: lease.dataset?.datasetId || '',
     datasetName: lease.dataset?.name || 'Unknown',
-    leaseId: lease.leaseId,
+    leaseId: (lease as any).leaseId || lease.id,
     durationHours: Math.round(
-      (lease.expiresAt.getTime() - lease.createdAt.getTime()) / (1000 * 60 * 60)
+      (lease.expiresAt.getTime() - lease.issuedAt.getTime()) / (1000 * 60 * 60)
     ),
     bytesProcessed: 0, // TODO: Get from usage metrics
     cost: 0, // TODO: Calculate from pricing
@@ -210,7 +210,7 @@ async function fetchUsageRecords(where: any): Promise<UsageRecord[]> {
  */
 async function fetchRevenueRecords(where: any): Promise<RevenueRecord[]> {
   // Group leases by dataset and date
-  const leases = await prisma.lease.findMany({
+  const leases = await prisma.accessLease.findMany({
     where,
     include: {
       dataset: {
@@ -225,12 +225,12 @@ async function fetchRevenueRecords(where: any): Promise<RevenueRecord[]> {
   const revenueByDataset = new Map<string, RevenueRecord>();
 
   for (const lease of leases) {
-    const key = `${lease.datasetId}_${lease.createdAt.toISOString().split('T')[0]}`;
+    const key = `${lease.dataset?.datasetId || ''}_${lease.issuedAt.toISOString().split('T')[0]}`;
     
     if (!revenueByDataset.has(key)) {
       revenueByDataset.set(key, {
-        date: lease.createdAt,
-        datasetId: lease.datasetId,
+        date: lease.issuedAt,
+        datasetId: lease.dataset?.datasetId || '',
         datasetName: lease.dataset?.name || 'Unknown',
         totalLeases: 0,
         totalRevenue: 0,
@@ -391,7 +391,7 @@ async function generatePDFReport(
 
   doc.end();
 
-  await new Promise((resolve) => stream.on('finish', resolve));
+  await new Promise<void>((resolve) => stream.on('finish', () => resolve()));
 
   const stats = require('fs').statSync(filePath);
   return { filePath, fileSize: stats.size };
@@ -498,7 +498,7 @@ export async function getBillingStatistics(
     }
   }
 
-  const leases = await prisma.lease.findMany({ where });
+  const leases = await prisma.accessLease.findMany({ where });
 
   const stats = {
     totalLeases: leases.length,

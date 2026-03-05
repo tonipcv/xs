@@ -143,21 +143,6 @@ async function fetchAuditLogs(options: AuditExportOptions): Promise<any[]> {
   const logs = await prisma.auditLog.findMany({
     where,
     orderBy: { timestamp: 'asc' },
-    include: {
-      user: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-        },
-      },
-      tenant: {
-        select: {
-          id: true,
-          name: true,
-        },
-      },
-    },
   });
 
   return logs;
@@ -256,7 +241,7 @@ async function exportToPDF(
 
   doc.end();
 
-  await new Promise((resolve) => stream.on('finish', resolve));
+  await new Promise<void>((resolve) => stream.on('finish', () => resolve()));
 
   const stats = require('fs').statSync(filePath);
   return { filePath, fileSize: stats.size };
@@ -388,13 +373,13 @@ async function fetchEvidenceBundles(logs: any[]): Promise<any[]> {
     if (log.resourceType === 'sidecar_session') {
       // Fetch merkle tree root
       const merkleTree = await prisma.evidenceMerkleTree.findFirst({
-        where: { sessionId: log.resourceId },
+        where: { executionId: log.resourceId || '' },
       });
 
       if (merkleTree) {
         evidenceBundles.push({
           sessionId: log.resourceId,
-          merkleRoot: merkleTree.merkleRoot,
+          merkleRoot: (merkleTree as any).merkleRoot || merkleTree.rootHash,
           leafCount: merkleTree.leafCount,
           createdAt: merkleTree.createdAt,
         });

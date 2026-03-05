@@ -10,12 +10,14 @@ export async function GET(req: NextRequest) {
     // Auth: Bearer -> API Key -> Session
     let tenantId: string | null = null
     let authMode: 'bearer' | 'apikey' | 'session' | 'none' = 'none'
-    const bearer = await validateBearer(req)
+    const bearerToken = req.headers.get('authorization')?.replace('Bearer ', '') || ''
+    const bearer = await validateBearer(bearerToken)
     if (bearer.valid) {
       tenantId = bearer.tenantId || null
       authMode = 'bearer'
     } else {
-      const api = await validateApiKey(req)
+      const apiKey = req.headers.get('x-api-key') || ''
+      const api = await validateApiKey(apiKey)
       if (api.valid) {
         tenantId = api.tenantId || null
         authMode = 'apikey'

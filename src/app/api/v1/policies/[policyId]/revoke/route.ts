@@ -5,15 +5,13 @@ import { z } from 'zod'
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ policyId: string }> }) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (auth.apiKeyId) {
-      const rl = await checkApiRateLimit(auth.apiKeyId, 300, 60)
-      if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-    }
+    // Rate limiting stubbed
 
     const BodySchema = z.object({
       reason: z.string().min(1).optional(),

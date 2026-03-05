@@ -9,7 +9,7 @@ import { sendEmail } from '@/lib/email';
 
 const prisma = new PrismaClient();
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-  apiVersion: '2023-10-16',
+  apiVersion: '2025-03-31.basil',
 });
 
 export interface InvoiceLineItem {
@@ -236,11 +236,11 @@ export async function createStripeInvoice(invoice: Invoice): Promise<string> {
     });
 
     // Finalize invoice
-    await stripe.invoices.finalizeInvoice(stripeInvoice.id);
+    await stripe.invoices.finalizeInvoice((stripeInvoice as any).id as string);
 
-    console.log(`Stripe invoice created: ${stripeInvoice.id}`);
+    console.log(`Stripe invoice created: ${(stripeInvoice as any).id}`);
 
-    return stripeInvoice.id;
+    return ((stripeInvoice as any).id as string);
   } catch (error) {
     console.error('Error creating Stripe invoice:', error);
     throw error;

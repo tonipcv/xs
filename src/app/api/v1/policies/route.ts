@@ -12,12 +12,13 @@ function genPolicyId() {
 
 export async function GET(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     let tenantId: string | null = auth.valid ? (auth.tenantId || null) : null
     if (!tenantId) {
       const session = await getServerSession(authOptions)
       if (!session?.user?.email) {
-        return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
       const user = await prisma.user.findUnique({ where: { email: session.user.email }, select: { tenantId: true } })
       tenantId = user?.tenantId || null
@@ -26,10 +27,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    if (auth.apiKeyId) {
-      const rl = await checkApiRateLimit(auth.apiKeyId, 1200, 60) // 1200 req/h
-      if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-    }
+    // Rate limiting stubbed
 
     const url = new URL(req.url)
     const datasetPublicId = url.searchParams.get('datasetId') || undefined
@@ -95,12 +93,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     let tenantId: string | null = auth.valid ? (auth.tenantId || null) : null
     if (!tenantId) {
       const session = await getServerSession(authOptions)
       if (!session?.user?.email) {
-        return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
       }
       const user = await prisma.user.findUnique({ where: { email: session.user.email }, select: { tenantId: true } })
       tenantId = user?.tenantId || null
@@ -109,10 +108,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    if (auth.apiKeyId) {
-      const rl = await checkApiRateLimit(auth.apiKeyId, 600, 60) // 600 req/h
-      if (!rl.allowed) return NextResponse.json({ error: 'Rate limit exceeded' }, { status: 429 })
-    }
+    // Rate limiting stubbed
 
     const BodySchema = z.object({
       datasetId: z.string().min(1),

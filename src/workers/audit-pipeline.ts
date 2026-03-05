@@ -8,11 +8,12 @@
  */
 
 import { prisma } from '../lib/prisma'
-import { insertAuditEvent, insertDataAccessEvent, insertPolicyDecision } from '../lib/xase/clickhouse-client'
 import { getClickHouseClient } from '@/lib/xase/clickhouse-client'
 
 const BATCH_SIZE = 1000
 const POLL_INTERVAL_MS = 10000 // 10 segundos
+
+const clickhouse = getClickHouseClient()
 
 interface SyncStats {
   totalSynced: number
@@ -47,7 +48,7 @@ async function syncAuditLogs(): Promise<number> {
     let synced = 0
     for (const log of logs) {
       try {
-        await insertAuditEvent({
+        await clickhouse.insert('audit_events', [{
           event_id: log.id,
           tenant_id: log.tenantId || 'unknown',
           event_type: 'AUDIT',
@@ -61,7 +62,7 @@ async function syncAuditLogs(): Promise<number> {
           user_agent: log.userAgent || 'unknown',
           metadata: log.metadata || '{}',
           event_timestamp: log.timestamp,
-        })
+        }])
 
         synced++
       } catch (error: any) {
@@ -103,7 +104,7 @@ async function syncAccessLogs(): Promise<number> {
     let synced = 0
     for (const log of logs) {
       try {
-        await insertDataAccessEvent({
+        await clickhouse.insert('data_access_events', [{
           access_id: log.id,
           tenant_id: log.clientTenantId,
           dataset_id: log.dataset.datasetId,
@@ -115,7 +116,7 @@ async function syncAccessLogs(): Promise<number> {
           hours_accessed: log.hoursAccessed || 0,
           outcome: log.outcome,
           event_timestamp: log.timestamp,
-        })
+        }])
 
         synced++
       } catch (error: any) {

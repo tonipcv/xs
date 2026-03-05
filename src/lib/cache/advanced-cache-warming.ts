@@ -141,7 +141,7 @@ async function warmCache(
 async function warmDatasetsCache(ttl: number, filters?: Record<string, any>): Promise<number> {
   const datasets = await prisma.dataset.findMany({
     where: {
-      status: 'PUBLISHED',
+      status: 'ACTIVE',
       ...filters,
     },
     take: 100,

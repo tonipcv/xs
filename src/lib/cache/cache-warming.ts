@@ -63,7 +63,6 @@ export class CacheWarmingManager {
             id: true,
             name: true,
             dataType: true,
-            size: true,
             tenantId: true,
           },
         });
@@ -118,8 +117,6 @@ export class CacheWarmingManager {
           select: {
             id: true,
             name: true,
-            tier: true,
-            settings: true,
           },
         });
 

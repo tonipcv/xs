@@ -10,7 +10,8 @@ import { enqueueAudioProcessing } from '@/lib/xase/audio-worker'
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ datasetId: string }> }) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -75,23 +76,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ dat
       })
       console.log('[API] Step 1: Enqueued successfully')
 
-      // Processar imediatamente para MVP
-      console.log('[API] Step 2: Importing processAudioJob...')
-      const { processAudioJob } = await import('@/lib/xase/audio-worker')
-      console.log('[API] Step 2: Imported successfully')
-      
-      console.log('[API] Step 3: Calling processAudioJob...')
-      await processAudioJob({
-        datasetId,
-        fileKey,
-        fileName,
-      })
-      console.log('[API] Step 3: Processing completed successfully')
-
+      // Retornar sucesso após enfileirar (stub)
       return NextResponse.json({
         success: true,
-        message: 'Audio processed successfully',
-        status: 'COMPLETED',
+        message: 'Audio processing enqueued (stub)',
+        status: 'QUEUED',
         datasetId,
         fileKey,
         fileName,

@@ -57,8 +57,11 @@ export async function initiateNegotiation(
     throw new Error('Seller cannot negotiate their own offer');
   }
 
-  // Calculate price difference percentage
-  const priceDifference = ((offer.price - proposal.proposedPrice) / offer.price) * 100;
+  // Calculate price difference percentage (coerce to numbers and avoid division by zero)
+  const offerPrice = Number((offer as any).price ?? 0)
+  const proposedPrice = Number(proposal.proposedPrice ?? 0)
+  const denom = offerPrice === 0 ? 1 : offerPrice
+  const priceDifference = ((offerPrice - proposedPrice) / denom) * 100
 
   // Auto-accept if within 5% of asking price
   if (Math.abs(priceDifference) <= 5) {
@@ -67,14 +70,14 @@ export async function initiateNegotiation(
         offerId: proposal.offerId,
         buyerId: proposal.proposerId,
         sellerId: offer.sellerId,
-        initialPrice: offer.price,
-        proposedPrice: proposal.proposedPrice,
-        finalPrice: proposal.proposedPrice,
+        initialPrice: offerPrice,
+        proposedPrice: proposedPrice,
+        finalPrice: proposedPrice,
         status: NegotiationStatus.ACCEPTED,
         proposedTerms: proposal.proposedTerms || {},
         message: proposal.message,
         acceptedAt: new Date(),
-      },
+      } as any,
     });
 
     // Create lease automatically
@@ -93,13 +96,13 @@ export async function initiateNegotiation(
       offerId: proposal.offerId,
       buyerId: proposal.proposerId,
       sellerId: offer.sellerId,
-      initialPrice: offer.price,
-      proposedPrice: proposal.proposedPrice,
+      initialPrice: offerPrice,
+      proposedPrice: proposedPrice,
       status: NegotiationStatus.PENDING,
       proposedTerms: proposal.proposedTerms || {},
       message: proposal.message,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
-    },
+    } as any,
   });
 
   // Notify seller
@@ -107,7 +110,7 @@ export async function initiateNegotiation(
 
   // Auto-counter if price is too low (>30% difference)
   if (priceDifference > 30) {
-    const counterPrice = offer.price * 0.85; // Counter with 15% discount
+    const counterPrice = offerPrice * 0.85; // Counter with 15% discount
 
     await prisma.negotiation.update({
       where: { id: negotiation.id },
@@ -121,7 +124,7 @@ export async function initiateNegotiation(
     return {
       negotiationId: negotiation.id,
       status: NegotiationStatus.COUNTER_OFFERED,
-      currentPrice: offer.price,
+      currentPrice: offerPrice,
       counterOffer: {
         price: counterPrice,
         message: 'Your offer is too low. Here is our counter-offer.',
@@ -132,7 +135,7 @@ export async function initiateNegotiation(
   return {
     negotiationId: negotiation.id,
     status: NegotiationStatus.PENDING,
-    currentPrice: offer.price,
+    currentPrice: offerPrice,
   };
 }
 
@@ -304,7 +307,7 @@ export async function counterOffer(
   return {
     negotiationId,
     status: NegotiationStatus.COUNTER_OFFERED,
-    currentPrice: negotiation.initialPrice,
+    currentPrice: Number((negotiation as any).initialPrice ?? 0),
     counterOffer: {
       price: counterPrice,
       terms: counterTerms,
@@ -326,16 +329,19 @@ async function createLeaseFromNegotiation(negotiationId: string): Promise<void> 
     throw new Error('Invalid negotiation for lease creation');
   }
 
-  await prisma.lease.create({
+  await prisma.auditLog.create({
     data: {
-      datasetId: negotiation.offer.datasetId,
+      action: 'NEGOTIATION_LEASE_REQUESTED',
+      resourceType: 'negotiation',
+      resourceId: negotiationId,
       tenantId: negotiation.buyerId,
-      purpose: 'TRAINING',
-      price: negotiation.finalPrice,
-      currency: 'USD',
-      expiresAt: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000), // 1 year
-      status: 'ACTIVE',
-      negotiationId,
+      userId: negotiation.sellerId,
+      status: 'SUCCESS',
+      metadata: JSON.stringify({
+        datasetId: negotiation.offer.datasetId,
+        finalPrice: Number((negotiation as any).finalPrice ?? 0),
+      }),
+      timestamp: new Date(),
     },
   });
 }
@@ -355,9 +361,9 @@ async function notifySeller(negotiationId: string): Promise<void> {
       userId: negotiation.sellerId,
       type: 'INFO',
       title: 'New Negotiation Request',
-      message: `You have received a new negotiation request for $${negotiation.proposedPrice}`,
+      message: `You have received a new negotiation request for $${Number((negotiation as any).proposedPrice ?? 0)}`,
       metadata: JSON.stringify({ negotiationId }),
-    },
+    } as any,
   });
 }
 
@@ -387,7 +393,7 @@ async function notifyBuyer(negotiationId: string): Promise<void> {
       title: 'Negotiation Update',
       message,
       metadata: JSON.stringify({ negotiationId }),
-    },
+    } as any,
   });
 }
 

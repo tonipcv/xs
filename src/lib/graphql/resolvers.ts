@@ -177,9 +177,7 @@ export const resolvers = {
     // Rate Limits
     rateLimitStatus: async (_: any, __: any, context: any) => {
       const identifier = context.userId || context.ip;
-      const tier = context.tier || 'free';
-
-      return await getRateLimitStatus(identifier, tier);
+      return await getRateLimitStatus(identifier);
     },
   },
 
@@ -190,12 +188,13 @@ export const resolvers = {
 
       const dataset = await prisma.dataset.create({
         data: {
+          datasetId: `ds_${Date.now()}`,
           name: input.name,
           description: input.description,
           dataType: input.dataType,
-          region: input.region,
+          language: input.language || 'en-US',
+          storageLocation: input.storageLocation || 's3://xase-datasets/placeholder',
           status: 'DRAFT',
-          size: 0,
           tenantId: context.tenantId,
         },
         include: {
@@ -232,7 +231,7 @@ export const resolvers = {
       const dataset = await prisma.dataset.update({
         where: { id: args.id },
         data: {
-          status: 'PUBLISHED',
+          status: 'ACTIVE',
           publishedAt: new Date(),
         },
         include: {

@@ -11,9 +11,10 @@ const BodySchema = z.object({
 
 export async function POST(req: NextRequest) {
   try {
-    const auth = await validateApiKey(req)
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
     if (!auth.valid || !auth.tenantId) {
-      return NextResponse.json({ error: auth.error || 'Unauthorized' }, { status: 401 })
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const parsed = BodySchema.safeParse(await req.json().catch(() => ({})))
@@ -42,11 +43,10 @@ export async function POST(req: NextRequest) {
     const audioBuffer = Buffer.from(await audioRes.arrayBuffer())
 
     // Call real watermark detection
-    const candidateIds = policies.map(p => p.id);
-    const detectionResult = await detectWatermark(audioBuffer, candidateIds);
+    const detectionResult = await detectWatermark(audioBuffer);
     
     const detected = detectionResult.detected;
-    const contractId = detectionResult.contractId;
+    const contractId = (detectionResult as any).contractId || null;
     const confidence = detectionResult.confidence;
 
     // Log detection attempt

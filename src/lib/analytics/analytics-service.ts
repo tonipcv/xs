@@ -86,9 +86,10 @@ export async function generateAnalyticsReport(
   });
 
   const datasetsByType = datasets.reduce((acc, d) => {
-    acc[d.dataType] = (acc[d.dataType] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
+    const key = (d.dataType as string | null) || 'UNKNOWN'
+    acc[key] = (acc[key] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
 
   const totalSize = datasets.reduce((sum, d) => sum + (d.totalDurationHours || 0), 0);
 
@@ -169,7 +170,7 @@ export async function generateAnalyticsReport(
       datasets: {
         total: allDatasets.length,
         created: datasets.length,
-        published: datasets.filter(d => d.status === 'PUBLISHED').length,
+        published: datasets.filter(d => d.status === 'ACTIVE').length,
         totalSize,
         byType: datasetsByType,
         topDatasets: [],
