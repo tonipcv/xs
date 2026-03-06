@@ -41,15 +41,26 @@
 - ✅ Eval dataset compiler (train/val/test splits)
 - ✅ Compiler registry with all 15 combinations
 
-**In Progress:**
-- 🔄 Adapting to DataAsset model (file-based storage vs in-DB content)
-- 🔄 End-to-end test suite
+### Week 2: Packaging & Testing
 
-### Week 2: Packaging & Testing (PENDING)
-- Packager (manifest + checksums + README)
-- Signed URL generation (S3 pre-signed URLs)
-- End-to-end integration tests
-- Fix broken tests from cleanup
+**Completed:**
+- ✅ **Epic 0: PreparationSpec Contract** (FULLY IMPLEMENTED)
+  - ✅ Defined complete contract schema with license/privacy/output fields
+  - ✅ Extended Prisma schema with `license`, `privacy`, `output` JSONB columns
+  - ✅ Created SQL migration `031_add_preparation_spec_columns.sql`
+  - ✅ Updated API validation with comprehensive Zod schemas
+  - ✅ Enhanced Packager to respect output layout contract
+  - ✅ Manifest now includes full PreparationSpec metadata
+  - ✅ README generation with license and privacy info
+  - ✅ Documented contract in `docs/PREPARATION_SPEC_CONTRACT.md`
+  - ✅ Added 8 passing tests for Packager output validation
+- ✅ Packager (manifest + checksums + README)
+- ✅ Signed URL generation (S3 pre-signed URLs)
+- ✅ Build passing with zero type errors
+
+**In Progress:**
+- 🔄 End-to-end integration tests (DB connection issues in test env)
+- 🔄 Adapting to DataAsset model (file-based storage vs in-DB content)
 
 ## Sprint 3: PENDING
 

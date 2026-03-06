@@ -14,20 +14,62 @@ export interface PreparationConfig {
   deid?: boolean;
   max_tokens?: number;
   seed?: number;
+  add_eos_token?: boolean;
+  eos_token?: string;
+  separator?: string;
   chunk_size?: number;
   chunk_overlap?: number;
+  chunk_tokens?: number;
+  overlap_tokens?: number;
+  preserveMetadata?: boolean;
   template?: 'chatml' | 'alpaca' | 'sharegpt';
+  system_prompt?: string;
+  instruction?: string;
   split_ratios?: { train: number; val: number; test: number };
   shard_size_mb?: number;
+  stratify_by?: string;
+  output_format?: 'jsonl' | 'parquet';
+  output_compression?: 'none' | 'gzip';
+  input_field?: string;
+  output_field?: string;
+  label_field?: string;
 }
 
-export interface PreparationRequest {
-  leaseId: string;
+export interface PreparationLicense {
+  type: string;
+  attribution?: string;
+  restrictions?: string[];
+}
+
+export interface PreparationPrivacy {
+  piiHandling: 'drop' | 'mask' | 'retain';
+  patientTokenization?: 'none' | 'hmac-sha256';
+  retentionHours?: number;
+  auditLogRequired?: boolean;
+}
+
+export interface PreparationOutputContract {
+  layout: string;
+  manifestFile: string;
+  readmeFile: string;
+  checksumFile: string;
+  checksumAlgorithm: 'sha256';
+}
+
+export interface PreparationSpec {
+  version: string;
   task: TaskType;
   modality: Modality;
   target: PreparationTarget;
   config?: PreparationConfig;
+  license: PreparationLicense;
+  privacy: PreparationPrivacy;
+  output: PreparationOutputContract;
 }
+
+export type PreparationRequest = PreparationSpec & {
+  leaseId: string;
+};
 
 export interface PreparationJob {
   id: string;
@@ -39,6 +81,11 @@ export interface PreparationJob {
   progress: number;
   outputPath?: string;
   manifestUrl?: string;
+  manifestPath?: string;
+  checksumPath?: string;
+  readmePath?: string;
+  downloadUrls?: string[];
+  deliveryExpiresAt?: Date;
   error?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -59,6 +106,7 @@ export interface CompilationResult {
   totalSizeBytes: number;
   recordCount: number;
   outputPaths: string[];
+  stats?: Record<string, unknown>;
 }
 
 export interface DeliveryResult {

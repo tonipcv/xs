@@ -32,12 +32,15 @@ export class DataPreparer {
 
     await this.updateJobStatus(job.id, 'normalizing', 10);
     const normalization = await this.normalize(datasetId, tenantId, request);
+    await this.persistNormalizationResult(job.id, normalization);
 
     await this.updateJobStatus(job.id, 'compiling', 40);
     const compilation = await this.compile(datasetId, request, normalization);
+    await this.persistCompilationResult(job.id, compilation);
 
     await this.updateJobStatus(job.id, 'delivering', 80);
-    const delivery = await this.deliver(datasetId, request, compilation);
+    const delivery = await this.deliver(job, compilation);
+    await this.persistDeliveryMetadata(job.id, delivery);
 
     await this.updateJobStatus(job.id, 'completed', 100);
 
@@ -119,15 +122,14 @@ export class DataPreparer {
   }
 
   private async deliver(
-    datasetId: string,
-    request: PreparationRequest,
+    job: PreparationJob,
     compilation: CompilationResult
   ): Promise<DeliveryResult> {
-    const packageResult = await this.packager.package(datasetId, compilation, request);
+    const packageResult = await this.packager.package(job.datasetId, job.id, compilation, job.request);
 
     const urls = await this.urlGenerator.generateUrls(
       compilation.outputPaths,
-      request.leaseId
+      job.request.leaseId
     );
 
     return {
@@ -137,6 +139,37 @@ export class DataPreparer {
       downloadUrls: urls,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     };
+  }
+
+  private async persistNormalizationResult(jobId: string, normalization: NormalizationResult): Promise<void> {
+    await prisma.preparationJob.update({
+      where: { id: jobId },
+      data: {
+        normalizationResult: normalization as any,
+      },
+    });
+  }
+
+  private async persistCompilationResult(jobId: string, compilation: CompilationResult): Promise<void> {
+    await prisma.preparationJob.update({
+      where: { id: jobId },
+      data: {
+        compilationResult: compilation as any,
+      },
+    });
+  }
+
+  private async persistDeliveryMetadata(jobId: string, delivery: DeliveryResult): Promise<void> {
+    await prisma.preparationJob.update({
+      where: { id: jobId },
+      data: {
+        manifestPath: delivery.manifestPath,
+        checksumPath: delivery.checksumPath,
+        readmePath: delivery.readmePath,
+        downloadUrls: delivery.downloadUrls,
+        deliveryExpiresAt: delivery.expiresAt,
+      },
+    });
   }
 
   private async updateJobStatus(

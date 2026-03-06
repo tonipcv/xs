@@ -1373,14 +1373,27 @@ model PreparationJob {
   format       String   // jsonl, parquet, bin, mds, webdataset
   
   config       String   @db.Text // JSON config
-  
+  license      Json     @map("license")
+  privacy      Json     @map("privacy")
+  output       Json     @map("output_contract")
+
   status       String   @default("pending") // pending, normalizing, compiling, delivering, completed, failed
   progress     Int      @default(0)
-  
-  outputPath   String?  @map("output_path")
-  manifestUrl  String?  @map("manifest_url")
+
+  normalizationResult Json? @map("normalization_result")
+  compilationResult   Json? @map("compilation_result")
+  deliveryResult      Json? @map("delivery_result")
+
+  outputPath        String?  @map("output_path")
+  manifestUrl       String?  @map("manifest_url")
+  manifestPath      String?  @map("manifest_path")
+  checksumPath      String?  @map("checksum_path")
+  readmePath        String?  @map("readme_path")
+  downloadUrls      Json?    @map("download_urls")
+  deliveryExpiresAt DateTime? @map("delivery_expires_at")
+
   error        String?  @db.Text
-  
+
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
   completedAt  DateTime? @map("completed_at")
@@ -1393,4 +1406,22 @@ model PreparationJob {
   @@index([status])
   @@index([createdAt])
   @@map("preparation_jobs")
+}
+
+model IdempotencyRecord {
+  id              String   @id @default(cuid())
+  idempotencyKey  String   @map("idempotency_key")
+  datasetId       String   @map("dataset_id")
+  tenantId        String   @map("tenant_id")
+  requestHash     String   @map("request_hash")
+  jobId           String   @map("job_id")
+  response        Json
+  createdAt       DateTime @default(now()) @map("created_at")
+  expiresAt       DateTime @map("expires_at")
+  
+  @@unique([idempotencyKey, datasetId, tenantId])
+  @@index([expiresAt])
+  @@index([idempotencyKey])
+  @@index([jobId])
+  @@map("idempotency_records")
 }

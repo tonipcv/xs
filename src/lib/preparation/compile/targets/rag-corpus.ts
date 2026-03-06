@@ -2,64 +2,66 @@ import { Compiler, CompileResult } from '../compiler-registry';
 import { PreparationConfig } from '../../preparation.types';
 import { JsonlWriter } from '../formatters/jsonl-writer';
 import { DatasetAdapter } from '../../adapters/dataset-adapter';
+import { Chunker } from '../chunker';
 import path from 'path';
 import fs from 'fs/promises';
 
 export class RagCorpusCompiler implements Compiler {
   private writer: JsonlWriter;
   private adapter: DatasetAdapter;
+  private chunker: Chunker;
 
   constructor() {
     this.writer = new JsonlWriter();
     this.adapter = new DatasetAdapter();
+    this.chunker = new Chunker();
   }
 
   async compile(datasetId: string, config: PreparationConfig): Promise<CompileResult> {
     const records = await this.adapter.getRecords(datasetId);
 
-    const chunkSize = config.chunk_size ?? 512;
-    const chunkOverlap = config.chunk_overlap ?? 50;
+    const chunkTokens = config.chunk_tokens ?? 512;
+    const overlapTokens = config.overlap_tokens ?? 50;
+    const preserveMetadata = config.preserveMetadata ?? true;
 
-    const chunks: Array<{ id: string; text: string; metadata: unknown }> = [];
+    const allChunks: Array<{ chunk_id: string; text: string; metadata: unknown }> = [];
 
     for (const record of records) {
       const text = record.content;
-      const recordChunks = this.chunkText(text, chunkSize, chunkOverlap);
+      const recordChunks = this.chunker.chunk(
+        text,
+        record.id,
+        {
+          chunk_tokens: chunkTokens,
+          overlap_tokens: overlapTokens,
+          preserveMetadata,
+        },
+        record.metadata
+      );
 
-      for (let i = 0; i < recordChunks.length; i++) {
-        chunks.push({
-          id: `${record.id}_chunk_${i}`,
-          text: recordChunks[i],
-          metadata: record.metadata ?? {},
+      for (const chunk of recordChunks) {
+        allChunks.push({
+          chunk_id: chunk.chunk_id,
+          text: chunk.text,
+          metadata: chunk.metadata,
         });
       }
     }
 
     const outputDir = `/tmp/preparation/${datasetId}`;
+    await fs.mkdir(outputDir, { recursive: true });
     const outputPath = path.join(outputDir, 'rag-corpus.jsonl');
 
-    await this.writer.write(outputPath, chunks);
+    await this.writer.write(outputPath, allChunks);
 
-    const totalSize = Buffer.byteLength(JSON.stringify(chunks));
+    const stats = await fs.stat(outputPath);
 
     return {
       shardCount: 1,
-      totalSizeBytes: totalSize,
+      totalSizeBytes: stats.size,
       outputPaths: [outputPath],
+      recordCount: allChunks.length,
+      format: 'jsonl',
     };
-  }
-
-  private chunkText(text: string, chunkSize: number, overlap: number): string[] {
-    const chunks: string[] = [];
-    const words = text.split(/\s+/);
-
-    for (let i = 0; i < words.length; i += chunkSize - overlap) {
-      const chunk = words.slice(i, i + chunkSize).join(' ');
-      if (chunk.length > 0) {
-        chunks.push(chunk);
-      }
-    }
-
-    return chunks;
   }
 }

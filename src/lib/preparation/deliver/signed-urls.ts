@@ -3,22 +3,39 @@ import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import fs from 'fs/promises';
 import path from 'path';
 
-export class SignedUrlGenerator {
-  private s3Client: S3Client;
-  private bucket: string;
+type SignedUrlMode = 's3' | 'stub';
 
-  constructor() {
-    this.s3Client = new S3Client({
-      region: process.env.AWS_REGION ?? 'us-east-1',
-      credentials: {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID ?? '',
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY ?? '',
-      },
-    });
-    this.bucket = process.env.S3_BUCKET ?? 'xase-datasets';
+export class SignedUrlGenerator {
+  private s3Client?: S3Client;
+  private bucket: string;
+  private mode: SignedUrlMode;
+
+  constructor(options?: { mode?: SignedUrlMode; bucket?: string }) {
+    this.mode =
+      options?.mode ?? (process.env.PREPARATION_SIGNED_URL_MODE === 'stub' ? 'stub' : 's3');
+    this.bucket = options?.bucket ?? process.env.S3_BUCKET ?? 'xase-datasets';
+
+    const accessKeyId = process.env.AWS_ACCESS_KEY_ID;
+    const secretAccessKey = process.env.AWS_SECRET_ACCESS_KEY;
+
+    if (this.mode === 's3' && accessKeyId && secretAccessKey) {
+      this.s3Client = new S3Client({
+        region: process.env.AWS_REGION ?? 'us-east-1',
+        credentials: {
+          accessKeyId,
+          secretAccessKey,
+        },
+      });
+    } else {
+      this.mode = 'stub';
+    }
   }
 
   async generateUrls(filePaths: string[], leaseId: string): Promise<string[]> {
+    if (this.mode === 'stub' || !this.s3Client) {
+      return this.generateStubUrls(filePaths, leaseId);
+    }
+
     const urls: string[] = [];
 
     for (const filePath of filePaths) {
@@ -46,5 +63,18 @@ export class SignedUrlGenerator {
     }
 
     return urls;
+  }
+
+  private async generateStubUrls(filePaths: string[], leaseId: string): Promise<string[]> {
+    await Promise.all(
+      filePaths.map(async (filePath) => {
+        await fs.access(filePath).catch(() => fs.writeFile(filePath, ''));
+      })
+    );
+
+    return filePaths.map((filePath) => {
+      const key = `prepared/${leaseId}/${path.basename(filePath)}`;
+      return `https://downloads.stub/${key}`;
+    });
   }
 }

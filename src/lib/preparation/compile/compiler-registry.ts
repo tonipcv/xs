@@ -14,6 +14,9 @@ export interface CompileResult {
   shardCount: number;
   totalSizeBytes: number;
   outputPaths: string[];
+  recordCount?: number;
+  format?: string;
+  stats?: Record<string, unknown>;
 }
 
 export interface Compiler {

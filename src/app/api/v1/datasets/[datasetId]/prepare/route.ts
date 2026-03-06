@@ -8,13 +8,54 @@ import { z } from 'zod';
 
 const preparationRequestSchema = z.object({
   leaseId: z.string(),
+  version: z.string().default('1.0'),
   task: z.enum(['pre-training', 'fine-tuning', 'dpo', 'rag', 'eval']),
   modality: z.enum(['text', 'image', 'audio', 'multimodal']),
   target: z.object({
-    runtime: z.string(),
-    format: z.string(),
+    runtime: z.enum(['hf', 'openai', 'megatron', 'mosaic', 'trl', 'pytorch', 'generic']),
+    format: z.enum(['jsonl', 'parquet', 'bin', 'mds', 'webdataset']),
   }),
-  config: z.record(z.unknown()).optional(),
+  config: z
+    .object({
+      quality_threshold: z.number().min(0).max(1).optional(),
+      deduplicate: z.boolean().optional(),
+      deid: z.boolean().optional(),
+      max_tokens: z.number().int().positive().optional(),
+      seed: z.number().int().optional(),
+      chunk_size: z.number().int().positive().optional(),
+      chunk_overlap: z.number().int().nonnegative().optional(),
+      template: z.enum(['chatml', 'alpaca', 'sharegpt']).optional(),
+      split_ratios: z
+        .object({
+          train: z.number().min(0),
+          val: z.number().min(0),
+          test: z.number().min(0),
+        })
+        .refine((val) => Math.abs(val.train + val.val + val.test - 1) < 0.0001, {
+          message: 'split ratios must sum to 1',
+        })
+        .optional(),
+      shard_size_mb: z.number().int().positive().optional(),
+    })
+    .optional(),
+  license: z.object({
+    type: z.string(),
+    attribution: z.string().optional(),
+    restrictions: z.array(z.string()).optional(),
+  }),
+  privacy: z.object({
+    piiHandling: z.enum(['drop', 'mask', 'retain']),
+    patientTokenization: z.enum(['none', 'hmac-sha256']).optional(),
+    retentionHours: z.number().int().positive().optional(),
+    auditLogRequired: z.boolean().optional(),
+  }),
+  output: z.object({
+    layout: z.string().default('prepared/{datasetId}/{jobId}'),
+    manifestFile: z.string().default('manifest.json'),
+    readmeFile: z.string().default('README.md'),
+    checksumFile: z.string().default('checksums.txt'),
+    checksumAlgorithm: z.literal('sha256').default('sha256'),
+  }),
 });
 
 export async function POST(
@@ -64,6 +105,9 @@ export async function POST(
         runtime: validatedRequest.target.runtime,
         format: validatedRequest.target.format,
         config: JSON.stringify(validatedRequest.config ?? {}),
+        license: validatedRequest.license as any,
+        privacy: validatedRequest.privacy as any,
+        output: validatedRequest.output as any,
         status: 'pending',
         progress: 0,
       },

@@ -2,55 +2,106 @@ import { Compiler, CompileResult } from '../compiler-registry';
 import { PreparationConfig } from '../../preparation.types';
 import { ParquetWriter } from '../formatters/parquet-writer';
 import { DatasetAdapter } from '../../adapters/dataset-adapter';
+import { EvalSplitter } from '../eval-splitter';
+import { JsonlWriter } from '../formatters/jsonl-writer';
+import { EvalFormatter } from '../eval-formatter';
 import path from 'path';
 import fs from 'fs/promises';
 
 export class EvalDatasetCompiler implements Compiler {
-  private writer: ParquetWriter;
+  private parquetWriter: ParquetWriter;
+  private jsonlWriter: JsonlWriter;
   private adapter: DatasetAdapter;
+  private splitter: EvalSplitter;
+  private formatter: EvalFormatter;
 
   constructor() {
-    this.writer = new ParquetWriter();
+    this.parquetWriter = new ParquetWriter();
+    this.jsonlWriter = new JsonlWriter();
     this.adapter = new DatasetAdapter();
+    this.splitter = new EvalSplitter();
+    this.formatter = new EvalFormatter();
   }
 
   async compile(datasetId: string, config: PreparationConfig): Promise<CompileResult> {
     const records = await this.adapter.getRecords(datasetId);
 
-    const splitRatios = config.split_ratios ?? { train: 0.8, val: 0.1, test: 0.1 };
-    const splits = this.splitDataset(records, splitRatios);
+    // Format records into standard eval format
+    const formattedRecords = this.formatter.format(records.map(r => ({ ...r })) as unknown as Record<string, unknown>[], {
+      input_field: config.input_field,
+      output_field: config.output_field,
+      label_field: config.label_field,
+      include_metadata: config.preserveMetadata ?? true,
+    });
+
+    // Validate formatted records
+    const validation = this.formatter.validate(formattedRecords);
+    const validRecords = validation.valid;
+
+    const splitRatios = config.split_ratios ?? { train: 0.7, test: 0.3 };
+    const train = splitRatios.train ?? 0.7;
+    const test = splitRatios.test ?? 0.3;
+    const val = 'val' in splitRatios ? splitRatios.val : undefined;
+
+    const splitResult = this.splitter.split(validRecords, {
+      train,
+      test,
+      val,
+      stratify_by: config.stratify_by,
+      seed: config.seed,
+    });
 
     const outputDir = `/tmp/preparation/${datasetId}`;
+    await fs.mkdir(outputDir, { recursive: true });
     const outputPaths: string[] = [];
 
-    for (const [splitName, splitRecords] of Object.entries(splits)) {
-      const splitPath = path.join(outputDir, `${splitName}.parquet`);
-      await this.writer.write(splitPath, splitRecords);
-      outputPaths.push(splitPath);
+    const format = config.output_format ?? 'jsonl';
+
+    if (format === 'parquet') {
+      const trainPath = path.join(outputDir, 'eval_train.parquet');
+      await this.parquetWriter.write(trainPath, splitResult.train);
+      outputPaths.push(trainPath);
+
+      const testPath = path.join(outputDir, 'eval_test.parquet');
+      await this.parquetWriter.write(testPath, splitResult.test);
+      outputPaths.push(testPath);
+
+      if (splitResult.val) {
+        const valPath = path.join(outputDir, 'eval_val.parquet');
+        await this.parquetWriter.write(valPath, splitResult.val);
+        outputPaths.push(valPath);
+      }
+    } else {
+      const trainPath = path.join(outputDir, 'eval_train.jsonl');
+      await this.jsonlWriter.write(trainPath, splitResult.train);
+      outputPaths.push(trainPath);
+
+      const testPath = path.join(outputDir, 'eval_test.jsonl');
+      await this.jsonlWriter.write(testPath, splitResult.test);
+      outputPaths.push(testPath);
+
+      if (splitResult.val) {
+        const valPath = path.join(outputDir, 'eval_val.jsonl');
+        await this.jsonlWriter.write(valPath, splitResult.val);
+        outputPaths.push(valPath);
+      }
     }
 
-    const totalSize = records.length * 1024;
+    const stats = this.splitter.getStatistics(splitResult);
+    const totalSize = validRecords.length * 1024;
 
     return {
       shardCount: outputPaths.length,
       totalSizeBytes: totalSize,
       outputPaths,
-    };
-  }
-
-  private splitDataset(
-    records: Array<{ id: string; content: unknown; metadata: unknown }>,
-    ratios: { train: number; val: number; test: number }
-  ): Record<string, Array<{ id: string; content: unknown; metadata: unknown }>> {
-    const shuffled = [...records].sort(() => Math.random() - 0.5);
-
-    const trainEnd = Math.floor(shuffled.length * ratios.train);
-    const valEnd = trainEnd + Math.floor(shuffled.length * ratios.val);
-
-    return {
-      train: shuffled.slice(0, trainEnd),
-      val: shuffled.slice(trainEnd, valEnd),
-      test: shuffled.slice(valEnd),
+      recordCount: stats.total,
+      format,
+      stats: {
+        formatted: formattedRecords.length,
+        valid: validRecords.length,
+        invalid: validation.invalid,
+        splits: stats,
+      },
     };
   }
 }
