@@ -1,5 +1,6 @@
 import { TaskType, Modality, Runtime, PreparationConfig } from '../preparation.types';
 import { PretrainJsonlCompiler } from './targets/pretrain-jsonl';
+import { PretrainParquetCompiler } from './targets/pretrain-parquet';
 import { PretrainMegatronCompiler } from './targets/pretrain-megatron';
 import { PretrainMdsCompiler } from './targets/pretrain-mds';
 import { SftJsonlCompiler } from './targets/sft-jsonl';
@@ -33,6 +34,7 @@ export class CompilerRegistry {
 
   private registerCompilers(): void {
     this.compilers.set('pre-training:text:hf', new PretrainJsonlCompiler());
+    this.compilers.set('pre-training:text:parquet', new PretrainParquetCompiler());
     this.compilers.set('pre-training:text:megatron', new PretrainMegatronCompiler());
     this.compilers.set('pre-training:text:mosaic', new PretrainMdsCompiler());
     this.compilers.set('fine-tuning:text:hf', new SftJsonlCompiler());

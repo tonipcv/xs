@@ -1,3 +1,5 @@
+import { QualityReport } from '@/lib/ingestion/quality-validator';
+
 export type TaskType = 'pre-training' | 'fine-tuning' | 'dpo' | 'rag' | 'eval';
 export type Modality = 'text' | 'image' | 'audio' | 'multimodal';
 export type Runtime = 'hf' | 'openai' | 'megatron' | 'mosaic' | 'trl' | 'pytorch' | 'generic';
@@ -33,6 +35,8 @@ export interface PreparationConfig {
   input_field?: string;
   output_field?: string;
   label_field?: string;
+  // Allow additional properties for flexibility
+  [key: string]: unknown;
 }
 
 export interface PreparationLicense {
@@ -98,6 +102,7 @@ export interface NormalizationResult {
   qualityScore: number;
   deduplicatedCount: number;
   deidApplied: boolean;
+  qualityReport?: QualityReport;
 }
 
 export interface CompilationResult {

@@ -2,6 +2,7 @@ import { PreparationRequest, PreparationJob, PreparationResult, NormalizationRes
 import { TextNormalizer } from './normalize/text-normalizer';
 import { DeidPipeline } from './normalize/deid-pipeline';
 import { QualityGate } from './normalize/quality-gate';
+import { DataQualityValidator, QualityReport } from '@/lib/ingestion/quality-validator';
 import { CompilerRegistry } from './compile/compiler-registry';
 import { Packager } from './deliver/packager';
 import { SignedUrlGenerator } from './deliver/signed-urls';
@@ -12,6 +13,7 @@ export class DataPreparer {
   private textNormalizer: TextNormalizer;
   private deidPipeline: DeidPipeline;
   private qualityGate: QualityGate;
+  private qualityValidator: DataQualityValidator;
   private compilerRegistry: CompilerRegistry;
   private packager: Packager;
   private urlGenerator: SignedUrlGenerator;
@@ -21,6 +23,7 @@ export class DataPreparer {
     this.textNormalizer = new TextNormalizer();
     this.deidPipeline = new DeidPipeline();
     this.qualityGate = new QualityGate();
+    this.qualityValidator = new DataQualityValidator();
     this.compilerRegistry = new CompilerRegistry();
     this.packager = new Packager();
     this.urlGenerator = new SignedUrlGenerator();
@@ -70,10 +73,21 @@ export class DataPreparer {
     let recordsProcessed = 0;
     let recordsFiltered = 0;
     let deduplicatedCount = 0;
+    let qualityReport: QualityReport | undefined;
 
     if (request.modality === 'text') {
       const normalized = await this.textNormalizer.normalize(datasetId);
       recordsProcessed = normalized.recordCount;
+
+      // Integrate quality-validator from ingestion
+      if (normalized.normalizedRecords && normalized.normalizedRecords.length > 0) {
+        qualityReport = await this.qualityValidator.validate(normalized.normalizedRecords);
+        
+        // Update quality score based on actual validation
+        if (qualityReport && !qualityReport.valid) {
+          recordsFiltered += qualityReport.errors.reduce((sum, e) => sum + e.count, 0);
+        }
+      }
     }
 
     if (request.config?.deid) {
@@ -90,12 +104,16 @@ export class DataPreparer {
       deduplicatedCount = quality.deduplicatedCount;
     }
 
+    // Calculate quality score from validation report or use default
+    const qualityScore = qualityReport?.metrics.overall ?? 0.85;
+
     return {
       recordsProcessed,
       recordsFiltered,
-      qualityScore: 0.85,
+      qualityScore,
       deduplicatedCount,
       deidApplied: request.config?.deid ?? false,
+      qualityReport,
     };
   }
 

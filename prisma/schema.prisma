@@ -322,6 +322,9 @@ model Dataset {
   // Multi-modal primary type (AUDIO, IMAGE, TEXT, TIMESERIES, TABULAR)
   dataType            DataType?         @map("data_type")
   
+  // Metadata para versionamento e extensibilidade
+  metadata            Json?             @map("metadata")
+  
   tenant              Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
   cloudIntegration    CloudIntegration?     @relation(fields: [cloudIntegrationId], references: [id], onDelete: SetNull)
   dataConnector       DataConnector?        @relation(fields: [dataConnectorId], references: [id], onDelete: SetNull)
@@ -1393,6 +1396,7 @@ model PreparationJob {
   deliveryExpiresAt DateTime? @map("delivery_expires_at")
 
   error        String?  @db.Text
+  deletedAt    DateTime? @map("deleted_at")
 
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
@@ -1400,6 +1404,7 @@ model PreparationJob {
   
   dataset      Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
   tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  logs         JobLog[]
   
   @@index([datasetId])
   @@index([tenantId])
@@ -1424,4 +1429,27 @@ model IdempotencyRecord {
   @@index([idempotencyKey])
   @@index([jobId])
   @@map("idempotency_records")
+}
+
+model JobLog {
+  id          String   @id @default(cuid())
+  jobId       String   @map("job_id")
+  tenantId    String   @map("tenant_id")
+  
+  level       String   // debug, info, warn, error
+  message     String
+  context     Json?    // additional structured data
+  
+  step        String?  // normalization, compilation, delivery
+  progress    Int?     // 0-100
+  
+  createdAt   DateTime @default(now()) @map("created_at")
+  
+  job         PreparationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
+  
+  @@index([jobId])
+  @@index([tenantId])
+  @@index([level])
+  @@index([createdAt])
+  @@map("job_logs")
 }

@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/app/api/auth/auth.config';
 import { prisma } from '@/lib/prisma';
-import { DataPreparer } from '@/lib/preparation/data-preparer';
-import { PreparationRequest, PreparationJob } from '@/lib/preparation/preparation.types';
+import { idempotencyManager } from '@/lib/preparation/idempotency/idempotency-manager';
+import { rateLimiter } from '@/lib/preparation/rate-limiting/rate-limiter';
+import { createJobQueue } from '@/lib/preparation/job-queue';
+import { PreparationRequest } from '@/lib/preparation/preparation.types';
 import { z } from 'zod';
 
 const preparationRequestSchema = z.object({
@@ -69,6 +71,42 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Rate limiting check
+    const rateLimitCheck = await rateLimiter.checkRateLimit(tenantId);
+    if (!rateLimitCheck.allowed) {
+      return NextResponse.json(
+        { 
+          error: 'Rate limit exceeded', 
+          reason: rateLimitCheck.reason,
+          retryAfter: rateLimitCheck.retryAfter 
+        },
+        { 
+          status: 429,
+          headers: rateLimitCheck.retryAfter 
+            ? { 'Retry-After': String(rateLimitCheck.retryAfter) }
+            : undefined
+        }
+      );
+    }
+
+    // Idempotency check
+    const idempotencyKey = request.headers.get('Idempotency-Key');
+    const body = await request.json();
+
+    if (idempotencyKey) {
+      const existing = await idempotencyManager.checkIdempotency(
+        idempotencyKey,
+        params.datasetId,
+        tenantId,
+        body
+      );
+
+      if (existing) {
+        // Return cached response
+        return NextResponse.json(existing.response, { status: 200 });
+      }
+    }
+
     const dataset = await prisma.dataset.findFirst({
       where: {
         id: params.datasetId,
@@ -80,7 +118,6 @@ export async function POST(
       return NextResponse.json({ error: 'Dataset not found' }, { status: 404 });
     }
 
-    const body = await request.json();
     const validatedRequest = preparationRequestSchema.parse(body) as any as PreparationRequest;
 
     const lease = await prisma.accessLease.findFirst({
@@ -113,49 +150,36 @@ export async function POST(
       },
     });
 
-    const preparer = new DataPreparer();
-    const job: PreparationJob = {
-      id: preparationJob.id,
+    // Store idempotency record if key was provided
+    if (idempotencyKey) {
+      const response = {
+        jobId: preparationJob.id,
+        status: 'pending',
+        message: 'Preparation job queued',
+      };
+      await idempotencyManager.storeIdempotency(
+        idempotencyKey,
+        params.datasetId,
+        tenantId,
+        body,
+        preparationJob.id,
+        response
+      );
+    }
+
+    // Add job to BullMQ queue instead of using setImmediate
+    const jobQueue = createJobQueue(process.env.REDIS_URL || 'redis://localhost:6379');
+    await jobQueue.addJob({
+      jobId: preparationJob.id,
       datasetId: dataset.id,
-      tenantId,
       request: validatedRequest,
-      startTime: Date.now(),
-      status: 'pending',
-      progress: 0,
-      createdAt: preparationJob.createdAt,
-      updatedAt: preparationJob.updatedAt,
-    };
-
-    setImmediate(async () => {
-      try {
-        const result = await preparer.prepare(job);
-
-        await prisma.preparationJob.update({
-          where: { id: preparationJob.id },
-          data: {
-            status: 'completed',
-            progress: 100,
-            outputPath: result.delivery.manifestPath,
-            manifestUrl: result.delivery.downloadUrls[0],
-            completedAt: new Date(),
-          },
-        });
-      } catch (error) {
-        console.error('Preparation job failed:', error);
-        await prisma.preparationJob.update({
-          where: { id: preparationJob.id },
-          data: {
-            status: 'failed',
-            error: error instanceof Error ? error.message : 'Unknown error',
-          },
-        });
-      }
+      priority: 10,
     });
 
     return NextResponse.json({
       jobId: preparationJob.id,
       status: 'pending',
-      message: 'Preparation job started',
+      message: 'Preparation job queued',
     });
   } catch (error) {
     console.error('Error creating preparation job:', error);
