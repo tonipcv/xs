@@ -55,7 +55,7 @@ describe('POST /api/policies', () => {
     });
 
     const datasetData = await datasetRes.json();
-    datasetId = datasetData.id;
+    datasetId = datasetData.dataset?.id || datasetData.id;
   });
 
   afterAll(async () => {
@@ -98,9 +98,9 @@ describe('POST /api/policies', () => {
 
     expect(response.status).toBe(201);
     const data = await response.json();
-    expect(data).toHaveProperty('id');
-    expect(data.name).toBe('Test Access Policy');
-    policyId = data.id;
+    expect(data.policy).toHaveProperty('id');
+    expect(data.policy.name).toBe('Test Access Policy');
+    policyId = data.policy.id;
   });
 
   it('should reject policy creation without authentication', async () => {

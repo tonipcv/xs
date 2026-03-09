@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { sendWelcomeEmail, sendEmailVerification } from '@/lib/email';
 import crypto from 'crypto';
 import { type Region } from '@/lib/prices';
+import jwt from 'jsonwebtoken';
 
 export async function POST(req: Request) {
   try {
@@ -16,7 +17,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { name, email, password, region } = body as {
+    const { name, email, password, region = 'us-east-1' } = body as {
       name?: string;
       email?: string;
       password?: string;
@@ -27,6 +28,14 @@ export async function POST(req: Request) {
     if (!name || !email || !password || !region) {
       return NextResponse.json(
         { error: 'Missing required fields' },
+        { status: 400 }
+      );
+    }
+
+    // Validar força da senha
+    if (password.length < 8 || !/[a-zA-Z]/.test(password) || !/[0-9]/.test(password)) {
+      return NextResponse.json(
+        { error: 'Password must be at least 8 characters with letters and numbers' },
         { status: 400 }
       );
     }
@@ -51,7 +60,16 @@ export async function POST(req: Request) {
     const hashedPassword = await hash(password, 10);
 
     try {
-      // Criar usuário
+      // Criar tenant primeiro
+      const tenant = await prisma.tenant.create({
+        data: {
+          name: `${name}'s Organization`,
+          email: email,
+          plan: 'free',
+        },
+      });
+
+      // Criar usuário associado ao tenant
       const user = await prisma.user.create({
         data: {
           name,
@@ -59,13 +77,15 @@ export async function POST(req: Request) {
           password: hashedPassword,
           region: region as Region,
           verificationToken,
-          emailVerified: null
+          emailVerified: null,
+          tenantId: tenant.id,
         },
         select: {
           id: true,
           name: true,
           email: true,
-          region: true
+          region: true,
+          tenantId: true,
         }
       });
 
@@ -91,14 +111,24 @@ export async function POST(req: Request) {
         console.error('Error sending registration emails:', emailError);
       }
 
+      // Generate JWT token
+      const token = jwt.sign(
+        { userId: user.id, tenantId: user.tenantId, email: user.email },
+        process.env.NEXTAUTH_SECRET || 'fallback-secret',
+        { expiresIn: '7d' }
+      );
+
       return NextResponse.json({
+        userId: user.id,
+        tenantId: user.tenantId,
+        token,
         user: {
           id: user.id,
           name: user.name,
           email: user.email,
           region: user.region,
         },
-      });
+      }, { status: 201 });
     } catch (dbError) {
       const dbErrMsg = dbError instanceof Error ? dbError.message : 'Unknown database error';
       console.error('Database error:', dbErrMsg);

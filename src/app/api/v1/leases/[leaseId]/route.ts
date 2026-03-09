@@ -55,6 +55,7 @@ export async function GET(req: NextRequest, context: any) {
     // Flatten a bit for convenience
     const dataset = lease.policy?.dataset
     return NextResponse.json({
+      id: lease.leaseId,
       leaseId: lease.leaseId,
       status: lease.status,
       issuedAt: lease.issuedAt,

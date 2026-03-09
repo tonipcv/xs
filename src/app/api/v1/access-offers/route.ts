@@ -83,7 +83,7 @@ export async function GET(req: NextRequest) {
         return { ...rest, dataType: dt || undefined }
       })
 
-    return NextResponse.json({ offers, limit, offset })
+    return NextResponse.json(offers)
   } catch (error: any) {
     const isDev = process.env.NODE_ENV !== 'production'
     return NextResponse.json(

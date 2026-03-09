@@ -12,6 +12,8 @@ import {
 import { prisma } from '@/lib/prisma';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+type MockType = ReturnType<typeof vi.fn>;
+
 // Mock Prisma
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -38,7 +40,7 @@ describe('DatasetVersionManager', () => {
 
   describe('getNextVersion', () => {
     it('should return 1 for new dataset', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
 
       const version = await manager.getNextVersion('dataset-001');
 
@@ -46,7 +48,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should return next version based on completed jobs', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         { id: 'job-001', status: 'completed', outputPath: '/path/1' },
         { id: 'job-002', status: 'completed', outputPath: '/path/2' },
         { id: 'job-003', status: 'completed', outputPath: '/path/3' },
@@ -58,7 +60,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should not count jobs without outputPath', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         { id: 'job-001', status: 'completed', outputPath: '/path/1' },
         { id: 'job-002', status: 'completed', outputPath: null },
         { id: 'job-003', status: 'completed', outputPath: '/path/3' },
@@ -70,7 +72,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should not count failed jobs', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         { id: 'job-001', status: 'completed', outputPath: '/path/1' },
         { id: 'job-002', status: 'failed', outputPath: '/path/2' },
       ]);
@@ -96,10 +98,10 @@ describe('DatasetVersionManager', () => {
     };
 
     it('should register new version successfully', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
-      (prisma.preparationJob.findUnique as vi.Mock).mockResolvedValue(mockJob);
-      (prisma.dataset.findUnique as vi.Mock).mockResolvedValue({ metadata: {} });
-      (prisma.dataset.update as vi.Mock).mockResolvedValue({});
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
+      (prisma.preparationJob.findUnique as unknown as MockType).mockResolvedValue(mockJob);
+      (prisma.dataset.findUnique as unknown as MockType).mockResolvedValue({ metadata: {} });
+      (prisma.dataset.update as unknown as MockType).mockResolvedValue({});
 
       const version = await manager.registerVersion('dataset-001', 'job-001', {
         description: 'Initial version',
@@ -115,14 +117,14 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should increment version for subsequent registrations', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         { id: 'job-prev', status: 'completed', outputPath: '/prev' },
       ]);
-      (prisma.preparationJob.findUnique as vi.Mock).mockResolvedValue(mockJob);
-      (prisma.dataset.findUnique as vi.Mock).mockResolvedValue({
+      (prisma.preparationJob.findUnique as unknown as MockType).mockResolvedValue(mockJob);
+      (prisma.dataset.findUnique as unknown as MockType).mockResolvedValue({
         metadata: { versions: [{ version: 1 }] },
       });
-      (prisma.dataset.update as vi.Mock).mockResolvedValue({});
+      (prisma.dataset.update as unknown as MockType).mockResolvedValue({});
 
       const version = await manager.registerVersion('dataset-001', 'job-001');
 
@@ -130,8 +132,8 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should throw error if job not found', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
-      (prisma.preparationJob.findUnique as vi.Mock).mockResolvedValue(null);
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
+      (prisma.preparationJob.findUnique as unknown as MockType).mockResolvedValue(null);
 
       await expect(
         manager.registerVersion('dataset-001', 'non-existent')
@@ -139,10 +141,10 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should use default description when not provided', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
-      (prisma.preparationJob.findUnique as vi.Mock).mockResolvedValue(mockJob);
-      (prisma.dataset.findUnique as vi.Mock).mockResolvedValue({ metadata: {} });
-      (prisma.dataset.update as vi.Mock).mockResolvedValue({});
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
+      (prisma.preparationJob.findUnique as unknown as MockType).mockResolvedValue(mockJob);
+      (prisma.dataset.findUnique as unknown as MockType).mockResolvedValue({ metadata: {} });
+      (prisma.dataset.update as unknown as MockType).mockResolvedValue({});
 
       const version = await manager.registerVersion('dataset-001', 'job-001');
 
@@ -151,10 +153,10 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should store version metadata in dataset', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
-      (prisma.preparationJob.findUnique as vi.Mock).mockResolvedValue(mockJob);
-      (prisma.dataset.findUnique as vi.Mock).mockResolvedValue({ metadata: {} });
-      (prisma.dataset.update as vi.Mock).mockResolvedValue({});
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
+      (prisma.preparationJob.findUnique as unknown as MockType).mockResolvedValue(mockJob);
+      (prisma.dataset.findUnique as unknown as MockType).mockResolvedValue({ metadata: {} });
+      (prisma.dataset.update as unknown as MockType).mockResolvedValue({});
 
       await manager.registerVersion('dataset-001', 'job-001', {
         changes: [{ type: 'added', description: 'New records', count: 500 }],
@@ -179,7 +181,7 @@ describe('DatasetVersionManager', () => {
 
   describe('listVersions', () => {
     it('should return empty metadata for dataset with no jobs', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
 
       const metadata = await manager.listVersions('dataset-001');
 
@@ -190,7 +192,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should list all versions in order', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -226,7 +228,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should filter out failed jobs', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -251,7 +253,7 @@ describe('DatasetVersionManager', () => {
 
   describe('getVersion', () => {
     it('should return specific version', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -276,7 +278,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should return null for non-existent version', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -294,7 +296,7 @@ describe('DatasetVersionManager', () => {
 
   describe('compareVersions', () => {
     it('should compare two versions correctly', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -324,7 +326,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should handle version decrease (removed records)', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -352,7 +354,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should throw error for non-existent versions', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
 
       await expect(
         manager.compareVersions('dataset-001', 1, 2)
@@ -362,7 +364,7 @@ describe('DatasetVersionManager', () => {
 
   describe('rollbackToVersion', () => {
     it('should rollback successfully', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -385,7 +387,7 @@ describe('DatasetVersionManager', () => {
           createdAt: new Date('2024-01-30'),
         },
       ]);
-      (prisma.preparationJob.update as vi.Mock).mockResolvedValue({});
+      (prisma.preparationJob.update as unknown as MockType).mockResolvedValue({});
 
       const result = await manager.rollbackToVersion('dataset-001', 1, 'user-001');
 
@@ -396,7 +398,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should fail if already at target version', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -413,7 +415,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should fail for invalid version', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -430,7 +432,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should mark jobs as failed during rollback', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -446,7 +448,7 @@ describe('DatasetVersionManager', () => {
           createdAt: new Date('2024-01-15'),
         },
       ]);
-      (prisma.preparationJob.update as vi.Mock).mockResolvedValue({});
+      (prisma.preparationJob.update as unknown as MockType).mockResolvedValue({});
 
       await manager.rollbackToVersion('dataset-001', 1, 'user-001');
 
@@ -462,7 +464,7 @@ describe('DatasetVersionManager', () => {
 
   describe('generateChangelog', () => {
     it('should generate changelog for all versions', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -495,7 +497,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should generate changelog for specific range', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -530,7 +532,7 @@ describe('DatasetVersionManager', () => {
 
   describe('verifyVersionIntegrity', () => {
     it('should verify valid version', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -551,7 +553,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should detect missing manifest', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -571,7 +573,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should detect missing download URLs', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -591,7 +593,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should return invalid for non-existent version', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
 
       const result = await manager.verifyVersionIntegrity('dataset-001', 1);
 
@@ -602,7 +604,7 @@ describe('DatasetVersionManager', () => {
 
   describe('getEvolutionStats', () => {
     it('should calculate evolution for multiple versions', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -631,7 +633,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should handle single version', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([
         {
           id: 'job-001',
           status: 'completed',
@@ -652,7 +654,7 @@ describe('DatasetVersionManager', () => {
 
     it('should calculate version frequency', async () => {
       // Daily frequency (> 0.5 per day)
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue(
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue(
         Array.from({ length: 10 }, (_, i) => ({
           id: `job-${i}`,
           status: 'completed',
@@ -669,7 +671,7 @@ describe('DatasetVersionManager', () => {
     });
 
     it('should handle empty dataset', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
 
       const stats = await manager.getEvolutionStats('dataset-001');
 

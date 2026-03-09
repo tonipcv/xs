@@ -8,15 +8,13 @@
 import { NodeSDK } from '@opentelemetry/sdk-node';
 import { getNodeAutoInstrumentations } from '@opentelemetry/auto-instrumentations-node';
 import { OTLPTraceExporter } from '@opentelemetry/exporter-trace-otlp-http';
-import { Resource } from '@opentelemetry/resources';
+import { resourceFromAttributes } from '@opentelemetry/resources';
 import { SemanticResourceAttributes } from '@opentelemetry/semantic-conventions';
-import { 
-  trace, 
+import type { 
   Span, 
-  SpanStatusCode, 
   Context,
-  context,
 } from '@opentelemetry/api';
+import { trace, context, SpanStatusCode } from '@opentelemetry/api';
 import { logger } from '@/lib/logger';
 
 export interface TracingConfig {
@@ -78,7 +76,7 @@ export class PipelineTracer {
 
   private initialize(): void {
     try {
-      const resource = new Resource({
+      const resource = resourceFromAttributes({
         [SemanticResourceAttributes.SERVICE_NAME]: this.config.serviceName,
         [SemanticResourceAttributes.SERVICE_VERSION]: this.config.serviceVersion,
         [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: this.config.environment,
@@ -100,8 +98,8 @@ export class PipelineTracer {
 
       this.sdk.start();
       logger.info('[PipelineTracer] OpenTelemetry tracing initialized');
-    } catch (error) {
-      logger.error('[PipelineTracer] Failed to initialize tracing:', error);
+    } catch (error: unknown) {
+      logger.error('[PipelineTracer] Failed to initialize tracing:', error instanceof Error ? error : undefined);
     }
   }
 
@@ -284,7 +282,7 @@ export class PipelineTracer {
       return;
     }
 
-    span.addEvent(name, attributes);
+    span.addEvent(name, attributes as any);
   }
 
   /**
@@ -294,7 +292,7 @@ export class PipelineTracer {
     if (span.isRecording()) {
       if (attributes) {
         Object.entries(attributes).forEach(([key, value]) => {
-          span.setAttribute(key, value);
+          span.setAttribute(key, value as any);
         });
       }
       span.setStatus({ code: SpanStatusCode.OK });
@@ -314,7 +312,7 @@ export class PipelineTracer {
       });
       if (attributes) {
         Object.entries(attributes).forEach(([key, value]) => {
-          span.setAttribute(key, value);
+          span.setAttribute(key, value as any);
         });
       }
       span.end();
@@ -340,7 +338,9 @@ export class PipelineTracer {
         traceFlags: 0,
         isRemote: false,
       }),
-    } as Span;
+      addLink: () => {},
+      addLinks: () => {},
+    } as unknown as Span;
   }
 
   /**

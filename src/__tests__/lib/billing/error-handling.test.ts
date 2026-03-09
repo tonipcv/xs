@@ -304,22 +304,20 @@ describe('Billing Error Handling', () => {
 
   describe('Concurrency and Race Conditions', () => {
     it('should handle concurrent snapshot creation', async () => {
-      vi.mocked(prisma.storageSnapshot.create).mockImplementation(() =>
-        Promise.resolve({
-          id: `snap_${Date.now()}`,
-          tenantId: 'tenant_1',
-          datasetId: 'dataset_1',
-          storageBytes: BigInt(1000),
-          storageGb: 0.000001,
-          snapshotType: 'PERIODIC',
-          snapshotTimestamp: new Date(),
-          billingPeriod: '2024-01',
-          hoursInPeriod: 1,
-          gbHours: 0.000001,
-          metadata: {},
-          createdAt: new Date(),
-        } as any)
-      )
+      vi.mocked(prisma.storageSnapshot.create).mockResolvedValue({
+        id: `snap_${Date.now()}`,
+        tenantId: 'tenant_1',
+        datasetId: 'dataset_1',
+        storageBytes: BigInt(1000),
+        storageGb: 0.000001,
+        snapshotType: 'PERIODIC',
+        snapshotTimestamp: new Date(),
+        billingPeriod: '2024-01',
+        hoursInPeriod: 720,
+        gbHours: 0.00072,
+        metadata: {},
+        createdAt: new Date(),
+      } as unknown as ReturnType<typeof prisma.storageSnapshot.create> extends Promise<infer T> ? T : never)
 
       const promises = Array(10).fill(null).map(() =>
         StorageService.createSnapshot({

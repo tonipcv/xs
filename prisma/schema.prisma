@@ -1,6 +1,3 @@
-// Xase Voice Data Governance - Schema Prisma (MVP Focus)
-// Versão: 1.3 (Core models removidos, foco 100% em Voice)
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,53 +7,55 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// ========================================
-// AUTENTICAÇÃO (NextAuth)
-// ========================================
-
 model User {
-  id                   String             @id @default(cuid())
+  id                   String               @id @default(cuid())
   name                 String?
-  email                String             @unique
-  emailVerified        DateTime?          @map("email_verified")
+  email                String               @unique
+  emailVerified        DateTime?            @map("email_verified") @db.Timestamp(6)
   image                String?
   password             String?
-  resetToken           String?            @unique
-  resetTokenExpiry     DateTime?
-  verificationToken    String?            @unique
+  resetToken           String?              @unique
+  resetTokenExpiry     DateTime?            @db.Timestamp(6)
+  verificationToken    String?              @unique
   language             String?
-  region               String             @default("OTHER")
-  createdAt            DateTime           @default(now()) @map("created_at")
-  updatedAt            DateTime           @updatedAt @map("updated_at")
+  region               String               @default("OTHER")
+  createdAt            DateTime             @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt            DateTime             @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
   phone                String?
-  passwordResetToken   String?            @map("password_reset_token")
-  passwordResetExpires DateTime?          @map("password_reset_expires")
-  emailOtpCode         String?
-  emailOtpExpires      DateTime?
-  twoFactorEnabled     Boolean            @default(false)
+  passwordResetToken   String?              @map("password_reset_token")
+  passwordResetExpires DateTime?            @map("password_reset_expires") @db.Timestamp(6)
+  emailotpcode         String?
+  emailotpexpires      DateTime?            @db.Timestamp(6)
+  twofactorenabled     Boolean              @default(false)
+  totpsecret           String?
+  twofactorverifiedat  DateTime?            @db.Timestamp(6)
+  twofactorbackupcodes String?
+  tenantid             String?
+  xaserole             String?
+  twoFactorEnabled     Boolean              @default(false)
   totpSecret           String?
-  twoFactorVerifiedAt  DateTime?
+  twoFactorVerifiedAt  DateTime?            @db.Timestamp(6)
   twoFactorBackupCodes String?
-  
-  // Stripe billing fields
-  stripeCustomerId     String?            @map("stripe_customer_id")
-  planTier             String?            @default("FREE") @map("plan_tier")
-  subscriptionStatus   String?            @map("subscription_status")
-  
-  // Link opcional para Tenant
+  emailOtpCode         String?
+  emailOtpExpires      DateTime?            @db.Timestamp(6)
   tenantId             String?
   xaseRole             XaseRole?
-  
-  accounts             Account[]
-  sessions             Session[]
-  tenant               Tenant?            @relation(fields: [tenantId], references: [id])
-  // Marketplace relations
-  offersSold           Offer[]            @relation("OfferSeller")
-  negotiationsAsBuyer  Negotiation[]      @relation("NegotiationBuyer")
-  negotiationsAsSeller Negotiation[]      @relation("NegotiationSeller")
+  planTier             String?              @default("FREE") @map("plan_tier") @db.VarChar(50)
+  subscriptionStatus   String?              @map("subscription_status") @db.VarChar(50)
+  stripeCustomerId     String?              @map("stripe_customer_id") @db.VarChar(255)
+  negotiationsAsBuyer  Negotiation[]        @relation("NegotiationBuyer")
+  negotiationsAsSeller Negotiation[]        @relation("NegotiationSeller")
   notifications        Notification[]
-  
-  @@index([tenantId])
+  offersSold           Offer[]              @relation("OfferSeller")
+  accounts             Account[]
+  audit_logs           audit_logs[]
+  sessions             Session[]
+  tenant               Tenant?              @relation(fields: [tenantId], references: [id], onUpdate: NoAction, map: "users_tenant_fkey")
+  xase_subscriptions   xase_subscriptions[]
+
+  @@index([stripeCustomerId], map: "idx_users_stripe_customer_id")
+  @@index([tenantId], map: "users_tenant_idx")
+  @@index([tenantid])
   @@map("users")
 }
 
@@ -73,7 +72,7 @@ model Account {
   scope             String?
   id_token          String?
   session_state     String?
-  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([provider, providerAccountId])
   @@map("accounts")
@@ -83,120 +82,51 @@ model Session {
   id           String   @id @default(cuid())
   sessionToken String   @unique @map("session_token")
   userId       String
-  expires      DateTime
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expires      DateTime @db.Timestamp(6)
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
   @@map("sessions")
 }
 
 model VerificationToken {
   identifier String
   token      String   @unique
-  expires    DateTime
+  expires    DateTime @db.Timestamp(6)
 
   @@unique([identifier, token])
   @@map("verification_tokens")
 }
 
-enum XaseRole {
-  OWNER
-  ADMIN
-  VIEWER
-  
-  @@map("xase_roles")
-}
-
-enum CloudProvider {
-  AWS_S3
-  GCS
-  AZURE_BLOB
-  SNOWFLAKE
-  BIGQUERY
-  
-  @@map("cloud_provider")
-}
-
-enum IntegrationStatus {
-  ACTIVE
-  ERROR
-  DISABLED
-  EXPIRED
-  
-  @@map("integration_status")
-}
-
-enum ConnectorType {
-  POSTGRES
-  MYSQL
-  MSSQL
-  ORACLE
-  MONGODB
-  REDIS
-  HTTP_API
-  
-  @@map("connector_type")
-}
-
-// ========================================
-// MULTI-TENANCY
-// ========================================
-
 model Tenant {
-  id               String           @id @default(cuid())
-  name             String
-  email            String           @unique
-  companyName      String?
-  industry         String?
-  website          String?
-  
-  // Voice Data Governance: tipo de organização
-  organizationType OrganizationType? @map("organization_type")
-  
-  // Status e billing
-  status          TenantStatus     @default(ACTIVE)
-  plan            String           @default("free")
-  
-  // Timestamps
-  createdAt       DateTime         @default(now()) @map("created_at")
-  updatedAt       DateTime         @updatedAt @map("updated_at")
-  
-  // Relações
-  users             User[]
-  apiKeys           ApiKey[]
-  datasets          Dataset[]
-  clientPolicies    AccessPolicy[] @relation("ClientPolicies")
-  creditLedger      CreditLedger[]
-  cloudIntegrations CloudIntegration[]
-  dataConnectors    DataConnector[]
-  onboardingProgress OnboardingProgress?
-  supplierOffers    AccessOffer[] @relation("SupplierOffers")
-  buyerExecutions   PolicyExecution[] @relation("BuyerExecutions")
-  buyerReviews      AccessReview[] @relation("BuyerReviews")
-  ropaRecords       ROPARecord[]
-  billingSnapshots  BillingSnapshot[]
-  preparationJobs   PreparationJob[]
-  
+  id                       String                     @id @default(cuid())
+  name                     String
+  email                    String                     @unique
+  companyName              String?
+  industry                 String?
+  website                  String?
+  organizationType         OrganizationType?          @map("organization_type")
+  status                   TenantStatus               @default(ACTIVE)
+  plan                     String                     @default("free")
+  createdAt                DateTime                   @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt                DateTime                   @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  supplierOffers           AccessOffer[]              @relation("SupplierOffers")
+  buyerReviews             AccessReview[]             @relation("BuyerReviews")
+  audit_logs               audit_logs[]
+  billingSnapshots         BillingSnapshot[]
+  cloudIntegrations        CloudIntegration[]
+  onboardingProgress       OnboardingProgress?
+  buyerExecutions          PolicyExecution[]          @relation("BuyerExecutions")
+  users                    User[]
+  clientPolicies           AccessPolicy[]             @relation("ClientPolicies")
+  apiKeys                  ApiKey[]
+  creditLedger             CreditLedger[]
+  datasets                 Dataset[]
+  xase_decision_records    xase_decision_records[]
+  xase_human_interventions xase_human_interventions[]
+  xase_storage_snapshots   xase_storage_snapshots[]
+
   @@map("xase_tenants")
 }
-
-enum TenantStatus {
-  ACTIVE
-  SUSPENDED
-  CANCELLED
-  
-  @@map("xase_tenant_status")
-}
-
-enum OrganizationType {
-  SUPPLIER
-  CLIENT
-  PLATFORM_ADMIN
-  
-  @@map("organization_type")
-}
-
-// ========================================
-// API KEYS
-// ========================================
 
 model ApiKey {
   id          String    @id @default(cuid())
@@ -204,243 +134,142 @@ model ApiKey {
   name        String
   keyHash     String    @unique @map("key_hash")
   keyPrefix   String    @map("key_prefix")
-
   isActive    Boolean   @default(true)
   permissions String    @default("read,write")
   rateLimit   Int       @default(1000)
+  lastUsedAt  DateTime? @db.Timestamp(6)
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt   DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
-  lastUsedAt  DateTime?
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  tenant      Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId])
   @@index([keyHash])
+  @@index([keyHash], map: "idx_api_keys_keyhash")
+  @@index([tenantId], map: "idx_api_keys_tenant")
+  @@index([tenantId])
   @@map("xase_api_keys")
 }
 
-// ========================================
-// AUDIT LOG (mantido para rastreabilidade)
-// ========================================
-
 model AuditLog {
-  id            String    @id @default(cuid())
-  tenantId      String?   @map("tenant_id")
-  userId        String?   @map("user_id")
-  
-  action        String
-  resourceType  String    @map("resource_type")
-  resourceId    String?   @map("resource_id")
-  
-  metadata      String?   @db.Text
-  ipAddress     String?   @map("ip_address")
-  userAgent     String?   @map("user_agent")
-  
-  status        String    @default("SUCCESS")
-  errorMessage  String?   @map("error_message")
-  
-  timestamp     DateTime  @default(now())
-  
-  @@index([tenantId])
-  @@index([userId])
-  @@index([action])
-  @@index([timestamp])
+  id           String   @id @default(dbgenerated("gen_random_uuid()"))
+  tenantId     String?  @map("tenant_id")
+  resourceType String   @default("GENERIC") @map("resource_type")
+  resourceId   String?  @map("resource_id")
+  userId       String?  @map("user_id")
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  errorMessage String?  @map("error_message")
+  action       String
+  timestamp    DateTime @default(now()) @db.Timestamp(6)
+
+  @@index([action], map: "idx_audit_action")
+  @@index([tenantId], map: "idx_audit_tenant")
+  @@index([timestamp], map: "idx_audit_ts")
+  @@index([userId], map: "idx_audit_user")
+  @@index([action], map: "idx_xase_audit_logs_action")
+  @@index([tenantId], map: "idx_xase_audit_logs_tenant_id")
+  @@index([timestamp], map: "idx_xase_audit_logs_timestamp")
+  @@index([userId], map: "idx_xase_audit_logs_user_id")
   @@map("xase_audit_logs")
 }
 
-// ========================================
-// VOICE DATA GOVERNANCE - CORE MODELS
-// ========================================
-
 model Dataset {
-  id              String    @id @default(cuid())
-  tenantId        String    @map("tenant_id")
-  
-  datasetId       String    @unique @map("dataset_id")
-  version         String    @default("1.0")
-  name            String
-  description     String?   @db.Text
-  
-  // CAMADA 1: Agregados (multi-source)
-  totalDurationHours  Float     @default(0) @map("total_duration_hours")
-  numRecordings       Int       @default(0) @map("num_recordings")
-  // Predominant metadata (novos campos)
-  primaryLanguage     String    @default("en-US") @map("primary_language")
-  primarySampleRate   Int       @default(16000) @map("primary_sample_rate")
-  primaryCodec        String    @default("wav") @map("primary_codec")
-  primaryChannelCount Int       @default(1) @map("primary_channel_count")
-  // Tamanho total agregado
-  totalSizeBytes      BigInt    @default(0) @map("total_size_bytes")
-  // Janela temporal (calculada)
-  collectionStartTs   DateTime? @map("collection_start_ts")
-  collectionEndTs     DateTime? @map("collection_end_ts")
-  // LEGADO (manter temporariamente para compatibilidade)
-  storageLocation     String    @map("storage_location")
-  storageSize         BigInt?   @map("storage_size")
-  datasetHash         String?   @map("dataset_hash")
-  
-  // OAuth Integration Links (LEGADO - será removido; usar DataSource)
-  cloudIntegrationId  String?   @map("cloud_integration_id")
-  dataConnectorId     String?   @map("data_connector_id")
-  
-  // CAMADA 2: Operacionais
-  // LEGADO (language será migrado para primaryLanguage)
-  language            String
-  // Métricas agregadas
-  avgSnr              Float?    @map("avg_snr")
-  avgSpeechRatio      Float?    @map("avg_speech_ratio")
-  avgOverlapRatio     Float?    @map("avg_overlap_ratio")
-  avgSilenceRatio     Float?    @map("avg_silence_ratio")
-  avgNoiseLevel       String?   @map("avg_noise_level")
-  
-  // CAMADA 3: Semânticos leves
-  // REMOVER futuramente: semânticos ao nível de Dataset
-  callType            String?   @map("call_type")
-  intentCluster       String?   @map("intent_cluster")
-  emotionBand         String?   @map("emotion_band")
-  outcomeFlag         String?   @map("outcome_flag")
-  
-  // CAMADA 4: Governança
-  consentStatus       ConsentStatus     @default(PENDING) @map("consent_status")
-  consentProofUri     String?           @map("consent_proof_uri")
-  consentProofHash    String?           @map("consent_proof_hash")
-  consentVersion      String?           @map("consent_version")
-  allowedPurposes     String[]          @map("allowed_purposes")
-  jurisdiction        String?
-  retentionExpiresAt  DateTime?         @map("retention_expires_at")
-  
-  processingStatus    ProcessingStatus  @default(PENDING) @map("processing_status")
-  processingError     String?           @db.Text @map("processing_error")
-  
-  status              DatasetStatus     @default(DRAFT)
-  publishedAt         DateTime?         @map("published_at")
-  archivedAt          DateTime?         @map("archived_at")
-  createdAt           DateTime          @default(now()) @map("created_at")
-  updatedAt           DateTime          @updatedAt @map("updated_at")
-  
-  // Multi-modal primary type (AUDIO, IMAGE, TEXT, TIMESERIES, TABULAR)
-  dataType            DataType?         @map("data_type")
-  
-  // Metadata para versionamento e extensibilidade
-  metadata            Json?             @map("metadata")
-  
-  tenant              Tenant                @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  cloudIntegration    CloudIntegration?     @relation(fields: [cloudIntegrationId], references: [id], onDelete: SetNull)
-  dataConnector       DataConnector?        @relation(fields: [dataConnectorId], references: [id], onDelete: SetNull)
-  dataSources         DataSource[]
-  policies            AccessPolicy[]
-  accessLogs          AccessLog[]
-  dataAssets          DataAsset[]
-  leases              AccessLease[]
-  accessOffers        AccessOffer[]
-  // Marketplace offers mapped to Offer table
-  offers              Offer[]
-  preparationJobs     PreparationJob[]
-  
-  @@index([tenantId])
-  @@index([status])
-  @@index([language])
-  @@index([primaryLanguage])
+  id                     String                   @id(map: "xase_voice_datasets_pkey") @default(cuid())
+  tenantId               String                   @map("tenant_id")
+  datasetId              String                   @unique(map: "xase_voice_datasets_dataset_id_key") @map("dataset_id")
+  version                String                   @default("1.0")
+  name                   String
+  description            String?
+  totalDurationHours     Float                    @map("total_duration_hours")
+  numRecordings          Int                      @map("num_recordings")
+  sample_rate            Int                      @default(16000)
+  codec                  String                   @default("wav")
+  channel_count          Int                      @default(1)
+  collectionStartTs      DateTime?                @map("collection_start_ts") @db.Timestamp(6)
+  collectionEndTs        DateTime?                @map("collection_end_ts") @db.Timestamp(6)
+  avgSnr                 Float?                   @map("avg_snr")
+  avgSpeechRatio         Float?                   @map("avg_speech_ratio")
+  avgOverlapRatio        Float?                   @map("avg_overlap_ratio")
+  avgSilenceRatio        Float?                   @map("avg_silence_ratio")
+  noise_level            String?
+  consentStatus          ConsentStatus            @default(PENDING) @map("consent_status")
+  consentProofUri        String?                  @map("consent_proof_uri")
+  consentProofHash       String?                  @map("consent_proof_hash")
+  consentVersion         String?                  @map("consent_version")
+  allowedPurposes        String[]                 @map("allowed_purposes")
+  jurisdiction           String?
+  retentionExpiresAt     DateTime?                @map("retention_expires_at") @db.Timestamp(6)
+  processingStatus       ProcessingStatus         @default(PENDING) @map("processing_status")
+  processingError        String?                  @map("processing_error")
+  status                 DatasetStatus            @default(DRAFT)
+  publishedAt            DateTime?                @map("published_at") @db.Timestamp(6)
+  archivedAt             DateTime?                @map("archived_at") @db.Timestamp(6)
+  createdAt              DateTime                 @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt              DateTime                 @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  primaryLanguage        String                   @default("en-US") @map("primary_language")
+  primarySampleRate      Int                      @default(16000) @map("primary_sample_rate")
+  primaryCodec           String                   @default("wav") @map("primary_codec")
+  primaryChannelCount    Int                      @default(1) @map("primary_channel_count")
+  totalSizeBytes         BigInt                   @default(0) @map("total_size_bytes")
+  avgNoiseLevel          String?                  @map("avg_noise_level")
+  risk_class             RiskClass?               @default(MEDIUM)
+  deleted_at             DateTime?                @db.Timestamptz(6)
+  storageLocation        String                   @map("storage_location")
+  storageSize            BigInt?                  @map("storage_size")
+  datasetHash            String?                  @map("dataset_hash")
+  language               String
+  cloudIntegrationId     String?                  @map("cloud_integration_id")
+  dataConnectorId        String?                  @map("data_connector_id")
+  callType               String?                  @map("call_type")
+  intentCluster          String?                  @map("intent_cluster")
+  emotionBand            String?                  @map("emotion_band")
+  outcomeFlag            String?                  @map("outcome_flag")
+  dataType               DataType?                @map("data_type")
+  metadata               Json?
+  offers                 Offer[]
+  accessOffers           AccessOffer[]
+  dataSources            DataSource[]
+  leases                 AccessLease[]
+  accessLogs             AccessLog[]
+  policies               AccessPolicy[]
+  dataAssets             DataAsset[]
+  cloudIntegration       CloudIntegration?        @relation(fields: [cloudIntegrationId], references: [id], onUpdate: NoAction, map: "xase_voice_datasets_cloud_integration_id_fkey")
+  dataConnector          DataConnector?           @relation(fields: [dataConnectorId], references: [id], onUpdate: NoAction, map: "xase_voice_datasets_data_connector_id_fkey")
+  tenant                 Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "xase_voice_datasets_tenant_id_fkey")
+  xase_storage_snapshots xase_storage_snapshots[]
+
   @@index([dataType])
-  @@index([avgNoiseLevel])
-  @@index([callType])
-  @@index([processingStatus])
-  @@index([consentStatus])
-  @@index([cloudIntegrationId])
-  @@index([dataConnectorId])
+  @@index([consentStatus], map: "idx_dataset_consent")
+  @@index([noise_level], map: "idx_dataset_noise")
+  @@index([processingStatus], map: "idx_dataset_proc")
+  @@index([status], map: "idx_dataset_status")
+  @@index([tenantId], map: "idx_dataset_tenant")
+  @@index([dataConnectorId], map: "xase_voice_datasets_data_connector_id_idx")
+  @@index([primaryLanguage], map: "xase_voice_datasets_primary_language_idx")
   @@map("xase_datasets")
 }
 
-enum ConsentStatus {
-  PENDING
-  VERIFIED_BY_XASE
-  SELF_DECLARED
-  MISSING
-  REVOKED
-  @@map("consent_status")
-}
-
-enum ProcessingStatus {
-  PENDING
-  QUEUED
-  PROCESSING
-  COMPLETED
-  FAILED
-  @@map("processing_status")
-}
-
-enum DatasetStatus {
-  DRAFT
-  ACTIVE
-  ARCHIVED
-  DELETED
-  @@map("dataset_status")
-}
-
-model ROPARecord {
-  id                String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenantId          String   @map("tenant_id") @db.Uuid
-  datasetId         String   @map("dataset_id")
-  
-  controller        String
-  processingPurpose String   @map("processing_purpose")
-  legalBasis        String   @map("legal_basis")
-  dataCategories    String[] @map("data_categories")
-  recipients        String[]
-  dpoContact        String?  @map("dpo_contact")
-  retentionPeriod   String?  @map("retention_period")
-  
-  recordData        Json?    @map("record_data")
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  updatedAt         DateTime @updatedAt @map("updated_at")
-  
-  tenant            Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  @@index([tenantId])
-  @@index([datasetId])
-  @@index([legalBasis])
-  @@index([createdAt])
-  @@map("xase_ropa_records")
-}
-
-enum DataSourceStatus {
-  ACTIVE
-  SYNCING
-  ERROR
-  REMOVED
-  @@map("data_source_status")
-}
-
 model DataSource {
-  id                  String    @id @default(cuid())
-  dataSourceId        String    @unique @map("data_source_id")
-  
-  datasetId           String    @map("dataset_id")
-  cloudIntegrationId  String    @map("cloud_integration_id")
-  storageLocation     String    @map("storage_location")
-  
-  name                String
-  description         String?   @db.Text
-  
-  numRecordings       Int       @default(0) @map("num_recordings")
-  durationHours       Float     @default(0) @map("duration_hours")
-  sizeBytes           BigInt    @default(0) @map("size_bytes")
-  
-  language            String?
-  sampleRate          Int?      @map("sample_rate")
-  codec               String?
-  
-  status              DataSourceStatus  @default(ACTIVE)
-  addedAt             DateTime  @default(now()) @map("added_at")
-  removedAt           DateTime? @map("removed_at")
-  lastSyncedAt        DateTime? @map("last_synced_at")
-  
-  dataset             Dataset           @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  cloudIntegration    CloudIntegration  @relation(fields: [cloudIntegrationId], references: [id])
-  dataAssets          DataAsset[]
-  
+  id                 String           @id @default(cuid())
+  dataSourceId       String           @unique @map("data_source_id")
+  datasetId          String           @map("dataset_id")
+  cloudIntegrationId String           @map("cloud_integration_id")
+  storageLocation    String           @map("storage_location")
+  name               String
+  description        String?
+  numRecordings      Int              @default(0) @map("num_recordings")
+  durationHours      Float            @default(0) @map("duration_hours")
+  sizeBytes          BigInt           @default(0) @map("size_bytes")
+  language           String?
+  sampleRate         Int?             @map("sample_rate")
+  codec              String?
+  status             DataSourceStatus @default(ACTIVE)
+  addedAt            DateTime         @default(now()) @map("added_at")
+  removedAt          DateTime?        @map("removed_at")
+  lastSyncedAt       DateTime?        @map("last_synced_at")
+  cloudIntegration   CloudIntegration @relation(fields: [cloudIntegrationId], references: [id])
+  dataset            Dataset          @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  dataAssets         DataAsset[]
+
   @@index([datasetId])
   @@index([cloudIntegrationId])
   @@index([status])
@@ -448,152 +277,130 @@ model DataSource {
 }
 
 model DataAsset {
-  id             String   @id @default(cuid())
-  datasetId      String   @map("dataset_id")
-  dataSourceId   String   @map("data_source_id")
-  segmentId      String   @unique @map("segment_id")
-  fileKey        String   @map("file_key")
-  
-  durationSec    Float    @map("duration_sec")
-  sampleRate     Int      @map("sample_rate")
+  id             String      @id(map: "xase_audio_segments_pkey") @default(cuid())
+  datasetId      String      @map("dataset_id")
+  segmentId      String      @unique(map: "xase_audio_segments_segment_id_key") @map("segment_id")
+  fileKey        String      @map("file_key")
+  durationSec    Float       @map("duration_sec")
+  sampleRate     Int         @map("sample_rate")
   codec          String
-  channelCount   Int      @map("channel_count")
-  startTs        DateTime? @map("start_ts")
-  endTs          DateTime? @map("end_ts")
-  fileSize       BigInt?  @map("file_size")
-  fileHash       String?  @map("file_hash")
-  
+  channelCount   Int         @map("channel_count")
+  startTs        DateTime?   @map("start_ts") @db.Timestamp(6)
+  endTs          DateTime?   @map("end_ts") @db.Timestamp(6)
+  fileSize       BigInt?     @map("file_size")
+  fileHash       String?     @map("file_hash")
   language       String
   snr            Float?
-  speechRatio    Float?   @map("speech_ratio")
-  overlapRatio   Float?   @map("overlap_ratio")
-  silenceRatio   Float?   @map("silence_ratio")
-  emotionBand    String?
-  intentCluster  String?
-  callType       String?
-
-  // Multi-modal generalization
+  speechRatio    Float?      @map("speech_ratio")
+  overlapRatio   Float?      @map("overlap_ratio")
+  silenceRatio   Float?      @map("silence_ratio")
+  emotion_band   String?
+  intent_cluster String?
+  call_type      String?
+  createdAt      DateTime    @default(now()) @map("created_at") @db.Timestamp(6)
+  dataSourceId   String      @map("data_source_id")
   dataType       DataType?   @map("data_type")
   dataFormat     DataFormat? @map("data_format")
-  metadata       Json?       @db.JsonB
-  
-  createdAt DateTime @default(now()) @map("created_at")
-  dataset   Dataset     @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  dataSource DataSource @relation(fields: [dataSourceId], references: [id], onDelete: Cascade)
-  
-  @@index([datasetId])
-  @@unique([datasetId, segmentId])
-  @@index([datasetId, segmentId])
+  metadata       Json?
+  dataSource     DataSource  @relation(fields: [dataSourceId], references: [id], onDelete: Cascade, map: "xase_audio_segments_data_source_id_fkey")
+  dataset        Dataset     @relation(fields: [datasetId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "xase_audio_segments_dataset_id_fkey")
+
+  @@index([call_type], map: "idx_seg_calltype")
+  @@index([datasetId], map: "idx_seg_dataset")
+  @@index([language], map: "idx_seg_lang")
+  @@index([dataSourceId], map: "xase_audio_segments_data_source_id_idx")
   @@map("xase_data_assets")
 }
 
 model AccessPolicy {
-  id              String    @id @default(cuid())
-  datasetId       String    @map("dataset_id")
-  clientTenantId  String    @map("client_tenant_id")
-  policyId        String    @unique @map("policy_id")
-  usagePurpose    String    @map("usage_purpose")
-  
-  maxHours            Float?    @map("max_hours")
-  maxDownloads        Int?      @map("max_downloads")
-  allowedEnvironment  String?   @map("allowed_environment")
-  expiresAt           DateTime? @map("expires_at")
-  canStream           Boolean   @default(true) @map("can_stream")
-  canBatchDownload    Boolean   @default(false) @map("can_batch_download")
-  maxConcurrentLeases Int?      @default(5) @map("max_concurrent_leases")
-  
-  hoursConsumed       Float     @default(0) @map("hours_consumed")
-  downloadsCount      Int       @default(0) @map("downloads_count")
-  lastAccessAt        DateTime? @map("last_access_at")
-  
-  // Rewrite rules for federated queries
-  allowedColumns  String[]  @default([]) @map("allowed_columns")
-  deniedColumns   String[]  @default([]) @map("denied_columns")
-  rowFilters      Json?     @map("row_filters")
-  maskingRules    Json?     @map("masking_rules")
+  id                    String            @id(map: "xase_voice_access_policies_pkey") @default(cuid())
+  datasetId             String            @map("dataset_id")
+  clientTenantId        String            @map("client_tenant_id")
+  policyId              String            @unique(map: "xase_voice_access_policies_policy_id_key") @map("policy_id")
+  usagePurpose          String            @map("usage_purpose")
+  maxHours              Float?            @map("max_hours")
+  maxDownloads          Int?              @map("max_downloads")
+  expiresAt             DateTime?         @map("expires_at") @db.Timestamp(6)
+  canStream             Boolean           @default(false) @map("can_stream")
+  canBatchDownload      Boolean           @default(false) @map("can_batch_download")
+  hoursConsumed         Float             @default(0) @map("hours_consumed")
+  downloadsCount        Int               @default(0) @map("downloads_count")
+  lastAccessAt          DateTime?         @map("last_access_at") @db.Timestamp(6)
+  status                PolicyStatus      @default(ACTIVE)
+  revokedAt             DateTime?         @map("revoked_at") @db.Timestamp(6)
+  revokedReason         String?           @map("revoked_reason")
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  allowedColumns        String[]          @map("allowed_columns")
+  deniedColumns         String[]          @map("denied_columns")
+  rowFilters            Json?             @map("row_filters")
+  maskingRules          Json?             @map("masking_rules")
+  maxConcurrentLeases   Int?              @map("max_concurrent_leases")
+  version               Int?              @default(1)
+  superseded_by_id      String?
+  superseded_at         DateTime?         @db.Timestamptz(6)
+  deleted_at            DateTime?         @db.Timestamptz(6)
+  allowedEnvironment    Json?             @map("allowed_environment")
+  regulatoryFrameworks  String[]          @default([]) @map("regulatory_frameworks")
+  deIdentificationLevel String?           @map("de_identification_level")
+  hipaaCategory         String?           @map("hipaa_category")
+  executions            PolicyExecution[]
+  leases                AccessLease[]
+  accessLogs            AccessLog[]
+  clientTenant          Tenant            @relation("ClientPolicies", fields: [clientTenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "xase_voice_access_policies_client_tenant_id_fkey")
+  dataset               Dataset           @relation(fields: [datasetId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "xase_voice_access_policies_dataset_id_fkey")
 
-  // Clinical compliance
-  regulatoryFrameworks String[] @default([]) @map("regulatory_frameworks")
-  deIdentificationLevel String? @map("de_identification_level")
-  hipaaCategory          String? @map("hipaa_category")
-  
-  status          PolicyStatus @default(ACTIVE)
-  revokedAt       DateTime? @map("revoked_at")
-  revokedReason   String?   @db.Text @map("revoked_reason")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  updatedAt       DateTime  @updatedAt @map("updated_at")
-  
-  dataset         Dataset           @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  clientTenant    Tenant            @relation("ClientPolicies", fields: [clientTenantId], references: [id], onDelete: Cascade)
-  accessLogs      AccessLog[]
-  leases          AccessLease[]
-  executions      PolicyExecution[]
-  
-  @@index([datasetId])
-  @@index([clientTenantId])
-  @@index([status])
-  @@index([expiresAt])
+  @@index([clientTenantId], map: "idx_policy_client")
+  @@index([datasetId], map: "idx_policy_dataset")
+  @@index([allowedEnvironment], map: "idx_policy_env_gin", type: Gin)
+  @@index([expiresAt], map: "idx_policy_expires")
+  @@index([status], map: "idx_policy_status")
+  @@index([superseded_by_id], map: "idx_policy_superseded")
+  @@index([version], map: "idx_policy_version")
   @@map("xase_access_policies")
 }
 
-enum PolicyStatus {
-  ACTIVE
-  EXPIRED
-  REVOKED
-  SUSPENDED
-  @@map("policy_status")
-}
-
 model AccessLog {
-  id              String    @id @default(cuid())
-  datasetId       String    @map("dataset_id")
-  policyId        String    @map("policy_id")
-  clientTenantId  String    @map("client_tenant_id")
-  userId          String?   @map("user_id")
-  apiKeyId        String?   @map("api_key_id")
-  
-  action          AccessAction
-  filesAccessed   Int       @default(0) @map("files_accessed")
-  hoursAccessed   Float     @default(0) @map("hours_accessed")
-  bytesTransferred BigInt?  @map("bytes_transferred")
-  
-  outcome         String
-  errorMessage    String?   @db.Text @map("error_message")
-  ipAddress       String?   @map("ip_address")
-  userAgent       String?   @db.Text @map("user_agent")
-  requestId       String?   @map("request_id")
-  timestamp       DateTime  @default(now())
-  
-  dataset     Dataset            @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  policy      AccessPolicy  @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  
-  @@index([datasetId])
-  @@index([policyId])
-  @@index([clientTenantId])
-  @@index([timestamp])
+  id               String       @id(map: "xase_voice_access_logs_pkey") @default(cuid())
+  datasetId        String       @map("dataset_id")
+  policyId         String       @map("policy_id")
+  clientTenantId   String       @map("client_tenant_id")
+  userId           String?      @map("user_id")
+  apiKeyId         String?      @map("api_key_id")
+  action           AccessAction
+  filesAccessed    Int          @default(0) @map("files_accessed")
+  hoursAccessed    Float        @default(0) @map("hours_accessed")
+  bytesTransferred BigInt?      @map("bytes_transferred")
+  outcome          String
+  errorMessage     String?      @map("error_message")
+  ipAddress        String?      @map("ip_address")
+  userAgent        String?      @map("user_agent")
+  requestId        String?      @map("request_id")
+  timestamp        DateTime     @default(now()) @db.Timestamp(6)
+  dataset          Dataset      @relation(fields: [datasetId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "xase_voice_access_logs_dataset_id_fkey")
+  policy           AccessPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "xase_voice_access_logs_policy_id_fkey")
+
+  @@index([clientTenantId], map: "idx_log_client")
+  @@index([datasetId], map: "idx_log_dataset")
+  @@index([policyId], map: "idx_log_policy")
+  @@index([timestamp], map: "idx_log_ts")
   @@map("xase_access_logs")
 }
 
-// ========================================
-// MARKETPLACE: Offers, Negotiations, Notifications
-// ========================================
-
 model Offer {
-  id         String   @id
-  datasetId  String   @map("datasetId")
-  sellerId   String   @map("sellerId")
-  price      Decimal  @db.Decimal(10, 2)
-  currency   String   @default("USD")
-  dataType   String?
-  status     String   @default("ACTIVE")
-  terms      Json?
-  createdAt  DateTime @default(now()) @map("createdAt")
-  updatedAt  DateTime @updatedAt @map("updatedAt")
-
-  // Relations
-  dataset Dataset @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  seller  User    @relation("OfferSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  id           String        @id
+  datasetId    String        @map("datasetId")
+  sellerId     String        @map("sellerId")
+  price        Decimal       @db.Decimal(10, 2)
+  currency     String        @default("USD")
+  dataType     String?
+  status       String        @default("ACTIVE")
+  terms        Json?
+  createdAt    DateTime      @default(now()) @map("createdAt")
+  updatedAt    DateTime      @updatedAt @map("updatedAt")
   negotiations Negotiation[]
+  dataset      Dataset       @relation(fields: [datasetId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  seller       User          @relation("OfferSeller", fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([datasetId])
   @@index([sellerId])
@@ -602,30 +409,28 @@ model Offer {
 }
 
 model Negotiation {
-  id            String   @id
-  offerId       String   @map("offerId")
-  buyerId       String   @map("buyerId")
-  sellerId      String   @map("sellerId")
-  initialPrice  Decimal  @db.Decimal(10, 2) @map("initialPrice")
-  proposedPrice Decimal  @db.Decimal(10, 2) @map("proposedPrice")
-  counterPrice  Decimal? @db.Decimal(10, 2) @map("counterPrice")
-  finalPrice    Decimal? @db.Decimal(10, 2) @map("finalPrice")
-  status        String   @default("PENDING")
-  proposedTerms Json?    @map("proposedTerms")
-  counterTerms  Json?    @map("counterTerms")
-  message       String?
-  counterMessage String? @map("counterMessage")
-  rejectionReason String? @map("rejectionReason")
-  expiresAt     DateTime? @map("expiresAt")
-  acceptedAt    DateTime? @map("acceptedAt")
-  rejectedAt    DateTime? @map("rejectedAt")
-  createdAt     DateTime  @default(now()) @map("createdAt")
-  updatedAt     DateTime  @updatedAt @map("updatedAt")
-
-  // Relations
-  offer  Offer @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  buyer  User  @relation("NegotiationBuyer", fields: [buyerId], references: [id], onDelete: Cascade)
-  seller User  @relation("NegotiationSeller", fields: [sellerId], references: [id], onDelete: Cascade)
+  id              String    @id
+  offerId         String    @map("offerId")
+  buyerId         String    @map("buyerId")
+  sellerId        String    @map("sellerId")
+  initialPrice    Decimal   @map("initialPrice") @db.Decimal(10, 2)
+  proposedPrice   Decimal   @map("proposedPrice") @db.Decimal(10, 2)
+  counterPrice    Decimal?  @map("counterPrice") @db.Decimal(10, 2)
+  finalPrice      Decimal?  @map("finalPrice") @db.Decimal(10, 2)
+  status          String    @default("PENDING")
+  proposedTerms   Json?     @map("proposedTerms")
+  counterTerms    Json?     @map("counterTerms")
+  message         String?
+  counterMessage  String?   @map("counterMessage")
+  rejectionReason String?   @map("rejectionReason")
+  expiresAt       DateTime? @map("expiresAt")
+  acceptedAt      DateTime? @map("acceptedAt")
+  rejectedAt      DateTime? @map("rejectedAt")
+  createdAt       DateTime  @default(now()) @map("createdAt")
+  updatedAt       DateTime  @updatedAt @map("updatedAt")
+  buyer           User      @relation("NegotiationBuyer", fields: [buyerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  offer           Offer     @relation(fields: [offerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  seller          User      @relation("NegotiationSeller", fields: [sellerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([offerId])
   @@index([buyerId])
@@ -643,66 +448,757 @@ model Notification {
   read      Boolean  @default(false)
   metadata  Json?
   createdAt DateTime @default(now()) @map("createdAt")
-
-  // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([userId])
   @@map("Notification")
 }
 
-// ========================================
-// LEASES (TTL-based streaming access)
-// ========================================
+model AccessLease {
+  id                     String                   @id(map: "xase_voice_access_leases_pkey") @default(cuid())
+  leaseId                String                   @unique(map: "xase_voice_access_leases_lease_id_key") @map("lease_id")
+  datasetId              String                   @map("dataset_id")
+  clientTenantId         String                   @map("client_tenant_id")
+  policyId               String                   @map("policy_id")
+  status                 LeaseStatus              @default(ACTIVE)
+  issuedAt               DateTime                 @default(now()) @map("issued_at") @db.Timestamptz(6)
+  expiresAt              DateTime                 @map("expires_at") @db.Timestamptz(6)
+  revokedAt              DateTime?                @map("revoked_at") @db.Timestamptz(6)
+  revokedReason          String?                  @map("revoked_reason")
+  deletedAt              DateTime?                @map("deleted_at") @db.Timestamptz(6)
+  ttlSeconds             Int?                     @default(28800) @map("ttl_seconds")
+  autoRenew              Boolean?                 @default(false) @map("auto_renew")
+  maxRenewals            Int?                     @default(0) @map("max_renewals")
+  renewalsCount          Int?                     @default(0) @map("renewals_count")
+  budgetLimit            Decimal?                 @map("budget_limit") @db.Decimal(10, 2)
+  lastRenewedAt          DateTime?                @map("last_renewed_at") @db.Timestamp(6)
+  alert30minSent         Boolean?                 @default(false) @map("alert_30min_sent")
+  alert5minSent          Boolean?                 @default(false) @map("alert_5min_sent")
+  executions             PolicyExecution[]
+  sidecarSessions        SidecarSession[]
+  dataset                Dataset                  @relation(fields: [datasetId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "xval_dataset_fk")
+  policy                 AccessPolicy             @relation(fields: [policyId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "xval_policy_fk")
+  xase_storage_snapshots xase_storage_snapshots[]
+
+  @@index([clientTenantId], map: "xval_client_idx")
+  @@index([datasetId], map: "xval_dataset_idx")
+  @@index([expiresAt], map: "xval_expires_idx")
+  @@index([policyId], map: "xval_policy_idx")
+  @@index([status], map: "xval_status_idx")
+  @@map("xase_access_leases")
+}
+
+model CreditLedger {
+  id              String   @id @default(cuid())
+  tenantId        String   @map("organization_id")
+  amount          Decimal  @db.Decimal(15, 4)
+  eventType       String   @map("event_type")
+  description     String?
+  metadata        Json?
+  balanceAfter    Decimal  @map("balance_after") @db.Decimal(15, 4)
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+  idempotency_key String?
+  tenant          Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([createdAt], map: "idx_ledger_created")
+  @@index([tenantId], map: "idx_ledger_org")
+  @@map("xase_credit_ledger")
+}
+
+model EpsilonQuery {
+  id         String    @id @default(cuid())
+  queryId    String    @unique @map("query_id")
+  tenantId   String    @map("tenant_id")
+  datasetId  String    @map("dataset_id")
+  epsilon    Float
+  userId     String    @map("user_id")
+  purpose    String
+  timestamp  DateTime  @default(now()) @db.Timestamptz(6)
+  archived   Boolean   @default(false)
+  archivedAt DateTime? @map("archived_at") @db.Timestamptz(6)
+
+  @@index([tenantId, datasetId], map: "idx_epsilon_queries_tenant_dataset")
+  @@map("epsilon_queries")
+}
+
+model EpsilonBudgetConfig {
+  id            String @id @default(cuid())
+  tenantId      String @map("tenant_id")
+  datasetId     String @map("dataset_id")
+  dailyBudget   Float  @default(1.0) @map("daily_budget")
+  weeklyBudget  Float  @default(5.0) @map("weekly_budget")
+  monthlyBudget Float  @default(20.0) @map("monthly_budget")
+  resetPeriod   String @default("daily") @map("reset_period")
+
+  @@unique([tenantId, datasetId], map: "uq_epsilon_budget_tenant_dataset")
+  @@map("epsilon_budget_configs")
+}
+
+model DataConnector {
+  id                        String            @id @default(cuid())
+  tenantId                  String            @map("tenant_id")
+  name                      String
+  encryptedConnectionString String?           @map("encrypted_connection_string")
+  encryptedCredentials      String?           @map("encrypted_credentials")
+  lastTestedAt              DateTime?         @map("last_tested_at") @db.Timestamptz(6)
+  createdAt                 DateTime          @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt                 DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  type                      ConnectorType?
+  host                      String?
+  port                      Int?
+  database                  String?
+  schema                    String?
+  lastTestStatus            String?           @map("last_test_status")
+  lastTestError             String?           @map("last_test_error")
+  status                    IntegrationStatus @default(ACTIVE)
+  datasets                  Dataset[]
+
+  @@unique([tenantId, type, name], map: "uq_data_connectors_tenant_type_name")
+  @@index([tenantId], map: "idx_data_connectors_tenant")
+  @@map("data_connectors")
+}
+
+model CloudIntegration {
+  id                    String            @id @default(cuid())
+  tenantId              String            @map("tenant_id")
+  name                  String
+  provider              CloudProvider
+  status                IntegrationStatus @default(ACTIVE)
+  encryptedAccessToken  String?           @map("encrypted_access_token")
+  encryptedRefreshToken String?           @map("encrypted_refresh_token")
+  tokenExpiresAt        DateTime?         @map("token_expires_at") @db.Timestamp(6)
+  scopes                String[]          @default([])
+  accountName           String?           @map("account_name")
+  projectId             String?           @map("project_id")
+  subscriptionId        String?           @map("subscription_id")
+  region                String?
+  lastTestedAt          DateTime?         @map("last_tested_at") @db.Timestamp(6)
+  lastTestStatus        String?           @map("last_test_status")
+  lastTestError         String?           @map("last_test_error")
+  createdAt             DateTime          @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt             DateTime          @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  tenant                Tenant            @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_cloud_integrations_tenant")
+  dataSources           DataSource[]
+  datasets              Dataset[]
+
+  @@unique([tenantId, provider, name], map: "uq_cloud_integrations_tenant_provider_name")
+  @@index([provider], map: "idx_cloud_integrations_provider")
+  @@index([status], map: "idx_cloud_integrations_status")
+  @@index([tenantId], map: "idx_cloud_integrations_tenant_id")
+  @@map("cloud_integrations")
+}
+
+model OAuthState {
+  id           String        @id @default(cuid())
+  state        String        @unique
+  tenantId     String        @map("tenant_id")
+  provider     CloudProvider
+  redirectPath String?       @map("redirect_path")
+  metadata     Json?
+  expiresAt    DateTime      @map("expires_at") @db.Timestamp(6)
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@index([expiresAt], map: "idx_oauth_states_expires_at")
+  @@index([state], map: "idx_oauth_states_state")
+  @@index([tenantId], map: "idx_oauth_states_tenant_id")
+  @@map("oauth_states")
+}
+
+model OnboardingProgress {
+  id                 String    @id @default(cuid())
+  tenantId           String    @unique @map("tenant_id")
+  roleSelected       Boolean   @default(false) @map("role_selected")
+  integrationSetup   Boolean   @default(false) @map("integration_setup")
+  firstDatasetAdded  Boolean   @default(false) @map("first_dataset_added")
+  firstPolicyCreated Boolean   @default(false) @map("first_policy_created")
+  firstLeaseIssued   Boolean   @default(false) @map("first_lease_issued")
+  currentStep        Int       @default(1) @map("current_step")
+  completedAt        DateTime? @map("completed_at") @db.Timestamp(6)
+  skippedAt          DateTime? @map("skipped_at") @db.Timestamp(6)
+  createdAt          DateTime  @default(now()) @map("created_at") @db.Timestamp(6)
+  updatedAt          DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamp(6)
+  tenant             Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_onboarding_progress_tenant")
+
+  @@index([tenantId], map: "idx_onboarding_progress_tenant_id")
+  @@map("onboarding_progress")
+}
+
+model AccessOffer {
+  id                   String            @id @default(cuid())
+  offerId              String            @unique @map("offer_id")
+  datasetId            String            @map("dataset_id")
+  supplierTenantId     String            @map("supplier_tenant_id")
+  title                String
+  description          String
+  allowedPurposes      String[]          @default([]) @map("allowed_purposes")
+  constraints          Json              @default("{}")
+  jurisdiction         String
+  evidenceFormat       String            @default("CRYPTOGRAPHIC_AUDIT_BUNDLE") @map("evidence_format")
+  complianceLevel      String            @default("SELF_DECLARED") @map("compliance_level")
+  scopeHours           Float             @map("scope_hours")
+  scopeRecordings      Int?              @map("scope_recordings")
+  priceModel           PriceModel        @default(PAY_PER_HOUR) @map("price_model")
+  pricePerHour         Decimal           @map("price_per_hour") @db.Decimal(10, 2)
+  currency             String            @default("USD")
+  successfulAudits     Int               @default(0) @map("successful_audits")
+  totalExecutions      Int               @default(0) @map("total_executions")
+  averageCompliance    Float?            @map("average_compliance")
+  language             String
+  useCases             String[]          @default([]) @map("use_cases")
+  riskClass            RiskClass         @default(MEDIUM) @map("risk_class")
+  sampleMetadata       Json?             @map("sample_metadata")
+  status               OfferStatus       @default(DRAFT)
+  publishedAt          DateTime?         @map("published_at")
+  expiresAt            DateTime?         @map("expires_at")
+  createdAt            DateTime          @default(now()) @map("created_at")
+  updatedAt            DateTime          @default(now()) @updatedAt @map("updated_at")
+  deletedAt            DateTime?         @map("deleted_at") @db.Timestamptz(6)
+  regulatoryFrameworks String[]          @default([]) @map("regulatory_frameworks")
+  dataset              Dataset           @relation(fields: [datasetId], references: [id], onDelete: Cascade)
+  supplier             Tenant            @relation("SupplierOffers", fields: [supplierTenantId], references: [id], onDelete: Cascade)
+  reviews              AccessReview[]
+  executions           PolicyExecution[]
+
+  @@index([status, publishedAt])
+  @@index([language, riskClass])
+  @@index([successfulAudits(sort: Desc)])
+  @@index([supplierTenantId])
+  @@index([pricePerHour])
+  @@index([scopeHours])
+  @@index([jurisdiction])
+  @@index([useCases], map: "access_offers_use_cases_gin_idx", type: Gin)
+  @@map("access_offers")
+}
+
+model PolicyExecution {
+  id                  String               @id @default(cuid())
+  executionId         String               @unique @map("execution_id")
+  offerId             String               @map("offer_id")
+  buyerTenantId       String               @map("buyer_tenant_id")
+  policyId            String               @map("policy_id")
+  leaseId             String               @map("lease_id")
+  allowedPurposes     String[]             @default([]) @map("allowed_purposes")
+  constraints         Json                 @default("{}")
+  hoursUsed           Float                @default(0) @map("hours_used")
+  requestCount        Int                  @default(0) @map("request_count")
+  bytesStreamed       BigInt               @default(0) @map("bytes_streamed")
+  totalCost           Decimal              @default(0) @map("total_cost") @db.Decimal(10, 2)
+  currency            String               @default("USD")
+  evidenceBundleUrl   String?              @map("evidence_bundle_url")
+  evidenceHash        String?              @map("evidence_hash")
+  evidenceGeneratedAt DateTime?            @map("evidence_generated_at")
+  status              ExecutionStatus      @default(ACTIVE)
+  startedAt           DateTime             @default(now()) @map("started_at")
+  expiresAt           DateTime             @map("expires_at")
+  completedAt         DateTime?            @map("completed_at")
+  revokedAt           DateTime?            @map("revoked_at")
+  executionTrustLevel String?              @default("SELF_REPORTED") @map("execution_trust_level")
+  deletedAt           DateTime?            @map("deleted_at") @db.Timestamptz(6)
+  idempotencyKey      String?              @map("idempotency_key")
+  review              AccessReview?
+  merkleTrees         EvidenceMerkleTree[]
+  buyer               Tenant               @relation("BuyerExecutions", fields: [buyerTenantId], references: [id], onDelete: Cascade)
+  lease               AccessLease          @relation(fields: [leaseId], references: [id], onDelete: Cascade)
+  offer               AccessOffer          @relation(fields: [offerId], references: [id], onDelete: Cascade)
+  policy              AccessPolicy         @relation(fields: [policyId], references: [id], onDelete: Cascade)
+
+  @@index([buyerTenantId])
+  @@index([offerId])
+  @@index([startedAt])
+  @@index([totalCost])
+  @@index([policyId])
+  @@index([leaseId])
+  @@index([executionTrustLevel], map: "idx_execution_trust")
+  @@index([status, expiresAt])
+  @@map("policy_executions")
+}
+
+model AccessReview {
+  id                      String          @id @default(cuid())
+  offerId                 String          @map("offer_id")
+  executionId             String          @unique @map("execution_id")
+  buyerTenantId           String          @map("buyer_tenant_id")
+  policyClarityRating     Int             @map("policy_clarity_rating")
+  accessReliabilityRating Int             @map("access_reliability_rating")
+  evidenceQualityRating   Int             @map("evidence_quality_rating")
+  regulatorAccepted       Boolean?        @map("regulator_accepted")
+  regulatorName           String?         @map("regulator_name")
+  auditSuccessful         Boolean?        @map("audit_successful")
+  auditFeedback           String?         @map("audit_feedback")
+  overallRating           Int             @map("overall_rating")
+  review                  String?
+  usedFor                 String?         @map("used_for")
+  createdAt               DateTime        @default(now()) @map("created_at")
+  buyer                   Tenant          @relation("BuyerReviews", fields: [buyerTenantId], references: [id], onDelete: Cascade)
+  execution               PolicyExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
+  offer                   AccessOffer     @relation(fields: [offerId], references: [id], onDelete: Cascade)
+
+  @@index([offerId])
+  @@index([buyerTenantId])
+  @@index([overallRating])
+  @@index([regulatorAccepted])
+  @@index([auditSuccessful])
+  @@map("access_reviews")
+}
+
+model IntegrationUsage {
+  id               String   @id @default(cuid())
+  integrationId    String   @map("integration_id")
+  integrationType  String   @map("integration_type")
+  requestCount     Int      @default(0) @map("request_count")
+  bytesTransferred BigInt   @default(0) @map("bytes_transferred")
+  errorCount       Int      @default(0) @map("error_count")
+  avgLatencyMs     Int?     @map("avg_latency_ms")
+  date             DateTime @db.Date
+  hour             Int?
+  createdAt        DateTime @default(now()) @map("created_at") @db.Timestamp(6)
+
+  @@unique([integrationId, integrationType, date, hour], map: "uq_integration_usage_id_type_date_hour")
+  @@index([date], map: "idx_integration_usage_date")
+  @@index([integrationId], map: "idx_integration_usage_integration_id")
+  @@index([integrationType], map: "idx_integration_usage_integration_type")
+  @@map("integration_usage")
+}
+
+model WatermarkConfig {
+  id              String    @id @default(cuid())
+  contractId      String    @map("contract_id")
+  algorithm       String
+  parameters      Json
+  robustnessLevel String    @map("robustness_level")
+  createdAt       DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime? @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([contractId], map: "idx_watermark_contract")
+  @@map("watermark_configs")
+}
+
+model SidecarSession {
+  id                  String      @id @default(cuid())
+  leaseId             String      @map("lease_id")
+  clientTenantId      String      @map("client_tenant_id")
+  datasetId           String?     @map("dataset_id")
+  startedAt           DateTime?   @default(now()) @map("started_at") @db.Timestamptz(6)
+  lastHeartbeat       DateTime?   @default(now()) @map("last_heartbeat") @db.Timestamptz(6)
+  endedAt             DateTime?   @map("ended_at") @db.Timestamptz(6)
+  status              String      @default("active")
+  totalBytesServed    BigInt?     @default(0) @map("total_bytes_served")
+  totalSegmentsServed Int?        @default(0) @map("total_segments_served")
+  metadata            Json?
+  createdAt           DateTime?   @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime?   @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  attestationReport   Json?       @map("attestation_report")
+  attested            Boolean?    @default(false)
+  binaryHash          String?     @map("binary_hash")
+  trustLevel          String?     @default("SELF_REPORTED") @map("trust_level")
+  deletedAt           DateTime?   @map("deleted_at") @db.Timestamptz(6)
+  lease               AccessLease @relation(fields: [leaseId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_sidecar_lease")
+
+  @@index([leaseId], map: "idx_sidecar_lease")
+  @@index([status, lastHeartbeat], map: "idx_sidecar_status")
+  @@index([clientTenantId], map: "idx_sidecar_tenant")
+  @@index([trustLevel, attested], map: "idx_sidecar_trust")
+  @@map("sidecar_sessions")
+}
+
+model EvidenceMerkleTree {
+  id             String          @id @default(cuid())
+  executionId    String          @map("execution_id")
+  rootHash       String          @map("root_hash")
+  treeData       Json            @map("tree_data")
+  leafCount      Int             @map("leaf_count")
+  proofSizeBytes Int?            @map("proof_size_bytes")
+  createdAt      DateTime?       @default(now()) @map("created_at") @db.Timestamptz(6)
+  verifiedAt     DateTime?       @map("verified_at") @db.Timestamptz(6)
+  execution      PolicyExecution @relation(fields: [executionId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_merkle_execution")
+
+  @@index([executionId], map: "idx_merkle_execution")
+  @@index([rootHash], map: "idx_merkle_root")
+  @@map("evidence_merkle_trees")
+}
+
+model WatermarkDetection {
+  id                 String    @id @default(cuid())
+  audioHash          String    @map("audio_hash")
+  detectedContractId String?   @map("detected_contract_id")
+  confidenceScore    Float     @map("confidence_score")
+  detectionMethod    String    @map("detection_method")
+  detectedAt         DateTime? @default(now()) @map("detected_at") @db.Timestamptz(6)
+  metadata           Json?
+  createdAt          DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  detectionSignature String?   @map("detection_signature")
+  verified           Boolean?  @default(false)
+
+  @@index([detectedContractId], map: "idx_detection_contract")
+  @@index([audioHash], map: "idx_detection_hash")
+  @@index([detectedAt(sort: Desc)], map: "idx_detection_timestamp")
+  @@map("watermark_detections")
+}
+
+model SidecarMetric {
+  id               BigInt    @id @default(autoincrement())
+  sidecarSessionId String    @map("sidecar_session_id")
+  metricType       String    @map("metric_type")
+  metricValue      Float     @map("metric_value")
+  windowStart      DateTime  @map("window_start") @db.Timestamptz(6)
+  windowEnd        DateTime  @map("window_end") @db.Timestamptz(6)
+  createdAt        DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([sidecarSessionId, windowStart(sort: Desc)], map: "idx_metrics_session")
+  @@index([metricType, windowStart(sort: Desc)], map: "idx_metrics_type")
+  @@map("sidecar_metrics")
+}
+
+model ExecutionContractSnapshot {
+  id           String    @id @default(cuid())
+  executionId  String    @map("execution_id")
+  rawContract  Json      @map("raw_contract")
+  contractHash String    @map("contract_hash")
+  createdAt    DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([executionId], map: "idx_snapshot_execution")
+  @@index([contractHash], map: "idx_snapshot_hash")
+  @@map("execution_contract_snapshots")
+}
+
+model BillingSnapshot {
+  id                    BigInt   @id @default(autoincrement())
+  tenantId              String   @map("tenant_id")
+  sidecarUrl            String   @map("sidecar_url")
+  snapshotDate          DateTime @map("snapshot_date") @db.Timestamptz(6)
+  period                String
+  dicomImages           Float    @default(0) @map("dicom_images")
+  fhirResources         Float    @default(0) @map("fhir_resources")
+  audioMinutes          Float    @default(0) @map("audio_minutes")
+  textPages             Float    @default(0) @map("text_pages")
+  bytesTotal            Float    @default(0) @map("bytes_total")
+  redactionsTotal       Float    @default(0) @map("redactions_total")
+  sidecarVersion        String?  @map("sidecar_version")
+  ingestionMode         String?  @map("ingestion_mode")
+  dataPipeline          String?  @map("data_pipeline")
+  featureDicomOcr       Boolean  @default(false) @map("feature_dicom_ocr")
+  featureFhirNlp        Boolean  @default(false) @map("feature_fhir_nlp")
+  featureAudioRedaction Boolean  @default(false) @map("feature_audio_redaction")
+  featurePrefetch       Boolean  @default(false) @map("feature_prefetch")
+  createdAt             DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  tenant                Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_billing_snapshot_tenant")
+
+  @@index([snapshotDate], map: "idx_billing_snapshots_snapshot_date")
+  @@index([tenantId, snapshotDate(sort: Desc)], map: "idx_billing_snapshots_tenant_date")
+  @@index([tenantId, period], map: "idx_billing_snapshots_tenant_period")
+  @@map("billing_snapshots")
+}
+
+model IdempotencyRecord {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  idempotencyKey String    @map("idempotency_key") @db.VarChar(255)
+  datasetId      String    @map("dataset_id") @db.Uuid
+  tenantId       String    @map("tenant_id") @db.Uuid
+  requestHash    String    @map("request_hash") @db.VarChar(64)
+  jobId          String    @map("job_id") @db.Uuid
+  response       Json
+  createdAt      DateTime? @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt      DateTime  @map("expires_at") @db.Timestamptz(6)
+
+  @@unique([idempotencyKey, datasetId, tenantId], map: "idempotency_records_unique")
+  @@index([expiresAt], map: "idx_idempotency_records_expires_at")
+  @@index([jobId], map: "idx_idempotency_records_job_id")
+  @@index([idempotencyKey], map: "idx_idempotency_records_key")
+  @@map("idempotency_records")
+}
+
+model audit_logs {
+  id           String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  user_id      String
+  tenant_id    String
+  action       String    @db.VarChar(255)
+  resource     String    @db.VarChar(255)
+  resource_id  String    @db.VarChar(255)
+  purpose      String?
+  metadata     Json?
+  ip_address   String?   @db.VarChar(45)
+  user_agent   String?
+  created_at   DateTime? @default(now()) @db.Timestamptz(6)
+  xase_tenants Tenant    @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "audit_logs_tenant_fk")
+  users        User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "audit_logs_user_fk")
+
+  @@index([action, created_at(sort: Desc)], map: "idx_audit_logs_action")
+  @@index([created_at], map: "idx_audit_logs_created_at")
+  @@index([resource, resource_id], map: "idx_audit_logs_resource")
+  @@index([tenant_id, created_at(sort: Desc)], map: "idx_audit_logs_tenant")
+  @@index([user_id, created_at(sort: Desc)], map: "idx_audit_logs_user")
+}
+
+/// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
+model telemetry_logs {
+  id                 BigInt    @id @default(autoincrement())
+  sidecar_session_id String
+  segment_id         String
+  timestamp          DateTime  @default(now()) @db.Timestamptz(6)
+  event_type         String
+  bytes_processed    BigInt?
+  latency_ms         Int?
+  metadata           Json?
+  created_at         DateTime? @default(now()) @db.Timestamptz(6)
+
+  @@index([event_type], map: "idx_telemetry_event_type")
+  @@index([sidecar_session_id, timestamp(sort: Desc)], map: "idx_telemetry_session")
+  @@index([timestamp(sort: Desc)], map: "idx_telemetry_timestamp")
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model xase_decision_records {
+  id                       String                     @id
+  tenantId                 String
+  transactionId            String                     @unique
+  policyId                 String?
+  policyVersion            String?
+  inputHash                String
+  outputHash               String
+  contextHash              String?
+  recordHash               String                     @unique
+  previousHash             String?
+  decisionType             String?
+  confidence               Float?
+  processingTime           Int?
+  inputPayload             String?
+  outputPayload            String?
+  contextPayload           String?
+  storageUrl               String?
+  isVerified               Boolean                    @default(true)
+  verifiedAt               DateTime                   @default(now())
+  timestamp                DateTime                   @default(now())
+  createdAt                DateTime                   @default(now())
+  hasHumanIntervention     Boolean?                   @default(false)
+  finalDecisionSource      String?                    @default("AI")
+  xase_tenants             Tenant                     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  xase_human_interventions xase_human_interventions[]
+
+  @@index([hasHumanIntervention])
+  @@index([policyId])
+  @@index([recordHash])
+  @@index([tenantId])
+  @@index([timestamp(sort: Desc)])
+  @@index([transactionId])
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model xase_human_interventions {
+  id                    String                   @id
+  tenantId              String
+  record_id             String
+  action                xase_intervention_action
+  actorUserId           String?
+  actorName             String?
+  actorEmail            String?
+  actorRole             String?
+  reason                String?
+  notes                 String?
+  metadata              String?
+  newOutcome            String?
+  previousOutcome       String?
+  ipAddress             String?
+  userAgent             String?
+  timestamp             DateTime                 @default(now())
+  created_at            DateTime                 @default(now())
+  xase_decision_records xase_decision_records    @relation(fields: [record_id], references: [id], onDelete: Cascade, map: "xase_human_interventions_recordId_fkey")
+  xase_tenants          Tenant                   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  @@index([action])
+  @@index([actorUserId])
+  @@index([created_at])
+  @@index([record_id], map: "xase_human_interventions_recordId_idx")
+  @@index([record_id])
+  @@index([tenantId])
+  @@index([timestamp(sort: Desc)])
+}
+
+model xase_invoices {
+  id                 String              @id @db.VarChar(255)
+  subscription_id    String?             @db.VarChar(255)
+  stripe_invoice_id  String              @unique @db.VarChar(255)
+  stripe_customer_id String              @db.VarChar(255)
+  amount_due         Decimal             @db.Decimal(10, 2)
+  amount_paid        Decimal             @db.Decimal(10, 2)
+  currency           String              @db.VarChar(10)
+  status             String              @db.VarChar(50)
+  invoice_pdf        String?             @db.VarChar(500)
+  hosted_invoice_url String?             @db.VarChar(500)
+  period_start       DateTime            @db.Timestamp(6)
+  period_end         DateTime            @db.Timestamp(6)
+  created_at         DateTime?           @default(now()) @db.Timestamp(6)
+  updated_at         DateTime?           @default(now()) @db.Timestamp(6)
+  xase_subscriptions xase_subscriptions? @relation(fields: [subscription_id], references: [id], onUpdate: NoAction, map: "fk_invoice_subscription")
+
+  @@index([status], map: "idx_invoices_status")
+  @@index([stripe_customer_id], map: "idx_invoices_stripe_customer_id")
+  @@index([subscription_id], map: "idx_invoices_subscription_id")
+}
+
+model xase_sql_migrations {
+  id         Int      @id @default(autoincrement())
+  filename   String   @unique
+  applied_at DateTime @default(now()) @db.Timestamptz(6)
+}
+
+model xase_storage_snapshots {
+  id                 String       @id
+  tenant_id          String
+  dataset_id         String?
+  lease_id           String?
+  storage_bytes      BigInt       @default(0)
+  storage_gb         Decimal      @default(0) @db.Decimal(15, 4)
+  snapshot_type      String       @default("PERIODIC")
+  snapshot_timestamp DateTime     @default(now()) @db.Timestamp(6)
+  billing_period     String?
+  hours_in_period    Decimal?     @default(1.0) @db.Decimal(10, 2)
+  gb_hours           Decimal?     @default(dbgenerated("(storage_gb * hours_in_period)")) @db.Decimal(15, 4)
+  metadata           Json?
+  created_at         DateTime     @default(now()) @db.Timestamp(6)
+  xase_datasets      Dataset?     @relation(fields: [dataset_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_storage_dataset")
+  xase_access_leases AccessLease? @relation(fields: [lease_id], references: [id], onUpdate: NoAction, map: "fk_storage_lease")
+  xase_tenants       Tenant       @relation(fields: [tenant_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_storage_tenant")
+
+  @@index([billing_period], map: "idx_storage_snapshots_billing_period")
+  @@index([dataset_id], map: "idx_storage_snapshots_dataset")
+  @@index([lease_id], map: "idx_storage_snapshots_lease")
+  @@index([tenant_id], map: "idx_storage_snapshots_tenant")
+  @@index([snapshot_timestamp], map: "idx_storage_snapshots_timestamp")
+  @@index([snapshot_type], map: "idx_storage_snapshots_type")
+}
+
+model xase_subscriptions {
+  id                     String          @id @db.VarChar(255)
+  user_id                String          @db.VarChar(255)
+  tenant_id              String?         @db.VarChar(255)
+  stripe_subscription_id String          @unique @db.VarChar(255)
+  stripe_customer_id     String          @db.VarChar(255)
+  stripe_price_id        String          @db.VarChar(255)
+  status                 String          @db.VarChar(50)
+  plan_tier              String          @db.VarChar(50)
+  current_period_start   DateTime        @db.Timestamp(6)
+  current_period_end     DateTime        @db.Timestamp(6)
+  cancel_at_period_end   Boolean?        @default(false)
+  canceled_at            DateTime?       @db.Timestamp(6)
+  created_at             DateTime?       @default(now()) @db.Timestamp(6)
+  updated_at             DateTime?       @default(now()) @db.Timestamp(6)
+  xase_invoices          xase_invoices[]
+  users                  User            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction, map: "fk_subscription_user")
+
+  @@index([status], map: "idx_subscriptions_status")
+  @@index([stripe_customer_id], map: "idx_subscriptions_stripe_customer_id")
+  @@index([tenant_id], map: "idx_subscriptions_tenant_id")
+  @@index([user_id], map: "idx_subscriptions_user_id")
+}
+
+enum XaseRole {
+  OWNER
+  ADMIN
+  VIEWER
+
+  @@map("xase_roles")
+}
+
+enum CloudProvider {
+  AWS_S3
+  GCS
+  AZURE_BLOB
+  SNOWFLAKE
+  BIGQUERY
+
+  @@map("cloud_provider")
+}
+
+enum IntegrationStatus {
+  ACTIVE
+  ERROR
+  DISABLED
+  EXPIRED
+
+  @@map("integration_status")
+}
+
+enum ConnectorType {
+  POSTGRES
+  MYSQL
+  MSSQL
+  ORACLE
+  MONGODB
+  REDIS
+  HTTP_API
+
+  @@map("connector_type")
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  CANCELLED
+
+  @@map("xase_tenant_status")
+}
+
+enum OrganizationType {
+  SUPPLIER
+  CLIENT
+  PLATFORM_ADMIN
+
+  @@map("organization_type")
+}
+
+enum ConsentStatus {
+  PENDING
+  VERIFIED_BY_XASE
+  SELF_DECLARED
+  MISSING
+  REVOKED
+
+  @@map("consent_status")
+}
+
+enum ProcessingStatus {
+  PENDING
+  QUEUED
+  PROCESSING
+  COMPLETED
+  FAILED
+
+  @@map("processing_status")
+}
+
+enum DatasetStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+  DELETED
+
+  @@map("dataset_status")
+}
+
+enum DataSourceStatus {
+  ACTIVE
+  SYNCING
+  ERROR
+  REMOVED
+
+  @@map("data_source_status")
+}
+
+enum PolicyStatus {
+  ACTIVE
+  EXPIRED
+  REVOKED
+  SUSPENDED
+
+  @@map("policy_status")
+}
 
 enum LeaseStatus {
   ACTIVE
   EXPIRED
   REVOKED
+
   @@map("lease_status")
-}
-
-model AccessLease {
-  id             String      @id @default(cuid())
-  leaseId        String      @unique @map("lease_id")
-  datasetId      String      @map("dataset_id")
-  clientTenantId String      @map("client_tenant_id")
-  policyId       String      @map("policy_id")
-
-  status         LeaseStatus @default(ACTIVE)
-  issuedAt       DateTime    @default(now()) @map("issued_at")
-  expiresAt      DateTime    @map("expires_at")
-  revokedAt      DateTime?   @map("revoked_at")
-  revokedReason  String?     @db.Text @map("revoked_reason")
-  
-  // Auto-renew support (for long H100/H200 training jobs)
-  ttlSeconds     Int         @default(28800) @map("ttl_seconds") // 8h default, max 259200 (72h)
-  autoRenew      Boolean     @default(false) @map("auto_renew")
-  maxRenewals    Int         @default(0) @map("max_renewals")
-  renewalsCount  Int         @default(0) @map("renewals_count")
-  budgetLimit    Decimal?    @db.Decimal(10, 2) @map("budget_limit")
-  lastRenewedAt  DateTime?   @map("last_renewed_at")
-  
-  // Alert tracking
-  alert30minSent Boolean     @default(false) @map("alert_30min_sent")
-  alert5minSent  Boolean     @default(false) @map("alert_5min_sent")
-  
-  // Soft delete
-  deletedAt      DateTime?   @map("deleted_at")
-
-  // Relations
-  dataset        Dataset     @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  policy         AccessPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  executions     PolicyExecution[]
-  sidecarSessions SidecarSession[]
-
-  @@index([datasetId])
-  @@index([clientTenantId])
-  @@index([policyId])
-  @@index([status])
-  @@index([expiresAt])
-  @@index([deletedAt])
-  @@map("xase_access_leases")
 }
 
 enum AccessAction {
@@ -710,16 +1206,17 @@ enum AccessAction {
   STREAM_ACCESS
   METADATA_VIEW
   POLICY_CHECK
+
   @@map("access_action")
 }
 
-// New multi-modal enums (DB types created via SQL migration)
 enum DataType {
   AUDIO
   IMAGE
   TEXT
   TIMESERIES
   TABULAR
+
   @@map("data_type")
 }
 
@@ -732,197 +1229,16 @@ enum DataFormat {
   HL7_V2
   CSV
   PARQUET
+
   @@map("data_format")
 }
 
-model CreditLedger {
-  id              String   @id @default(cuid())
-  tenantId        String   @map("organization_id")
-  amount          Decimal  @db.Decimal(15, 4)
-  eventType       String   @map("event_type")
-  description     String?  @db.Text
-  metadata        Json?
-  balanceAfter    Decimal  @db.Decimal(15, 4) @map("balance_after")
-  createdAt       DateTime @default(now()) @map("created_at")
-  
-  tenant    Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  @@index([tenantId])
-  @@index([createdAt])
-  @@map("xase_credit_ledger")
-}
-
-// ========================================
-// DIFFERENTIAL PRIVACY - EPSILON BUDGET
-// ========================================
-
-model EpsilonQuery {
-  id         String   @id @default(cuid())
-  queryId    String   @unique @map("query_id")
-  tenantId   String   @map("tenant_id")
-  datasetId  String   @map("dataset_id")
-  epsilon    Float
-  userId     String   @map("user_id")
-  purpose    String
-  timestamp  DateTime @default(now())
-  archived   Boolean  @default(false)
-  archivedAt DateTime? @map("archived_at")
-  
-  @@index([tenantId, datasetId])
-  @@index([timestamp])
-  @@index([archived])
-  @@map("epsilon_queries")
-}
-
-model EpsilonBudgetConfig {
-  id            String   @id @default(cuid())
-  tenantId      String   @map("tenant_id")
-  datasetId     String   @map("dataset_id")
-  dailyBudget   Float    @default(1.0) @map("daily_budget")
-  weeklyBudget  Float    @default(5.0) @map("weekly_budget")
-  monthlyBudget Float    @default(20.0) @map("monthly_budget")
-  resetPeriod   String   @default("daily") @map("reset_period")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  
-  @@unique([tenantId, datasetId])
-  @@index([tenantId])
-  @@map("epsilon_budget_configs")
-}
-
-model DataConnector {
-  id                        String   @id @default(cuid())
-  tenantId                  String   @map("tenant_id")
-  name                      String
-  type                      ConnectorType?
-  
-  // Connection details (ENCRYPTED)
-  encryptedConnectionString String?  @map("encrypted_connection_string") @db.Text
-  encryptedCredentials      String?  @map("encrypted_credentials") @db.Text
-  
-  // Connection config
-  host                      String?
-  port                      Int?
-  database                  String?
-  schema                    String?
-  
-  // Status
-  status                    IntegrationStatus @default(ACTIVE)
-  lastTestedAt              DateTime? @map("last_tested_at")
-  lastTestStatus            String?  @map("last_test_status")
-  lastTestError             String?  @db.Text @map("last_test_error")
-  
-  // Metadata
-  createdAt                 DateTime @default(now()) @map("created_at")
-  updatedAt                 DateTime @updatedAt @map("updated_at")
-  
-  // Relations
-  tenant                    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  datasets                  Dataset[]
-  
-  @@unique([tenantId, type, name])
-  @@index([tenantId])
-  @@map("data_connectors")
-}
-
-model CloudIntegration {
-  id                        String   @id @default(cuid())
-  tenantId                  String   @map("tenant_id")
-  
-  // Identification
-  name                      String
-  provider                  CloudProvider
-  status                    IntegrationStatus @default(ACTIVE)
-  
-  // OAuth Tokens (ENCRYPTED)
-  encryptedAccessToken      String?  @map("encrypted_access_token") @db.Text
-  encryptedRefreshToken     String?  @map("encrypted_refresh_token") @db.Text
-  tokenExpiresAt            DateTime? @map("token_expires_at")
-  scopes                    String[] @default([])
-  
-  // Provider-specific metadata
-  accountName               String?  @map("account_name")
-  projectId                 String?  @map("project_id")
-  subscriptionId            String?  @map("subscription_id")
-  region                    String?
-  
-  // Health & Testing
-  lastTestedAt              DateTime? @map("last_tested_at")
-  lastTestStatus            String?  @map("last_test_status")
-  lastTestError             String?  @db.Text @map("last_test_error")
-  
-  // Metadata
-  createdAt                 DateTime @default(now()) @map("created_at")
-  updatedAt                 DateTime @updatedAt @map("updated_at")
-  
-  // Relations
-  tenant                    Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  datasets                  Dataset[]
-  dataSources               DataSource[]
-  
-  @@unique([tenantId, provider, name])
-  @@index([tenantId])
-  @@index([status])
-  @@index([provider])
-  @@map("cloud_integrations")
-}
-
-model OAuthState {
-  id           String   @id @default(cuid())
-  state        String   @unique
-  tenantId     String   @map("tenant_id")
-  provider     CloudProvider
-  
-  // Context for reconstruction
-  redirectPath String?  @map("redirect_path")
-  metadata     Json?
-  
-  // Security
-  expiresAt    DateTime @map("expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  
-  @@index([state])
-  @@index([expiresAt])
-  @@index([tenantId])
-  @@map("oauth_states")
-}
-
-model OnboardingProgress {
-  id                 String   @id @default(cuid())
-  tenantId           String   @unique @map("tenant_id")
-  
-  // Steps completed
-  roleSelected       Boolean  @default(false) @map("role_selected")
-  integrationSetup   Boolean  @default(false) @map("integration_setup")
-  firstDatasetAdded  Boolean  @default(false) @map("first_dataset_added")
-  firstPolicyCreated Boolean  @default(false) @map("first_policy_created")
-  firstLeaseIssued   Boolean  @default(false) @map("first_lease_issued")
-  
-  // Metadata
-  currentStep        Int      @default(1) @map("current_step")
-  completedAt        DateTime? @map("completed_at")
-  skippedAt          DateTime? @map("skipped_at")
-  
-  // Tracking
-  createdAt          DateTime @default(now()) @map("created_at")
-  updatedAt          DateTime @updatedAt @map("updated_at")
-  
-  // Relations
-  tenant             Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  @@map("onboarding_progress")
-}
-
-// ========================================
-// GOVERNED ACCESS MARKETPLACE (Canonical Xase)
-// ========================================
-
 enum RiskClass {
-  LOW           // Public data, low sensitivity
-  MEDIUM        // Business data, moderate sensitivity
-  HIGH          // PII, healthcare, financial
-  CRITICAL      // Highly regulated (HIPAA PHI, etc)
-  
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+
   @@map("risk_class")
 }
 
@@ -932,7 +1248,7 @@ enum OfferStatus {
   PAUSED
   EXPIRED
   REVOKED
-  
+
   @@map("offer_status")
 }
 
@@ -942,514 +1258,30 @@ enum ExecutionStatus {
   EXPIRED
   REVOKED
   AUDITED
-  
+
   @@map("execution_status")
 }
 
 enum PriceModel {
-  PAY_PER_HOUR           // Charge per hour of usage
-  PAY_PER_REQUEST        // Charge per API request
-  FIXED_LEASE            // Fixed price for time-boxed access
-  TIERED                 // Volume-based pricing tiers
-  
+  PAY_PER_HOUR
+  PAY_PER_REQUEST
+  FIXED_LEASE
+  TIERED
+
   @@map("price_model")
 }
 
-model AccessOffer {
-  id              String   @id @default(cuid())
-  offerId         String   @unique @map("offer_id")
-  
-  // References
-  datasetId       String   @map("dataset_id")
-  supplierTenantId String  @map("supplier_tenant_id")
-  
-  // Offer details
-  title           String
-  description     String   @db.Text
-  
-  // Access contract (executable rules)
-  allowedPurposes String[] @default([]) @map("allowed_purposes")
-  constraints     Json     @default("{}") @db.JsonB
-  
-  // Legal guarantees
-  jurisdiction    String
-  evidenceFormat  String   @default("CRYPTOGRAPHIC_AUDIT_BUNDLE") @map("evidence_format")
-  complianceLevel String   @default("SELF_DECLARED") @map("compliance_level")
-  
-  // Scope
-  scopeHours      Float    @map("scope_hours")
-  scopeRecordings Int?     @map("scope_recordings")
-  
-  // Pricing
-  priceModel      PriceModel @default(PAY_PER_HOUR) @map("price_model")
-  pricePerHour    Decimal    @db.Decimal(10, 2) @map("price_per_hour")
-  currency        String     @default("USD")
-  
-  // Trust signals (precedent, not ratings)
-  successfulAudits Int      @default(0) @map("successful_audits")
-  totalExecutions  Int      @default(0) @map("total_executions")
-  averageCompliance Float?  @map("average_compliance")
-  
-  // Metadata for discovery
-  language        String
-  useCases        String[] @default([]) @map("use_cases")
-  riskClass       RiskClass @default(MEDIUM) @map("risk_class")
-  regulatoryFrameworks String[] @default([]) @map("regulatory_frameworks")
-  
-  // Sample metadata (NOT files, just metadata)
-  sampleMetadata  Json?    @db.JsonB @map("sample_metadata")
-  
-  // Lifecycle
-  status          OfferStatus @default(DRAFT)
-  publishedAt     DateTime?   @map("published_at")
-  expiresAt       DateTime?   @map("expires_at")
-  // Soft delete
-  deletedAt         DateTime? @map("deleted_at")
-  
-  createdAt       DateTime    @default(now()) @map("created_at")
-  updatedAt       DateTime    @updatedAt @map("updated_at")
-  
-  // Relations
-  dataset         Dataset     @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  supplier        Tenant      @relation("SupplierOffers", fields: [supplierTenantId], references: [id], onDelete: Cascade)
-  executions      PolicyExecution[]
-  reviews         AccessReview[]
-  
-  @@index([status, publishedAt])
-  @@index([language, riskClass])
-  @@index([successfulAudits])
-  @@index([supplierTenantId])
-  @@index([pricePerHour])
-  @@index([scopeHours])
-  @@index([jurisdiction])
-  @@index([deletedAt])
-  @@map("access_offers")
+enum voice_access_action {
+  BATCH_DOWNLOAD
+  STREAM_ACCESS
+  METADATA_VIEW
+  POLICY_CHECK
 }
 
-model PolicyExecution {
-  id              String   @id @default(cuid())
-  executionId     String   @unique @map("execution_id")
-  
-  // References
-  offerId         String   @map("offer_id")
-  buyerTenantId   String   @map("buyer_tenant_id")
-  policyId        String   @map("policy_id")
-  leaseId         String   @map("lease_id")
-  
-  // Access contract snapshot
-  allowedPurposes String[] @default([]) @map("allowed_purposes")
-  constraints     Json     @default("{}") @db.JsonB
-  
-  // Usage tracking (runtime!)
-  hoursUsed       Float    @default(0) @map("hours_used")
-  requestCount    Int      @default(0) @map("request_count")
-  bytesStreamed   BigInt   @default(0) @map("bytes_streamed")
-  
-  // Financial
-  totalCost       Decimal  @default(0) @db.Decimal(10, 2) @map("total_cost")
-  currency        String   @default("USD")
-  
-  // Evidence generation
-  evidenceBundleUrl String? @map("evidence_bundle_url")
-  evidenceHash      String?   @map("evidence_hash")
-  evidenceGeneratedAt DateTime? @map("evidence_generated_at")
-  
-  // Trust layer
-  executionTrustLevel String    @default("SELF_REPORTED") @map("execution_trust_level")
-  
-  // Billing atomicity
-  idempotencyKey      String?   @unique @map("idempotency_key")
-  
-  // Soft delete
-  deletedAt           DateTime? @map("deleted_at")
-  
-  // Timestamps
-  startedAt       DateTime  @default(now()) @map("started_at")
-  expiresAt       DateTime        @map("expires_at")
-  completedAt     DateTime?       @map("completed_at")
-  revokedAt       DateTime?       @map("revoked_at")
-  
-  // Relations
-  offer           AccessOffer       @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  buyer           Tenant            @relation("BuyerExecutions", fields: [buyerTenantId], references: [id], onDelete: Cascade)
-  policy          AccessPolicy @relation(fields: [policyId], references: [id], onDelete: Cascade)
-  lease           AccessLease  @relation(fields: [leaseId], references: [id], onDelete: Cascade)
-  review          AccessReview?
-  merkleTrees     EvidenceMerkleTree[]
-  snapshots       ExecutionContractSnapshot[]
-  
-  @@index([buyerTenantId])
-  @@index([offerId])
-  @@index([startedAt])
-  @@index([totalCost])
-  @@index([policyId])
-  @@index([leaseId])
-  @@index([executionTrustLevel])
-  @@index([idempotencyKey])
-  @@index([deletedAt])
-  @@map("policy_executions")
-}
-
-model AccessReview {
-  id              String   @id @default(cuid())
-  offerId         String   @map("offer_id")
-  executionId     String   @unique @map("execution_id")
-  buyerTenantId   String   @map("buyer_tenant_id")
-  
-  // Review metrics (about LEGAL UTILITY, not "nice audio")
-  policyClarityRating Int  @map("policy_clarity_rating")
-  accessReliabilityRating Int @map("access_reliability_rating")
-  evidenceQualityRating Int @map("evidence_quality_rating")
-  
-  // Regulator acceptance
-  regulatorAccepted Boolean? @map("regulator_accepted")
-  regulatorName     String?  @map("regulator_name")
-  
-  // Audit outcome
-  auditSuccessful   Boolean? @map("audit_successful")
-  auditFeedback     String?  @db.Text @map("audit_feedback")
-  
-  // Overall
-  overallRating     Int      @map("overall_rating")
-  review            String?  @db.Text
-  usedFor           String?  @map("used_for")
-  
-  createdAt         DateTime @default(now()) @map("created_at")
-  
-  // Relations
-  offer             AccessOffer @relation(fields: [offerId], references: [id], onDelete: Cascade)
-  execution         PolicyExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
-  buyer             Tenant @relation("BuyerReviews", fields: [buyerTenantId], references: [id], onDelete: Cascade)
-  
-  @@index([offerId])
-  @@index([buyerTenantId])
-  @@index([overallRating])
-  @@index([regulatorAccepted])
-  @@index([auditSuccessful])
-  @@map("access_reviews")
-}
-
-model IntegrationUsage {
-  id                  String   @id @default(cuid())
-  integrationId       String   @map("integration_id")
-  integrationType     String   @map("integration_type")
-  
-  // Metrics
-  requestCount        Int      @default(0) @map("request_count")
-  bytesTransferred    BigInt   @default(0) @map("bytes_transferred")
-  errorCount          Int      @default(0) @map("error_count")
-  avgLatencyMs        Int?     @map("avg_latency_ms")
-  
-  // Time bucket
-  date                DateTime @db.Date
-  hour                Int?
-  
-  // Metadata
-  createdAt           DateTime @default(now()) @map("created_at")
-  
-  @@unique([integrationId, integrationType, date, hour])
-  @@index([integrationId])
-  @@index([date])
-  @@index([integrationType])
-  @@map("integration_usage")
-}
-
-// ========================================
-// SIDECAR ARCHITECTURE
-// ========================================
-
-model WatermarkConfig {
-  id              String   @id @default(cuid())
-  contractId      String   @map("contract_id")
-  algorithm       String   // 'spread_spectrum_v1'
-  parameters      Json
-  robustnessLevel String   @map("robustness_level")
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-  
-  @@index([contractId])
-  @@map("watermark_configs")
-}
-
-// TelemetryLog moved to TimescaleDB for high-volume writes
-// Only aggregated metrics remain in Prisma (SidecarMetric)
-
-model SidecarSession {
-  id                   String    @id @default(cuid())
-  leaseId              String    @map("lease_id")
-  clientTenantId       String    @map("client_tenant_id")
-  datasetId            String?   @map("dataset_id")
-  startedAt            DateTime  @default(now()) @map("started_at")
-  lastHeartbeat        DateTime  @default(now()) @map("last_heartbeat")
-  endedAt              DateTime? @map("ended_at")
-  status               String    @default("active")
-  totalBytesServed     BigInt    @default(0) @map("total_bytes_served")
-  totalSegmentsServed  Int       @default(0) @map("total_segments_served")
-  metadata             Json?
-  
-  // Trust layer
-  attestationReport    Json?     @map("attestation_report")
-  attested             Boolean   @default(false)
-  binaryHash           String?   @map("binary_hash")
-  trustLevel           String    @default("SELF_REPORTED") @map("trust_level")
-  
-  // Soft delete
-  deletedAt            DateTime? @map("deleted_at")
-  
-  createdAt            DateTime  @default(now()) @map("created_at")
-  updatedAt            DateTime  @updatedAt @map("updated_at")
-  
-  lease                AccessLease @relation(fields: [leaseId], references: [id], onDelete: Cascade)
-  metrics              SidecarMetric[]
-  
-  @@index([leaseId])
-  @@index([clientTenantId])
-  @@index([status, lastHeartbeat])
-  @@index([trustLevel, attested])
-  @@index([deletedAt])
-  @@map("sidecar_sessions")
-}
-
-model EvidenceMerkleTree {
-  id              String    @id @default(cuid())
-  executionId     String    @map("execution_id")
-  rootHash        String    @map("root_hash")
-  treeData        Json      @map("tree_data")
-  leafCount       Int       @map("leaf_count")
-  proofSizeBytes  Int?      @map("proof_size_bytes")
-  createdAt       DateTime  @default(now()) @map("created_at")
-  verifiedAt      DateTime? @map("verified_at")
-  
-  execution       PolicyExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
-  
-  @@index([executionId])
-  @@index([rootHash])
-  @@map("evidence_merkle_trees")
-}
-
-model WatermarkDetection {
-  id                  String   @id @default(cuid())
-  audioHash           String   @map("audio_hash")
-  detectedContractId  String?  @map("detected_contract_id")
-  confidenceScore     Float    @map("confidence_score")
-  detectionMethod     String   @map("detection_method")
-  detectedAt          DateTime @default(now()) @map("detected_at")
-  metadata            Json?
-  
-  // Signature verification
-  detectionSignature  String?  @map("detection_signature")
-  verified            Boolean  @default(false)
-  
-  createdAt           DateTime @default(now()) @map("created_at")
-  
-  @@index([detectedContractId])
-  @@index([audioHash])
-  @@index([detectedAt])
-  @@map("watermark_detections")
-}
-
-model SidecarMetric {
-  id                 BigInt   @id @default(autoincrement())
-  sidecarSessionId   String   @map("sidecar_session_id")
-  metricType         String   @map("metric_type")
-  metricValue        Float    @map("metric_value")
-  windowStart        DateTime @map("window_start")
-  windowEnd          DateTime @map("window_end")
-  createdAt          DateTime @default(now()) @map("created_at")
-  
-  session            SidecarSession @relation(fields: [sidecarSessionId], references: [id], onDelete: Cascade)
-  
-  @@index([sidecarSessionId, windowStart])
-  @@index([metricType, windowStart])
-  @@map("sidecar_metrics")
-}
-
-model ExecutionContractSnapshot {
-  id              String   @id @default(cuid())
-  executionId     String   @map("execution_id")
-  rawContract     Json     @map("raw_contract")
-  contractHash    String   @map("contract_hash")
-  createdAt       DateTime @default(now()) @map("created_at")
-  
-  execution       PolicyExecution @relation(fields: [executionId], references: [id], onDelete: Cascade)
-  
-  @@index([executionId])
-  @@index([contractHash])
-  @@map("execution_contract_snapshots")
-}
-
-model BillingSnapshot {
-  id                   BigInt   @id @default(autoincrement())
-  tenantId             String   @map("tenant_id")
-  sidecarUrl           String   @map("sidecar_url")
-  snapshotDate         DateTime @map("snapshot_date")
-  period               String   // YYYY-MM format
-  
-  // Billing counters
-  dicomImages          Float    @default(0) @map("dicom_images")
-  fhirResources        Float    @default(0) @map("fhir_resources")
-  audioMinutes         Float    @default(0) @map("audio_minutes")
-  textPages            Float    @default(0) @map("text_pages")
-  bytesTotal           Float    @default(0) @map("bytes_total")
-  redactionsTotal      Float    @default(0) @map("redactions_total")
-  
-  // Sidecar metadata
-  sidecarVersion       String?  @map("sidecar_version")
-  ingestionMode        String?  @map("ingestion_mode")
-  dataPipeline         String?  @map("data_pipeline")
-  
-  // Features enabled
-  featureDicomOcr      Boolean  @default(false) @map("feature_dicom_ocr")
-  featureFhirNlp       Boolean  @default(false) @map("feature_fhir_nlp")
-  featureAudioRedaction Boolean @default(false) @map("feature_audio_redaction")
-  featurePrefetch      Boolean  @default(false) @map("feature_prefetch")
-  
-  createdAt            DateTime @default(now()) @map("created_at")
-  
-  tenant               Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  
-  @@index([tenantId, period])
-  @@index([snapshotDate])
-  @@map("billing_snapshots")
-}
-
-// ========================================
-// WEBHOOKS
-// ========================================
-
-model Webhook {
-  id          String   @id @default(cuid())
-  tenantId    String   @map("tenant_id")
-  url         String
-  secret      String
-  events      String[] // Array of event types
-  isActive    Boolean  @default(true) @map("is_active")
-  description String?
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  
-  deliveries  WebhookDelivery[]
-  
-  @@index([tenantId])
-  @@index([isActive])
-  @@map("webhooks")
-}
-
-model WebhookDelivery {
-  id             String   @id @default(cuid())
-  webhookId      String   @map("webhook_id")
-  eventType      String   @map("event_type")
-  payload        String   @db.Text
-  status         String   @default("pending") // pending, success, failed
-  attempts       Int      @default(0)
-  lastAttemptAt  DateTime? @map("last_attempt_at")
-  nextRetryAt    DateTime? @map("next_retry_at")
-  responseStatus Int?     @map("response_status")
-  responseBody   String?  @db.Text @map("response_body")
-  error          String?  @db.Text
-  
-  createdAt      DateTime @default(now()) @map("created_at")
-  
-  webhook        Webhook  @relation(fields: [webhookId], references: [id], onDelete: Cascade)
-  
-  @@index([webhookId])
-  @@index([status])
-  @@index([nextRetryAt])
-  @@index([createdAt])
-  @@map("webhook_deliveries")
-}
-
-// ========================================
-// DATA PREPARATION PIPELINE
-// ========================================
-
-model PreparationJob {
-  id           String   @id @default(cuid())
-  datasetId    String   @map("dataset_id")
-  tenantId     String   @map("tenant_id")
-  leaseId      String   @map("lease_id")
-  
-  task         String   // pre-training, fine-tuning, dpo, rag, eval
-  modality     String   // text, image, audio, multimodal
-  runtime      String   // hf, openai, megatron, mosaic, trl, pytorch, generic
-  format       String   // jsonl, parquet, bin, mds, webdataset
-  
-  config       String   @db.Text // JSON config
-  license      Json     @map("license")
-  privacy      Json     @map("privacy")
-  output       Json     @map("output_contract")
-
-  status       String   @default("pending") // pending, normalizing, compiling, delivering, completed, failed
-  progress     Int      @default(0)
-
-  normalizationResult Json? @map("normalization_result")
-  compilationResult   Json? @map("compilation_result")
-  deliveryResult      Json? @map("delivery_result")
-
-  outputPath        String?  @map("output_path")
-  manifestUrl       String?  @map("manifest_url")
-  manifestPath      String?  @map("manifest_path")
-  checksumPath      String?  @map("checksum_path")
-  readmePath        String?  @map("readme_path")
-  downloadUrls      Json?    @map("download_urls")
-  deliveryExpiresAt DateTime? @map("delivery_expires_at")
-
-  error        String?  @db.Text
-  deletedAt    DateTime? @map("deleted_at")
-
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-  completedAt  DateTime? @map("completed_at")
-  
-  dataset      Dataset  @relation(fields: [datasetId], references: [id], onDelete: Cascade)
-  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
-  logs         JobLog[]
-  
-  @@index([datasetId])
-  @@index([tenantId])
-  @@index([status])
-  @@index([createdAt])
-  @@map("preparation_jobs")
-}
-
-model IdempotencyRecord {
-  id              String   @id @default(cuid())
-  idempotencyKey  String   @map("idempotency_key")
-  datasetId       String   @map("dataset_id")
-  tenantId        String   @map("tenant_id")
-  requestHash     String   @map("request_hash")
-  jobId           String   @map("job_id")
-  response        Json
-  createdAt       DateTime @default(now()) @map("created_at")
-  expiresAt       DateTime @map("expires_at")
-  
-  @@unique([idempotencyKey, datasetId, tenantId])
-  @@index([expiresAt])
-  @@index([idempotencyKey])
-  @@index([jobId])
-  @@map("idempotency_records")
-}
-
-model JobLog {
-  id          String   @id @default(cuid())
-  jobId       String   @map("job_id")
-  tenantId    String   @map("tenant_id")
-  
-  level       String   // debug, info, warn, error
-  message     String
-  context     Json?    // additional structured data
-  
-  step        String?  // normalization, compilation, delivery
-  progress    Int?     // 0-100
-  
-  createdAt   DateTime @default(now()) @map("created_at")
-  
-  job         PreparationJob @relation(fields: [jobId], references: [id], onDelete: Cascade)
-  
-  @@index([jobId])
-  @@index([tenantId])
-  @@index([level])
-  @@index([createdAt])
-  @@map("job_logs")
+enum xase_intervention_action {
+  REVIEW_REQUESTED
+  APPROVED
+  REJECTED
+  OVERRIDE
+  ESCALATED
 }

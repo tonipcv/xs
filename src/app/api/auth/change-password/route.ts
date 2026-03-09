@@ -4,12 +4,31 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { sendEmail } from '@/lib/email'
+import { validateApiKey } from '@/lib/xase/auth'
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return new NextResponse('Unauthorized', { status: 401 })
+    let userEmail: string | null = null;
+    
+    // Try API key auth first
+    const apiKey = request.headers.get('x-api-key') || '';
+    const auth = await validateApiKey(apiKey);
+    
+    if (auth.valid && auth.tenantId) {
+      const user = await prisma.user.findFirst({
+        where: { tenantId: auth.tenantId },
+        select: { email: true },
+      });
+      userEmail = user?.email || null;
+    }
+    
+    // Fall back to session auth
+    if (!userEmail) {
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.email) {
+        return new NextResponse('Unauthorized', { status: 401 })
+      }
+      userEmail = session.user.email;
     }
 
     const body = await request.json() as { currentPassword?: string; newPassword?: string };
@@ -20,7 +39,7 @@ export async function POST(request: Request) {
     }
 
     const user = await prisma.user.findUnique({
-      where: { email: session.user.email }
+      where: { email: userEmail }
     })
 
     if (!user?.password) {
@@ -35,12 +54,12 @@ export async function POST(request: Request) {
     const hashedPassword = await bcrypt.hash(newPassword, 10)
 
     await prisma.user.update({
-      where: { email: session.user.email },
+      where: { email: userEmail },
       data: { password: hashedPassword }
     })
 
     await sendEmail({
-      to: session.user.email,
+      to: userEmail,
       subject: 'Senha alterada com sucesso',
       html: `
         <h1>Sua senha foi alterada</h1>

@@ -72,7 +72,7 @@ describe('AwsStsManager', () => {
         },
       });
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: typeof mockSend }) => void }).mockImplementation(() => ({
         send: mockSend,
       }));
 
@@ -102,7 +102,7 @@ describe('AwsStsManager', () => {
         },
       });
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: typeof mockSend }) => void }).mockImplementation(() => ({
         send: mockSend,
       }));
 
@@ -135,7 +135,7 @@ describe('AwsStsManager', () => {
         },
       });
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: typeof mockSend }) => void }).mockImplementation(() => ({
         send: mockSend,
       }));
 
@@ -165,7 +165,7 @@ describe('AwsStsManager', () => {
         },
       });
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: typeof mockSend }) => void }).mockImplementation(() => ({
         send: mockSend,
       }));
 
@@ -196,7 +196,7 @@ describe('AwsStsManager', () => {
     it('should throw error on assume role failure', async () => {
       const { STSClient } = await import('@aws-sdk/client-sts');
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: ReturnType<typeof vi.fn> }) => void }).mockImplementation(() => ({
         send: vi.fn().mockRejectedValue(new Error('Access denied')),
       }));
 
@@ -221,7 +221,7 @@ describe('AwsStsManager', () => {
         },
       });
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: typeof mockSend }) => void }).mockImplementation(() => ({
         send: mockSend,
       }));
 
@@ -240,7 +240,7 @@ describe('AwsStsManager', () => {
     it('should return caller identity', async () => {
       const { STSClient } = await import('@aws-sdk/client-sts');
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: ReturnType<typeof vi.fn> }) => void }).mockImplementation(() => ({
         send: vi.fn().mockResolvedValue({
           Account: '123456789012',
           Arn: 'arn:aws:iam::123456789012:user/test-user',
@@ -260,7 +260,7 @@ describe('AwsStsManager', () => {
     it('should check if credentials are valid', async () => {
       const { STSClient } = await import('@aws-sdk/client-sts');
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: ReturnType<typeof vi.fn> }) => void }).mockImplementation(() => ({
         send: vi.fn().mockResolvedValue({
           Credentials: {
             AccessKeyId: 'ASIA...',
@@ -282,7 +282,7 @@ describe('AwsStsManager', () => {
     it('should detect expired credentials', async () => {
       const { STSClient } = await import('@aws-sdk/client-sts');
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: ReturnType<typeof vi.fn> }) => void }).mockImplementation(() => ({
         send: vi.fn().mockResolvedValue({
           Credentials: {
             AccessKeyId: 'ASIA...',
@@ -304,7 +304,7 @@ describe('AwsStsManager', () => {
     it('should clear specific cached credentials', async () => {
       const { STSClient } = await import('@aws-sdk/client-sts');
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: ReturnType<typeof vi.fn> }) => void }).mockImplementation(() => ({
         send: vi.fn().mockResolvedValue({
           Credentials: {
             AccessKeyId: 'ASIA...',
@@ -328,7 +328,7 @@ describe('AwsStsManager', () => {
     it('should clear all cached credentials', async () => {
       const { STSClient } = await import('@aws-sdk/client-sts');
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: ReturnType<typeof vi.fn> }) => void }).mockImplementation(() => ({
         send: vi.fn().mockResolvedValue({
           Credentials: {
             AccessKeyId: 'ASIA...',
@@ -428,7 +428,7 @@ describe('AwsStsManager', () => {
           },
         });
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: typeof mockSend }) => void }).mockImplementation(() => ({
         send: mockSend,
       }));
 
@@ -460,7 +460,7 @@ describe('AwsStsManager', () => {
         },
       });
       
-      (STSClient as vi.Mock).mockImplementation(() => ({
+      (STSClient as unknown as { mockImplementation: (fn: () => { send: typeof mockSend }) => void }).mockImplementation(() => ({
         send: mockSend,
       }));
 

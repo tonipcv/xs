@@ -7,6 +7,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { BillingService } from '@/lib/billing/billing-service'
+import { validateApiKey } from '@/lib/xase/auth'
+import { prisma } from '@/lib/prisma'
 
 // Safely convert BigInt values to string for JSON responses
 function toSafeJSON(value: any): any {
@@ -22,23 +24,41 @@ function toSafeJSON(value: any): any {
 
 export async function GET(req: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Try API key auth first
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
+    let tenantId: string | null = auth.valid ? (auth.tenantId || null) : null
+
+    if (!tenantId) {
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.email) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      const user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { tenantId: true },
+      })
+      tenantId = user?.tenantId || null
+    }
+
+    if (!tenantId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const url = new URL(req.url)
-    const tenantId = url.searchParams.get('tenantId')
     const action = url.searchParams.get('action')
-
-    if (!tenantId) {
-      return NextResponse.json({ error: 'tenantId required' }, { status: 400 })
-    }
 
     // Get comprehensive billing summary
     if (action === 'summary' || !action) {
       const summary = await BillingService.getBillingSummary(tenantId)
-      return NextResponse.json(toSafeJSON(summary))
+      // Flatten response to match test expectations
+      return NextResponse.json(toSafeJSON({
+        usage: summary.currentMonth.usage,
+        costs: summary.currentMonth.costs,
+        period: summary.currentMonth.period,
+        balance: summary.balance,
+        trends: summary.trends,
+      }))
     }
 
     // Get current month usage

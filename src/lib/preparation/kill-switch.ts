@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { createJobLogger } from './job-logger';
+import { SignedUrlGenerator } from './deliver/signed-urls';
 
 export type CancellationToken = {
   jobId: string;
@@ -16,13 +17,16 @@ export type CancellationToken = {
  * - Cancellation token management per job
  * - Polling mechanism to check for cancellation requests
  * - Graceful shutdown with cleanup
+ * - Signed URL revocation on cancellation
  */
 export class KillSwitch {
   private activeTokens: Map<string, CancellationToken> = new Map();
   private checkIntervalMs: number;
+  private signedUrlGenerator: SignedUrlGenerator;
 
   constructor(checkIntervalMs: number = 1000) {
     this.checkIntervalMs = checkIntervalMs;
+    this.signedUrlGenerator = new SignedUrlGenerator();
   }
 
   /**
@@ -40,12 +44,13 @@ export class KillSwitch {
   }
 
   /**
-   * Request cancellation of a job
+   * Request cancellation of a job and revoke signed URLs
    */
   async requestCancellation(
     jobId: string, 
     tenantId: string, 
-    reason: string = 'User requested cancellation'
+    reason: string = 'User requested cancellation',
+    leaseId?: string
   ): Promise<boolean> {
     // Check if job exists and belongs to tenant
     const job = await prisma.preparationJob.findFirst({
@@ -60,7 +65,7 @@ export class KillSwitch {
     }
 
     // Can only cancel pending or active jobs
-    if (!['pending', 'active', 'processing'].includes(job.status)) {
+    if (!['pending', 'active', 'processing', 'normalizing', 'compiling', 'delivering'].includes(job.status)) {
       return false;
     }
 
@@ -80,6 +85,24 @@ export class KillSwitch {
       token.cancelled = true;
       token.cancelledAt = new Date();
       token.reason = reason;
+    }
+
+    // Revoke signed URLs if leaseId provided
+    if (leaseId) {
+      try {
+        const revoked = await this.signedUrlGenerator.revokeUrls(leaseId);
+        if (revoked) {
+          const logger = createJobLogger(jobId, tenantId);
+          await logger.info(
+            `Signed URLs revoked for lease ${leaseId}`,
+            { leaseId },
+            'delivery',
+            job.progress || 0
+          );
+        }
+      } catch (error) {
+        console.error(`Failed to revoke URLs for job ${jobId}:`, error);
+      }
     }
 
     // Log cancellation

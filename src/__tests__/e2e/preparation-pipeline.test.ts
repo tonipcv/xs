@@ -21,6 +21,8 @@ describe('Data Preparation Pipeline E2E', () => {
       data: {
         tenantId: testTenantId,
         amount: 100.0,
+        eventType: 'credit',
+        balanceAfter: 100.0,
         description: 'Initial credits for testing',
       },
     });
@@ -38,9 +40,12 @@ describe('Data Preparation Pipeline E2E', () => {
 
     const dataSource = await prisma.dataSource.create({
       data: {
-        tenantId: testTenantId,
-        sourceType: 'MANUAL',
+        dataSourceId: 'test-source-001',
+        datasetId: testDatasetId,
+        cloudIntegrationId: 'test-integration',
+        storageLocation: 's3://test-bucket',
         name: 'Test Source',
+        status: 'ACTIVE',
       },
     });
     testDataSourceId = dataSource.id;
@@ -86,8 +91,13 @@ describe('Data Preparation Pipeline E2E', () => {
       datasetId: testDatasetId,
       tenantId: testTenantId,
       startTime: Date.now(),
+      status: 'pending',
+      progress: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       request: {
         leaseId: 'test-lease-001',
+        version: '1.0',
         task: 'pre-training',
         modality: 'text',
         target: {
@@ -100,6 +110,19 @@ describe('Data Preparation Pipeline E2E', () => {
           deid: false,
           shard_size_mb: 10,
           seed: 42,
+        },
+        license: {
+          type: 'research',
+        },
+        privacy: {
+          piiHandling: 'retain',
+        },
+        output: {
+          layout: 'standard',
+          manifestFile: 'manifest.json',
+          readmeFile: 'README.md',
+          checksumFile: 'checksums.txt',
+          checksumAlgorithm: 'sha256',
         },
       },
     };
@@ -123,8 +146,13 @@ describe('Data Preparation Pipeline E2E', () => {
       datasetId: testDatasetId,
       tenantId: testTenantId,
       startTime: Date.now(),
+      status: 'pending',
+      progress: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       request: {
         leaseId: 'test-lease-002',
+        version: '1.0',
         task: 'fine-tuning',
         modality: 'text',
         target: {
@@ -134,6 +162,19 @@ describe('Data Preparation Pipeline E2E', () => {
         config: {
           deid: true,
           template: 'chatml',
+        },
+        license: {
+          type: 'research',
+        },
+        privacy: {
+          piiHandling: 'mask',
+        },
+        output: {
+          layout: 'standard',
+          manifestFile: 'manifest.json',
+          readmeFile: 'README.md',
+          checksumFile: 'checksums.txt',
+          checksumAlgorithm: 'sha256',
         },
       },
     };
@@ -157,8 +198,13 @@ describe('Data Preparation Pipeline E2E', () => {
       datasetId: testDatasetId,
       tenantId: testTenantId,
       startTime: Date.now(),
+      status: 'pending',
+      progress: 0,
+      createdAt: new Date(),
+      updatedAt: new Date(),
       request: {
         leaseId: 'test-lease-003',
+        version: '1.0',
         task: 'rag',
         modality: 'text',
         target: {
@@ -168,6 +214,19 @@ describe('Data Preparation Pipeline E2E', () => {
         config: {
           chunk_size: 256,
           chunk_overlap: 25,
+        },
+        license: {
+          type: 'research',
+        },
+        privacy: {
+          piiHandling: 'retain',
+        },
+        output: {
+          layout: 'standard',
+          manifestFile: 'manifest.json',
+          readmeFile: 'README.md',
+          checksumFile: 'checksums.txt',
+          checksumAlgorithm: 'sha256',
         },
       },
     };

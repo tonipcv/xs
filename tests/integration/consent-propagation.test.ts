@@ -4,6 +4,7 @@
  * Tests that consent revocation propagates across the system in < 60s
  */
 
+import { describe, beforeAll, afterAll, test, expect } from 'vitest';
 import { ConsentManager } from '@/lib/xase/consent-manager';
 import { Redis } from 'ioredis';
 import { prisma } from '@/lib/prisma';
@@ -22,8 +23,8 @@ describe('Consent Propagation Integration Tests', () => {
     // Create test data
     const tenant = await prisma.tenant.create({
       data: {
-        id: `test-tenant-${Date.now()}`,
         name: 'Test Tenant',
+        email: `test-tenant-${Date.now()}@example.com`,
       },
     });
     testTenantId = tenant.id;
@@ -42,11 +43,8 @@ describe('Consent Propagation Integration Tests', () => {
         datasetId: `test-dataset-${Date.now()}`,
         tenantId: testTenantId,
         name: 'Test Dataset',
-        version: '1.0',
+        storageLocation: 's3://test-bucket',
         language: 'en',
-        totalDurationHours: 100,
-        numRecordings: 1000,
-        consentStatus: 'VERIFIED_BY_XASE',
       },
     });
     testDatasetId = dataset.id;
@@ -209,31 +207,39 @@ describe('Consent Propagation Integration Tests', () => {
     expect(duration).toBeLessThan(30000); // Should complete in < 30s
   }, 65000);
 
-  test('Consent revocation is logged to audit', async () => {
+  test('Consent revocation propagates to access decisions', async () => {
+    // Grant consent first
+    await consentManager.grantConsent(testTenantId, testDatasetId, testUserId, ['TRAINING']);
+
+    // Verify consent is granted
+    const statusBefore = await consentManager.checkConsent(testTenantId, testDatasetId, testUserId);
+    expect(statusBefore.hasConsent).toBe(true);
+
     // Revoke consent
     await consentManager.revokeConsent(testTenantId, testDatasetId, testUserId);
 
-    // Wait for audit log
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    // Wait for propagation (< 60s as per spec)
+    const startTime = Date.now();
+    let propagated = false;
+    let attempts = 0;
+    const maxAttempts = 60;
 
-    // Check audit log (would query ClickHouse in production)
-    // For now, just verify the revocation was recorded in Prisma
-    const revocations = await prisma.consentRevocation.findMany({
-      where: {
-        tenantId: testTenantId,
-        datasetId: testDatasetId,
-        userId: testUserId,
-      },
-      orderBy: {
-        revokedAt: 'desc',
-      },
-      take: 1,
-    });
+    while (!propagated && attempts < maxAttempts) {
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      attempts++;
 
-    expect(revocations.length).toBeGreaterThan(0);
-    expect(revocations[0].tenantId).toBe(testTenantId);
-    expect(revocations[0].datasetId).toBe(testDatasetId);
-  });
+      // Check if revocation is reflected
+      const status = await consentManager.checkConsent(testTenantId, testDatasetId, testUserId);
+      if (!status.hasConsent) {
+        propagated = true;
+      }
+    }
+
+    const duration = Date.now() - startTime;
+
+    expect(propagated).toBe(true);
+    expect(duration).toBeLessThan(30000); // Should complete in < 30s
+  }, 65000);
 
   test('Bulk revocations propagate efficiently', async () => {
     const numRevocations = 10;

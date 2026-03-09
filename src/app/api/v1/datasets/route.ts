@@ -93,24 +93,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // Create dataset
     const dataset = await prisma.dataset.create({
       data: {
-        tenantId: tenantId!,
         datasetId,
         name,
-        description: description || null,
-        language,
+        description,
+        tenantId: tenantId!,
+        storageLocation,
+        status: 'ACTIVE',
         primaryLanguage: language,
-        // Persist primary modality when provided
+        language: language,
         dataType: dataType ? (dataType as unknown as PrismaDataType) : null,
         totalDurationHours,
         numRecordings,
         storageSize: totalSizeBytes > 0 ? BigInt(totalSizeBytes) : null,
         totalSizeBytes: totalSizeBytes > 0 ? BigInt(totalSizeBytes) : BigInt(0),
-        storageLocation,
         cloudIntegrationId: integrationId || null,
         processingStatus: 'PENDING',
-        status: numRecordings > 0 ? 'ACTIVE' : 'DRAFT',
       },
       select: {
         id: true,
@@ -357,7 +357,7 @@ export async function GET(req: NextRequest) {
       },
     })
 
-    return NextResponse.json({ datasets })
+    return NextResponse.json(datasets)
   } catch (err) {
     console.error('[API] GET /api/v1/datasets error:', err instanceof Error ? err.message : err)
     return NextResponse.json({ error: 'Internal error' }, { status: 500 })

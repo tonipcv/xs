@@ -7,19 +7,19 @@ export class ConsentManager {
     return { granted: false, timestamp: null };
   }
 
-  async grantConsent(data: unknown) {
+  async grantConsent(tenantId: string, datasetId: string, userId: string, purposes: string[]) {
     console.warn('Consent grant stubbed');
     return true;
   }
 
-  async revokeConsent(data: unknown) {
+  async revokeConsent(tenantId: string, datasetId: string, userId: string) {
     console.warn('Consent revocation stubbed');
     return true;
   }
 
-  async checkConsent(resourceId: string) {
+  async checkConsent(tenantId: string, datasetId: string, userId: string) {
     console.warn('Consent check stubbed');
-    return { granted: false };
+    return { granted: false, hasConsent: false };
   }
 
   static async grantConsent(data: unknown) {

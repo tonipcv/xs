@@ -3,22 +3,22 @@ CREATE TABLE "User" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "name" TEXT,
     "email" TEXT NOT NULL,
-    "emailVerified" DATETIME,
+    "emailVerified" TIMESTAMP,
     "image" TEXT,
     "password" TEXT,
     "resetToken" TEXT,
-    "resetTokenExpiry" DATETIME,
+    "resetTokenExpiry" TIMESTAMP,
     "verificationToken" TEXT,
     "isPremium" BOOLEAN NOT NULL DEFAULT false,
     "isSuperPremium" BOOLEAN NOT NULL DEFAULT false,
     "language" TEXT,
     "region" TEXT NOT NULL DEFAULT 'OTHER',
     "stripeCustomerId" TEXT,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     "phone" TEXT,
     "password_reset_token" TEXT,
-    "password_reset_expires" DATETIME
+    "password_reset_expires" TIMESTAMP
 );
 
 -- CreateTable
@@ -43,7 +43,7 @@ CREATE TABLE "Session" (
     "id" TEXT NOT NULL PRIMARY KEY,
     "sessionToken" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
-    "expires" DATETIME NOT NULL,
+    "expires" TIMESTAMP NOT NULL,
     CONSTRAINT "Session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -51,7 +51,7 @@ CREATE TABLE "Session" (
 CREATE TABLE "VerificationToken" (
     "identifier" TEXT NOT NULL,
     "token" TEXT NOT NULL,
-    "expires" DATETIME NOT NULL
+    "expires" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -61,8 +61,8 @@ CREATE TABLE "Plan" (
     "description" TEXT NOT NULL,
     "type" TEXT NOT NULL,
     "features" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL
 );
 
 -- CreateTable
@@ -74,8 +74,8 @@ CREATE TABLE "Price" (
     "language" TEXT NOT NULL,
     "interval" TEXT NOT NULL,
     "stripeId" TEXT NOT NULL,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "Price_planId_fkey" FOREIGN KEY ("planId") REFERENCES "Plan" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
@@ -86,11 +86,11 @@ CREATE TABLE "Subscription" (
     "priceId" TEXT NOT NULL,
     "status" TEXT NOT NULL,
     "stripeId" TEXT NOT NULL,
-    "currentPeriodStart" DATETIME NOT NULL,
-    "currentPeriodEnd" DATETIME NOT NULL,
+    "currentPeriodStart" TIMESTAMP NOT NULL,
+    "currentPeriodEnd" TIMESTAMP NOT NULL,
     "cancelAtPeriodEnd" BOOLEAN NOT NULL DEFAULT false,
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "Subscription_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE,
     CONSTRAINT "Subscription_priceId_fkey" FOREIGN KEY ("priceId") REFERENCES "Price" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
@@ -102,8 +102,8 @@ CREATE TABLE "PrayerRequest" (
     "request" TEXT NOT NULL,
     "response" TEXT,
     "status" TEXT NOT NULL DEFAULT 'pending',
-    "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    "updatedAt" DATETIME NOT NULL,
+    "createdAt" TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP NOT NULL,
     CONSTRAINT "PrayerRequest_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
 );
 

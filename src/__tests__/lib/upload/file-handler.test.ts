@@ -22,7 +22,7 @@ describe('File Handler', () => {
       })
       
       expect(result.valid).toBe(false)
-      expect(result.error).toContain('not allowed')
+      expect(result.error).toBe('Invalid file type')
     })
 
     it('should validate file extension', () => {
@@ -53,7 +53,7 @@ describe('File Handler', () => {
       
       expect(info.name).toBe('test.txt')
       expect(info.type).toBe('text/plain')
-      expect(info.extension).toBe('txt')
+      expect(info.extension).toBe('.txt')
       expect(info.size).toBeGreaterThan(0)
     })
   })

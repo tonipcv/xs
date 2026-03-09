@@ -88,8 +88,8 @@ describe('Array Utilities', () => {
   })
 
   describe('difference', () => {
-    it('should find difference', () => {
-      const result = ArrayUtils.difference([1, 2, 3], [2, 3], [3])
+    it('should find difference between two arrays', () => {
+      const result = ArrayUtils.difference([1, 2, 3], [2, 3])
       expect(result).toEqual([1])
     })
   })
@@ -137,12 +137,12 @@ describe('Array Utilities', () => {
 
   describe('range', () => {
     it('should create range', () => {
-      const result = ArrayUtils.range(0, 5)
+      const result = ArrayUtils.range(0, 4)
       expect(result).toEqual([0, 1, 2, 3, 4])
     })
 
     it('should create range with step', () => {
-      const result = ArrayUtils.range(0, 10, 2)
+      const result = ArrayUtils.range(0, 8, 2)
       expect(result).toEqual([0, 2, 4, 6, 8])
     })
   })

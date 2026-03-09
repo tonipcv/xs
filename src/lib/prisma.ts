@@ -1,5 +1,18 @@
 import { PrismaClient } from '@prisma/client'
 
+// Extend PrismaClient with $metrics for monitoring
+declare module '@prisma/client' {
+  interface PrismaClient {
+    $metrics: {
+      json: () => Promise<{
+        counters: Array<{ key: string; value: number }>;
+        gauges?: Array<{ key: string; value: number }>;
+        histograms?: Array<{ key: string; value: number }>;
+      }>;
+    };
+  }
+}
+
 const prismaClientSingleton = () => {
   return new PrismaClient()
 }

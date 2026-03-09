@@ -106,9 +106,13 @@ export class DicomOcrScrubber {
 
       // Step 3: Apply scrubbing
       const scrubbedRegions: ScrubRegion[] = [];
+      let scrubbedData = imageData;
+      
       for (const region of phiRegions) {
-        const scrubRegion = await this.scrubRegion(imageData, region);
+        const { scrubRegion } = await this.scrubRegion(scrubbedData, region);
         scrubbedRegions.push(scrubRegion);
+        // Note: In a real implementation, we would update scrubbedData with the modified pixels
+        // For now, we just track the regions that need scrubbing
       }
 
       // Step 4: Generate report
@@ -251,10 +255,11 @@ export class DicomOcrScrubber {
     });
   }
 
-  private async scrubRegion(imageData: Buffer, region: OCRResult): Promise<ScrubRegion> {
-    // In production, this would apply image processing
-    // For now, return the scrub region metadata
-    return {
+  private async scrubRegion(imageData: Buffer, region: OCRResult): Promise<{ scrubRegion: ScrubRegion; scrubbedData: Buffer }> {
+    // For DICOM images, we need to apply pixel-level scrubbing
+    // This is a simplified implementation - real DICOM processing would require parsing the DICOM format
+    
+    const scrubRegion: ScrubRegion = {
       x: region.boundingBox.x,
       y: region.boundingBox.y,
       width: region.boundingBox.width,
@@ -262,6 +267,100 @@ export class DicomOcrScrubber {
       reason: `PHI detected: ${region.text}`,
       method: this.config.method,
     };
+
+    // In a real implementation, we would:
+    // 1. Parse the DICOM pixel data (could be 8-bit, 16-bit, various photometric interpretations)
+    // 2. Apply the scrubbing method (blur, blackout, inpaint)
+    // 3. Re-encode the pixel data
+    
+    // For now, return the metadata and original data
+    // The actual pixel manipulation would require a DICOM library like dicom-parser + canvas/sharp
+    return { scrubRegion, scrubbedData: imageData };
+  }
+
+  /**
+   * Apply blackout to a region of pixel data
+   * Assumes 8-bit grayscale or RGB data in a simple buffer format
+   */
+  private applyBlackout(
+    pixelData: Buffer,
+    width: number,
+    x: number,
+    y: number,
+    regionWidth: number,
+    regionHeight: number,
+    bytesPerPixel: number = 1
+  ): Buffer {
+    const result = Buffer.from(pixelData);
+    
+    for (let row = y; row < y + regionHeight && row < width; row++) {
+      for (let col = x; col < x + regionWidth; col++) {
+        const pixelIndex = (row * width + col) * bytesPerPixel;
+        
+        // Set pixel to black (0)
+        for (let b = 0; b < bytesPerPixel; b++) {
+          if (pixelIndex + b < result.length) {
+            result[pixelIndex + b] = 0;
+          }
+        }
+      }
+    }
+    
+    return result;
+  }
+
+  /**
+   * Apply blur to a region of pixel data using simple box blur
+   */
+  private applyBlur(
+    pixelData: Buffer,
+    width: number,
+    height: number,
+    x: number,
+    y: number,
+    regionWidth: number,
+    regionHeight: number,
+    blurRadius: number = 5,
+    bytesPerPixel: number = 1
+  ): Buffer {
+    const result = Buffer.from(pixelData);
+    const radius = Math.min(blurRadius, 10); // Limit blur radius
+    
+    for (let row = y; row < y + regionHeight && row < height; row++) {
+      for (let col = x; col < x + regionWidth && col < width; col++) {
+        let sum = 0;
+        let count = 0;
+        
+        // Sample neighboring pixels
+        for (let dy = -radius; dy <= radius; dy++) {
+          for (let dx = -radius; dx <= radius; dx++) {
+            const sampleRow = row + dy;
+            const sampleCol = col + dx;
+            
+            if (sampleRow >= 0 && sampleRow < height && sampleCol >= 0 && sampleCol < width) {
+              const sampleIndex = (sampleRow * width + sampleCol) * bytesPerPixel;
+              // For grayscale, just use first byte
+              if (sampleIndex < pixelData.length) {
+                sum += pixelData[sampleIndex];
+                count++;
+              }
+            }
+          }
+        }
+        
+        // Set blurred value
+        const pixelIndex = (row * width + col) * bytesPerPixel;
+        const blurredValue = Math.round(sum / count);
+        
+        for (let b = 0; b < bytesPerPixel; b++) {
+          if (pixelIndex + b < result.length) {
+            result[pixelIndex + b] = blurredValue;
+          }
+        }
+      }
+    }
+    
+    return result;
   }
 
   async batchScrub(

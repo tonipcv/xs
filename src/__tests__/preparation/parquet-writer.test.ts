@@ -137,9 +137,11 @@ describe('ParquetWriter', () => {
 
     it('should validate records against schema', () => {
       const schema = {
-        id: 'number',
-        name: 'string',
-        age: 'number',
+        fields: [
+          { name: 'id', type: 'number' as const },
+          { name: 'name', type: 'string' as const },
+          { name: 'age', type: 'number' as const },
+        ],
       };
 
       const validRecords = [
@@ -157,9 +159,11 @@ describe('ParquetWriter', () => {
 
     it('should allow null values in validation', () => {
       const schema = {
-        id: 'number',
-        name: 'string',
-        age: 'number',
+        fields: [
+          { name: 'id', type: 'number' as const },
+          { name: 'name', type: 'string' as const },
+          { name: 'age', type: 'number' as const },
+        ],
       };
 
       const recordsWithNull = [

@@ -3,9 +3,22 @@ import { PIIMetricsLogger, PIIMetrics } from '@/lib/preparation/deid/pii-metrics
 import { AuditLogger } from '@/lib/preparation/audit/audit-logger';
 
 describe('PIIMetricsLogger', () => {
-  const createMockAuditLogger = () => ({
-    log: vi.fn().mockResolvedValue(undefined),
-  } as unknown as AuditLogger);
+  const createMockAuditLogger = (): AuditLogger => {
+    const mockFn = vi.fn().mockResolvedValue(undefined) as unknown as AuditLogger['log'] & { mock: { calls: unknown[][] } };
+    return {
+      log: mockFn,
+      logJobCreate: vi.fn().mockResolvedValue(undefined),
+      logJobCancel: vi.fn().mockResolvedValue(undefined),
+      logJobView: vi.fn().mockResolvedValue(undefined),
+      logDataAccess: vi.fn().mockResolvedValue(undefined),
+      logDataDownload: vi.fn().mockResolvedValue(undefined),
+      logConfigUpdate: vi.fn().mockResolvedValue(undefined),
+      logError: vi.fn().mockResolvedValue(undefined),
+      logSecurityEvent: vi.fn().mockResolvedValue(undefined),
+      queryLogs: vi.fn().mockResolvedValue([]),
+      exportLogs: vi.fn().mockResolvedValue(Buffer.from('')),
+    } as unknown as AuditLogger;
+  };
 
   const createLogger = () => new PIIMetricsLogger(createMockAuditLogger());
 
@@ -71,8 +84,11 @@ describe('PIIMetricsLogger', () => {
 
       await logger.logMetrics(metrics);
 
-      const callArgs = auditLogger.log.mock.calls[0];
-      const metadata = callArgs[5].metadata;
+      const mockLog = auditLogger.log as unknown as { mock: { calls: unknown[][] } };
+      const calls = mockLog.mock.calls;
+      const firstCall = calls[0] as unknown[];
+      const arg6 = firstCall[5] as { metadata: { entitiesRemoved: Record<string, number> } };
+      const metadata = arg6.metadata;
 
       // Verify only counts are present, no actual values
       expect(metadata.entitiesRemoved.name).toBe(5);
@@ -94,7 +110,8 @@ describe('PIIMetricsLogger', () => {
       await logger.logBatchMetrics('ds-123', 'job-456', 'tenant-abc', results, 'redact');
 
       expect(auditLogger.log).toHaveBeenCalled();
-      const metadata = auditLogger.log.mock.calls[0][5].metadata;
+      const callData = (auditLogger.log as unknown as { mock: { calls: unknown[][] } }).mock.calls[0];
+      const metadata = (callData[5] as { metadata: { recordsProcessed: number; recordsWithPII: number; totalEntitiesRemoved: number } }).metadata;
       expect(metadata.recordsProcessed).toBe(3);
       expect(metadata.recordsWithPII).toBe(2);
       expect(metadata.totalEntitiesRemoved).toBe(3);

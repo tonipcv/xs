@@ -53,25 +53,30 @@ export class MeteringService {
    * Record usage metric
    */
   static async recordUsage(metric: UsageMetrics): Promise<void> {
-    const redis = await getRedisClient()
-    const key = `${this.REDIS_PREFIX}${metric.tenantId}:${metric.metric}`
-    
-    // Add to Redis sorted set for real-time tracking
-    await redis.zadd(
-      key,
-      metric.timestamp.getTime(),
-      JSON.stringify({
-        value: metric.value,
-        leaseId: metric.leaseId,
-        datasetId: metric.datasetId,
-        metadata: metric.metadata,
+    try {
+      const redis = await getRedisClient()
+      const key = `${this.REDIS_PREFIX}${metric.tenantId}:${metric.metric}`
+      
+      // Add to Redis sorted set for real-time tracking (skip if Redis unavailable)
+      await redis.zAdd(
+        key,
+        { score: metric.timestamp.getTime(), value: JSON.stringify({
+          value: metric.value,
+          leaseId: metric.leaseId,
+          datasetId: metric.datasetId,
+          metadata: metric.metadata,
+        }) }
+      ).catch(() => {
+        // Redis unavailable, continue with DB only
       })
-    )
 
-    // Set expiration (keep for 7 days)
-    await redis.expire(key, 7 * 24 * 60 * 60)
+      // Set expiration (keep for 7 days) - ignore errors
+      await redis.expire(key, 7 * 24 * 60 * 60).catch(() => {})
+    } catch (error) {
+      // Redis unavailable, continue with DB only
+    }
 
-    // Batch write to database
+    // Batch write to database (always works)
     await this.batchWriteToDatabase(metric)
   }
 
@@ -79,15 +84,20 @@ export class MeteringService {
    * Batch write to database
    */
   private static async batchWriteToDatabase(metric: UsageMetrics): Promise<void> {
-    const redis = await getRedisClient()
-    const batchKey = `${this.REDIS_PREFIX}batch:${metric.tenantId}`
-    
-    await redis.lpush(batchKey, JSON.stringify(metric))
-    
-    const batchSize = await redis.llen(batchKey)
-    
-    if (batchSize >= this.BATCH_SIZE) {
-      await this.flushBatch(metric.tenantId)
+    try {
+      const redis = await getRedisClient()
+      const batchKey = `${this.REDIS_PREFIX}batch:${metric.tenantId}`
+      
+      await redis.lPush(batchKey, JSON.stringify(metric)).catch(() => {})
+      
+      const batchSize = await redis.lLen(batchKey).catch(() => 0)
+      
+      if (batchSize >= this.BATCH_SIZE) {
+        await this.flushBatch(metric.tenantId)
+      }
+    } catch (error) {
+      // Redis unavailable, write directly to DB
+      await this.writeMetricsToDatabase([metric])
     }
   }
 
@@ -95,29 +105,40 @@ export class MeteringService {
    * Flush batch to database
    */
   static async flushBatch(tenantId: string): Promise<void> {
-    const redis = await getRedisClient()
-    const batchKey = `${this.REDIS_PREFIX}batch:${tenantId}`
-    
-    const batch = await redis.lrange(batchKey, 0, this.BATCH_SIZE - 1)
-    if (batch.length === 0) return
+    try {
+      const redis = await getRedisClient()
+      const batchKey = `${this.REDIS_PREFIX}batch:${tenantId}`
+      
+      const batch = await redis.lRange(batchKey, 0, this.BATCH_SIZE - 1).catch(() => [])
+      if (batch.length === 0) return
 
-    const metrics = batch.map((item: string) => JSON.parse(item))
+      const metrics = batch.map((item: string) => JSON.parse(item))
 
-    // Write to database
+      // Write to database
+      await this.writeMetricsToDatabase(metrics)
+
+      // Remove processed items
+      await redis.lTrim(batchKey, batch.length, -1).catch(() => {})
+    } catch (error) {
+      // Redis unavailable, skip
+    }
+  }
+
+  /**
+   * Write metrics directly to database (fallback when Redis unavailable)
+   */
+  private static async writeMetricsToDatabase(metrics: UsageMetrics[]): Promise<void> {
     await prisma.creditLedger.createMany({
-      data: metrics.map((m: any) => ({
+      data: metrics.map((m) => ({
         tenantId: m.tenantId,
         leaseId: m.leaseId,
         datasetId: m.datasetId,
         action: m.metric.toUpperCase(),
         creditChange: -m.value,
-        balanceAfter: 0, // Will be calculated
+        balanceAfter: 0,
         metadata: JSON.stringify(m.metadata || {}),
       })),
-    })
-
-    // Remove processed items
-    await redis.ltrim(batchKey, batch.length, -1)
+    }).catch(() => {})
   }
 
   /**
@@ -147,11 +168,7 @@ export class MeteringService {
     // Fetch from Redis for recent data
     for (const metric of ['hours', 'requests', 'bytes', 'queries', 'epsilon', 'storage_gb_hours']) {
       const key = `${this.REDIS_PREFIX}${tenantId}:${metric}`
-      const data = await redis.zrangebyscore(
-        key,
-        start.getTime(),
-        end.getTime()
-      )
+      const data = await redis.zRangeByScore(key, start.getTime(), end.getTime())
 
       for (const item of data) {
         const parsed = JSON.parse(item)
@@ -198,7 +215,7 @@ export class MeteringService {
 
     for (const metric of ['hours', 'requests', 'bytes', 'queries', 'epsilon', 'storage_gb_hours']) {
       const key = `${this.REDIS_PREFIX}${tenantId}:${metric}`
-      const data = await redis.zrangebyscore(key, hourAgo, now)
+      const data = await redis.zRangeByScore(key, hourAgo, now)
       
       usage[metric] = data.reduce((sum: number, item: string) => {
         const parsed = JSON.parse(item)

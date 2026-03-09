@@ -88,6 +88,30 @@ export class JobLogger {
   /**
    * Log job start
    */
+  async start(task: string, context?: LogContext): Promise<void> {
+    await this.info(
+      `Job started: ${task}`,
+      context,
+      'setup',
+      0
+    );
+  }
+
+  /**
+   * Log step progress
+   */
+  async step(stepName: string, progress: number, context?: LogContext): Promise<void> {
+    await this.info(
+      `Step ${stepName}: ${progress}%`,
+      context,
+      stepName as PreparationStep,
+      progress
+    );
+  }
+
+  /**
+   * Log job start (legacy)
+   */
   async logStart(task: string, modality: string): Promise<void> {
     await this.info(
       `Starting preparation job: ${task} (${modality})`,

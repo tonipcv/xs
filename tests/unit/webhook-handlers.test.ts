@@ -171,14 +171,14 @@ describe('Webhook Handler Logic', () => {
   describe('Error Handling', () => {
     it('should handle missing customer ID', () => {
       const customerId: string | undefined = undefined;
-      const isValid = customerId && customerId.length > 0;
+      const isValid = customerId && (customerId as string).length > 0;
       
       expect(isValid).toBeFalsy();
     });
 
     it('should handle missing subscription ID', () => {
       const subscriptionId: string | null = null;
-      const isValid = subscriptionId && subscriptionId.length > 0;
+      const isValid = subscriptionId && (subscriptionId as string).length > 0;
       
       expect(isValid).toBeFalsy();
     });
@@ -252,7 +252,7 @@ describe('Webhook Handler Logic', () => {
   describe('Webhook Signature Validation', () => {
     it('should require signature header', () => {
       const signature: string | undefined = undefined;
-      const isValid = signature && signature.length > 0;
+      const isValid = signature && (signature as string).length > 0;
       
       expect(isValid).toBeFalsy();
     });

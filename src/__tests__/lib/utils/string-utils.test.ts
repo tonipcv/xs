@@ -123,7 +123,7 @@ describe('String Utilities', () => {
   describe('similarity', () => {
     it('should calculate similarity', () => {
       const result = StringUtils.similarity('hello', 'hallo')
-      expect(result).toBeGreaterThan(50)
+      expect(result).toBeGreaterThan(0.5) // Returns 0-1 scale, 0.8 for hello/hallo
     })
   })
 })

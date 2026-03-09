@@ -1,10 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { z } from 'zod';
+import { SignedUrlGenerator } from '@/lib/preparation/deliver/signed-urls';
 
 const cancelRequestSchema = z.object({
   reason: z.string().optional(),
 });
+
+// Singleton instance for URL revocation
+const signedUrlGenerator = new SignedUrlGenerator();
 
 export async function POST(
   request: NextRequest,
@@ -41,6 +45,17 @@ export async function POST(
       );
     }
 
+    // Revoke signed URLs if job has delivery info
+    let urlsRevoked = false;
+    try {
+      if (job.leaseId && signedUrlGenerator.hasActiveUrls(job.leaseId)) {
+        urlsRevoked = await signedUrlGenerator.revokeUrls(job.leaseId);
+      }
+    } catch (urlError) {
+      console.error(`Failed to revoke URLs for job ${jobId}:`, urlError);
+      // Continue with cancellation even if URL revocation fails
+    }
+
     const updatedJob = await prisma.preparationJob.update({
       where: { id: jobId },
       data: {
@@ -55,6 +70,7 @@ export async function POST(
       status: updatedJob.status,
       message: 'Job cancelled successfully',
       cancelledAt: updatedJob.updatedAt,
+      urlsRevoked,
     });
   } catch (error) {
     console.error('Error cancelling job:', error);

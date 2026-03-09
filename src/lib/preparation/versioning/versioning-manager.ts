@@ -1,9 +1,11 @@
 /**
  * Versioning and TTL Manager for Data Preparation Artifacts
  * Manages incremental versions and retention policies
+ * With git commit hash integration for full reproducibility
  */
 
 import { createHash } from 'crypto';
+import { execSync } from 'child_process';
 
 export interface VersionConfig {
   datasetId: string;
@@ -15,8 +17,9 @@ export interface VersionConfig {
 export interface VersionInfo {
   version: string; // v1, v2, v3, etc.
   configHash: string;
+  gitCommitHash?: string;
   seed: number;
-  commitHash?: string;
+  commitHash?: string; // Legacy field
   createdAt: Date;
   isReproducible: boolean;
 }
@@ -34,11 +37,79 @@ export interface ArtifactMetadata {
   createdAt: Date;
   lastAccessedAt?: Date;
   configHash: string;
+  gitCommitHash?: string;
+}
+
+export interface ReproducibilityManifest {
+  datasetId: string;
+  version: string;
+  configHash: string;
+  gitCommitHash: string;
+  seed: number;
+  commandLine: string;
+  environment: Record<string, string>;
+  timestamp: string;
 }
 
 export class VersioningManager {
   private versions: Map<string, VersionInfo[]> = new Map();
   private artifacts: Map<string, ArtifactMetadata[]> = new Map();
+
+  /**
+   * Get current git commit hash
+   */
+  getGitCommitHash(): string {
+    try {
+      // Try to get the current git commit hash
+      const hash = execSync('git rev-parse HEAD', { 
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'ignore'] // Ignore stderr
+      }).trim();
+      return hash;
+    } catch {
+      // If git command fails, try environment variable
+      return process.env.GIT_COMMIT_HASH || 'unknown';
+    }
+  }
+
+  /**
+   * Get full reproducibility context
+   */
+  getReproducibilityContext(): {
+    gitCommitHash: string;
+    gitBranch: string;
+    gitTag?: string;
+    nodeVersion: string;
+    platform: string;
+  } {
+    let gitBranch = 'unknown';
+    let gitTag: string | undefined;
+    
+    try {
+      gitBranch = execSync('git rev-parse --abbrev-ref HEAD', {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'ignore']
+      }).trim();
+      
+      // Try to get current tag if any
+      gitTag = execSync('git describe --tags --exact-match 2>/dev/null || echo ""', {
+        encoding: 'utf8',
+        stdio: ['pipe', 'pipe', 'ignore']
+      }).trim() || undefined;
+    } catch {
+      // Use env variables as fallback
+      gitBranch = process.env.GIT_BRANCH || 'unknown';
+      gitTag = process.env.GIT_TAG;
+    }
+
+    return {
+      gitCommitHash: this.getGitCommitHash(),
+      gitBranch,
+      gitTag,
+      nodeVersion: process.version,
+      platform: `${process.platform}-${process.arch}`,
+    };
+  }
 
   /**
    * Calculate config hash for reproducibility tracking
@@ -58,6 +129,7 @@ export class VersioningManager {
   generateVersion(config: VersionConfig): VersionInfo {
     const datasetVersions = this.versions.get(config.datasetId) || [];
     const configHash = this.calculateConfigHash(config.config);
+    const gitCommitHash = config.commitHash || this.getGitCommitHash();
     
     // Check if this exact config was used before
     const existingVersion = datasetVersions.find((v) => v.configHash === configHash);
@@ -70,8 +142,9 @@ export class VersioningManager {
     const version: VersionInfo = {
       version: `v${versionNumber}`,
       configHash,
+      gitCommitHash,
+      commitHash: gitCommitHash, // Legacy field for backwards compatibility
       seed: config.seed ?? Date.now(),
-      commitHash: config.commitHash,
       createdAt: new Date(),
       isReproducible: !!config.seed,
     };
@@ -251,6 +324,34 @@ export class VersioningManager {
       exportedAt: new Date().toISOString(),
       versions: this.getVersionHistory(datasetId),
       artifacts: this.artifacts.get(datasetId) || [],
+    };
+  }
+
+  /**
+   * Generate full reproducibility manifest
+   */
+  generateReproducibilityManifest(
+    datasetId: string,
+    version: string,
+    config: Record<string, unknown>
+  ): ReproducibilityManifest {
+    const context = this.getReproducibilityContext();
+    
+    return {
+      datasetId,
+      version,
+      configHash: this.calculateConfigHash(config),
+      gitCommitHash: context.gitCommitHash,
+      seed: Date.now(),
+      commandLine: process.argv.join(' '),
+      environment: {
+        NODE_ENV: process.env.NODE_ENV || 'development',
+        PLATFORM: context.platform,
+        NODE_VERSION: context.nodeVersion,
+        GIT_BRANCH: context.gitBranch,
+        ...(context.gitTag && { GIT_TAG: context.gitTag }),
+      },
+      timestamp: new Date().toISOString(),
     };
   }
 }

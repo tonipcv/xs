@@ -9,15 +9,45 @@ import { PrismaClient } from '@prisma/client';
 const prisma = new PrismaClient();
 const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3000';
 
+let serverAvailable = false;
+
+async function checkServer(): Promise<void> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(`${BASE_URL}/api/health`, { signal: controller.signal });
+    clearTimeout(timeout);
+    serverAvailable = res.status === 200;
+  } catch {
+    serverAvailable = false;
+  }
+  
+  if (!serverAvailable) {
+    throw new Error(
+      `Server not available at ${BASE_URL}. ` +
+      `Start the server with 'npm run dev' before running API tests.`
+    );
+  }
+}
+
 describe('POST /api/auth/register', () => {
   const testEmail = `test-${Date.now()}@example.com`;
 
-  afterAll(async () => {
-    // Cleanup (best-effort, ignore if DB is unavailable or permissions denied)
+  beforeAll(async () => {
     try {
-      await prisma.user.deleteMany({
-        where: { email: testEmail },
-      });
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 1000);
+      await fetch(`${BASE_URL}/api/health`, { signal: controller.signal });
+      clearTimeout(timeout);
+      serverAvailable = true;
+    } catch {
+      serverAvailable = false;
+    }
+  });
+
+  afterAll(async () => {
+    try {
+      await prisma.user.deleteMany({ where: { email: testEmail } });
     } catch {}
   });
 

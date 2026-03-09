@@ -10,7 +10,8 @@ import {
   MultimodalPackager, 
   PatientRecord, 
   getMultimodalPackager, 
-  resetMultimodalPackager 
+  resetMultimodalPackager,
+  createMultimodalPackager
 } from '@/lib/preparation/deliver/multimodal-packager';
 import * as fs from 'fs/promises';
 import * as path from 'path';
@@ -129,7 +130,7 @@ describe('MultimodalPackager - REAL Linked Patient Data', () => {
 
   beforeEach(() => {
     resetMultimodalPackager();
-    packager = getMultimodalPackager({
+    packager = createMultimodalPackager({
       packageBy: 'patient',
       includeText: true,
       includeImages: true,
@@ -277,7 +278,7 @@ describe('MultimodalPackager - REAL Linked Patient Data', () => {
 
   describe('Configuration Options', () => {
     it('should respect includeText option', async () => {
-      const noTextPackager = getMultimodalPackager({ includeText: false });
+      const noTextPackager = createMultimodalPackager({ includeText: false });
       const outputDir = path.join(tempDir, 'output10');
       
       await noTextPackager.packageByPatient(testRecords, outputDir);
@@ -288,7 +289,7 @@ describe('MultimodalPackager - REAL Linked Patient Data', () => {
     });
 
     it('should respect includeImages option', async () => {
-      const noImagesPackager = getMultimodalPackager({ includeImages: false });
+      const noImagesPackager = createMultimodalPackager({ includeImages: false });
       const outputDir = path.join(tempDir, 'output11');
       
       await noImagesPackager.packageByPatient(testRecords, outputDir);
@@ -299,7 +300,7 @@ describe('MultimodalPackager - REAL Linked Patient Data', () => {
     });
 
     it('should respect anonymize option', async () => {
-      const anonPackager = getMultimodalPackager({ anonymize: true });
+      const anonPackager = createMultimodalPackager({ anonymize: true });
       const outputDir = path.join(tempDir, 'output12');
       
       await anonPackager.packageByPatient(testRecords, outputDir);

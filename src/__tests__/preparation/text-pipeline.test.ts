@@ -101,6 +101,9 @@ describe.skip('Text Preparation Pipeline (requires integration DB)', () => {
         config: JSON.stringify(request.config),
         status: 'pending',
         progress: 0,
+        license: {},
+        privacy: {},
+        output: {},
       },
     });
 

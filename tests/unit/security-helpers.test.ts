@@ -133,7 +133,7 @@ describe('Security Helpers', () => {
 
     it('should handle null expiration', () => {
       const expiresAt: Date | null = null;
-      const isExpired = expiresAt ? expiresAt.getTime() < Date.now() : false;
+      const isExpired = expiresAt ? (expiresAt as Date).getTime() < Date.now() : false;
       
       expect(isExpired).toBe(false);
     });

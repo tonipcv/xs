@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ExecuteAccessOfferSchema } from '@/lib/validations/access-offer'
 import { nanoid } from 'nanoid'
+import { validateApiKey } from '@/lib/xase/auth'
 
 export async function POST(
   req: NextRequest,
@@ -11,15 +12,31 @@ export async function POST(
 ) {
   try {
     const { params } = context as { params: { offerId: string } }
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.email) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    
+    // Try API key auth first
+    const apiKey = req.headers.get('x-api-key') || ''
+    const auth = await validateApiKey(apiKey)
+    let user: any = null
+    
+    if (auth.valid && auth.tenantId) {
+      user = await prisma.user.findFirst({
+        where: { tenantId: auth.tenantId },
+        include: { tenant: true },
+      })
     }
-
-    const user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      include: { tenant: true },
-    })
+    
+    // Fall back to session auth
+    if (!user) {
+      const session = await getServerSession(authOptions)
+      if (!session?.user?.email) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        include: { tenant: true },
+      })
+    }
 
     if (!user?.tenant) {
       return NextResponse.json({ error: 'No tenant found' }, { status: 403 })

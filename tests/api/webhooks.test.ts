@@ -7,18 +7,46 @@ import { describe, it, expect, beforeEach, vi } from 'vitest';
 
 // Mock prisma before importing the module under test
 vi.mock('@/lib/prisma', () => {
+  const mockWebhooks = new Map<string, any>();
+  
   const mockAuditLog = {
-    create: vi.fn(async () => ({})),
-    findFirst: vi.fn(async () => ({
-      metadata: JSON.stringify({
-        url: 'https://example.com/webhook',
-        events: ['dataset.created'],
-        secret: 'test_secret_key',
-        active: true,
-      }),
-      resourceId: 'webhook_test',
-    })),
-    findMany: vi.fn(async () => []),
+    create: vi.fn(async (data: any) => {
+      if (data.data.action === 'WEBHOOK_REGISTERED') {
+        mockWebhooks.set(data.data.resourceId, {
+          resourceId: data.data.resourceId,
+          metadata: data.data.metadata,
+        });
+      } else if (data.data.action === 'WEBHOOK_UPDATED') {
+        const existing = mockWebhooks.get(data.data.resourceId);
+        if (existing) {
+          const metadata = JSON.parse(data.data.metadata);
+          mockWebhooks.set(data.data.resourceId, {
+            resourceId: data.data.resourceId,
+            metadata: JSON.stringify({
+              ...JSON.parse(existing.metadata),
+              ...metadata,
+            }),
+          });
+        }
+      } else if (data.data.action === 'WEBHOOK_DELETED') {
+        mockWebhooks.delete(data.data.resourceId);
+      }
+      return data.data;
+    }),
+    findFirst: vi.fn(async (query: any) => {
+      const resourceId = query?.where?.resourceId;
+      if (resourceId && mockWebhooks.has(resourceId)) {
+        return mockWebhooks.get(resourceId);
+      }
+      // Return null if webhook not found (deleted)
+      if (resourceId && !mockWebhooks.has(resourceId)) {
+        return null;
+      }
+      // Return first webhook if no specific ID
+      const first = mockWebhooks.values().next().value;
+      return first || null;
+    }),
+    findMany: vi.fn(async () => Array.from(mockWebhooks.values())),
   };
   return {
     prisma: {
@@ -122,8 +150,15 @@ describe('Outbound Webhooks', () => {
 
   describe('Webhook Delivery', () => {
     it('should send webhook for subscribed event', async () => {
+      // Create a fresh webhook for this test
+      const webhook = await registerWebhook({
+        url: 'https://example.com/webhook-delivery',
+        events: ['dataset.created'],
+        active: true,
+      });
+
       const delivery = await sendWebhook(
-        webhookId,
+        webhook.id,
         'dataset.created',
         {
           id: 'dataset_123',
@@ -136,22 +171,36 @@ describe('Outbound Webhooks', () => {
       );
 
       expect(delivery.id).toBeDefined();
-      expect(delivery.webhookId).toBe(webhookId);
+      expect(delivery.webhookId).toBe(webhook.id);
       expect(delivery.event).toBe('dataset.created');
       expect(delivery.status).toBe('pending');
     });
 
     it('should reject webhook for unsubscribed event', async () => {
+      // Create a webhook that only subscribes to dataset.created
+      const webhook = await registerWebhook({
+        url: 'https://example.com/webhook-specific',
+        events: ['dataset.created'],
+        active: true,
+      });
+
       await expect(
-        sendWebhook(webhookId, 'billing.invoice_created', { id: 'invoice_123' })
+        sendWebhook(webhook.id, 'billing.invoice_created', { id: 'invoice_123' })
       ).rejects.toThrow('is not subscribed to event');
     });
 
     it('should reject webhook for inactive webhook', async () => {
-      await updateWebhook(webhookId, { active: false });
+      // Create a fresh webhook and deactivate it
+      const webhook = await registerWebhook({
+        url: 'https://example.com/webhook-inactive',
+        events: ['dataset.created'],
+        active: true,
+      });
+      
+      await updateWebhook(webhook.id, { active: false });
 
       await expect(
-        sendWebhook(webhookId, 'dataset.created', { id: 'dataset_123' })
+        sendWebhook(webhook.id, 'dataset.created', { id: 'dataset_123' })
       ).rejects.toThrow('is not active');
     });
   });
@@ -206,11 +255,18 @@ describe('Outbound Webhooks', () => {
 
   describe('Webhook Deletion', () => {
     it('should delete webhook', async () => {
-      await deleteWebhook(webhookId);
+      // Create a fresh webhook to delete
+      const webhook = await registerWebhook({
+        url: 'https://example.com/webhook-delete',
+        events: ['dataset.created'],
+        active: true,
+      });
+
+      await deleteWebhook(webhook.id);
 
       // Verify webhook is deleted by trying to send to it
       await expect(
-        sendWebhook(webhookId, 'dataset.created', { id: 'dataset_123' })
+        sendWebhook(webhook.id, 'dataset.created', { id: 'dataset_123' })
       ).rejects.toThrow('not found');
     });
   });

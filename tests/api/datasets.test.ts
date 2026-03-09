@@ -13,8 +13,27 @@ let authToken: string;
 let testTenantId: string;
 let testDatasetId: string;
 
+async function checkServer(): Promise<void> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(`${BASE_URL}/api/health`, { signal: controller.signal });
+    clearTimeout(timeout);
+    if (res.status !== 200) {
+      throw new Error();
+    }
+  } catch {
+    throw new Error(
+      `Server not available at ${BASE_URL}. ` +
+      `Start the server with 'npm run dev' before running API tests.`
+    );
+  }
+}
+
 describe('Datasets API', () => {
   beforeAll(async () => {
+    await checkServer();
+
     // Create test user and get auth token
     const email = `dataset-test-${Date.now()}@example.com`;
     

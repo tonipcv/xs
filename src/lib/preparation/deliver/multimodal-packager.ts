@@ -127,7 +127,8 @@ export class MultimodalPackager {
           const packageResult = await this.createPatientPackage(
             patientId,
             records,
-            outputBaseDir
+            outputBaseDir,
+            warnings
           );
           packages.push(packageResult);
         } catch (error) {
@@ -232,7 +233,8 @@ export class MultimodalPackager {
   private async createPatientPackage(
     patientId: string,
     records: PatientRecord[],
-    outputBaseDir: string
+    outputBaseDir: string,
+    warnings: string[]
   ): Promise<PatientPackage> {
     const patientDir = path.join(outputBaseDir, `patient_${patientId}`);
     await fs.mkdir(patientDir, { recursive: true });
@@ -285,14 +287,19 @@ export class MultimodalPackager {
           filePath: targetPath,
         });
       } catch (error) {
-        console.warn(`Failed to copy file ${record.filePath}: ${error}`);
+        const warningMsg = `Failed to copy file ${record.filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`;
+        console.warn(warningMsg);
+        warnings.push(warningMsg);
       }
     }
 
-    // Gera manifest do paciente
-    const textCount = organizedRecords.filter(r => r.modality === 'text').length;
-    const imageCount = organizedRecords.filter(r => r.modality === 'image').length;
-    const audioCount = organizedRecords.filter(r => r.modality === 'audio').length;
+    const textRecords = organizedRecords.filter(r => r.modality === 'text' || r.modality === 'structured');
+    const imageRecords = organizedRecords.filter(r => r.modality === 'image');
+    const audioRecords = organizedRecords.filter(r => r.modality === 'audio');
+
+    const textCount = textRecords.length;
+    const imageCount = imageRecords.length;
+    const audioCount = audioRecords.length;
 
     const linkIntegrity = this.validateLinkIntegrity(organizedRecords);
 
@@ -493,4 +500,9 @@ export function getMultimodalPackager(config?: Partial<MultimodalPackageConfig>)
 
 export function resetMultimodalPackager(): void {
   packager = null;
+}
+
+// For tests - bypasses singleton
+export function createMultimodalPackager(config?: Partial<MultimodalPackageConfig>): MultimodalPackager {
+  return new MultimodalPackager(config);
 }

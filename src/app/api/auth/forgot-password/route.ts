@@ -30,6 +30,18 @@ export async function POST(request: Request) {
 
     const { email } = body
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return new NextResponse(
+        JSON.stringify({ error: 'Invalid email format' }),
+        { 
+          status: 400,
+          headers: { 'Content-Type': 'application/json' }
+        }
+      )
+    }
+
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true, name: true, email: true }

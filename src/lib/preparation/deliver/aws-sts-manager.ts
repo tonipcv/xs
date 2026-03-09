@@ -3,6 +3,10 @@
  * Provides least-privilege access with short TTL
  */
 
+import { STSClient, AssumeRoleCommand, GetCallerIdentityCommand } from '@aws-sdk/client-sts';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { S3Client, GetObjectCommand } from '@aws-sdk/client-s3';
+
 export interface STSCredentials {
   accessKeyId: string;
   secretAccessKey: string;
@@ -15,7 +19,7 @@ export interface STSAssumeRoleConfig {
   sessionName: string;
   durationSeconds: number;
   externalId?: string;
-  policy?: string; // IAM policy JSON for further restriction
+  policy?: string;
 }
 
 export interface ScopedPermissions {
@@ -26,27 +30,56 @@ export interface ScopedPermissions {
 
 export class AWSSTSManager {
   private region: string;
+  private stsClient: STSClient;
+  private s3Client: S3Client;
 
-  constructor(region: string = 'us-east-1') {
+  constructor(region: string = process.env.AWS_REGION || 'us-east-1') {
     this.region = region;
+    this.stsClient = new STSClient({ region });
+    this.s3Client = new S3Client({ region });
   }
 
   /**
    * Assume role with least privilege for dataset access
+   * REAL implementation using AWS STS API
    */
   async assumeRoleForDataset(
     config: STSAssumeRoleConfig,
     permissions: ScopedPermissions
   ): Promise<STSCredentials> {
-    // In production, this calls AWS STS AssumeRole API
-    // For now, return simulated credentials
-    const expiration = new Date(Date.now() + config.durationSeconds * 1000);
+    const command = new AssumeRoleCommand({
+      RoleArn: config.roleArn,
+      RoleSessionName: config.sessionName.substring(0, 64),
+      DurationSeconds: config.durationSeconds,
+      ExternalId: config.externalId,
+      Policy: config.policy,
+    });
+
+    const response = await this.stsClient.send(command);
+    
+    if (!response.Credentials) {
+      throw new Error('Failed to assume role: no credentials returned');
+    }
+
+    return {
+      accessKeyId: response.Credentials.AccessKeyId!,
+      secretAccessKey: response.Credentials.SecretAccessKey!,
+      sessionToken: response.Credentials.SessionToken!,
+      expiration: response.Credentials.Expiration!,
+    };
+  }
+
+  /**
+   * Get current AWS account ID
+   */
+  async getCallerIdentity(): Promise<{ accountId: string; arn: string; userId: string }> {
+    const command = new GetCallerIdentityCommand({});
+    const response = await this.stsClient.send(command);
     
     return {
-      accessKeyId: `ASIA${this.generateRandom(16)}`,
-      secretAccessKey: this.generateRandom(40),
-      sessionToken: this.generateSessionToken(config.sessionName, expiration),
-      expiration,
+      accountId: response.Account!,
+      arn: response.Arn!,
+      userId: response.UserId!,
     };
   }
 
@@ -61,14 +94,18 @@ export class AWSSTSManager {
   ): Promise<STSCredentials & { scope: ScopedPermissions }> {
     const sessionName = `dataset-${datasetId}-${leaseId}`.substring(0, 64);
     
+    // Use the configured test role ARN or construct one
+    const roleArn = process.env.AWS_TEST_ROLE_ARN || 
+      `arn:aws:iam::${await this.getAccountId()}:role/xase-dataset-access`;
+    
     const permissions: ScopedPermissions = {
-      bucket: `xase-prepared-datasets-${this.region}`,
+      bucket: process.env.AWS_S3_BUCKET || `xase-prepared-datasets-${this.region}`,
       prefix: `${datasetId}/${leaseId}/`,
       actions: ['s3:GetObject', 's3:ListBucket'],
     };
 
     const config: STSAssumeRoleConfig = {
-      roleArn: `arn:aws:iam::123456789012:role/xase-dataset-access`,
+      roleArn,
       sessionName,
       durationSeconds: ttlMinutes * 60,
     };
@@ -91,14 +128,17 @@ export class AWSSTSManager {
   ): Promise<STSCredentials & { scope: ScopedPermissions }> {
     const sessionName = `sidecar-${patientToken}`.substring(0, 64);
     
+    const roleArn = process.env.AWS_TEST_ROLE_ARN || 
+      `arn:aws:iam::${await this.getAccountId()}:role/xase-sidecar-streaming`;
+    
     const permissions: ScopedPermissions = {
-      bucket: `xase-sidecar-delivery-${this.region}`,
+      bucket: process.env.AWS_S3_BUCKET || `xase-sidecar-delivery-${this.region}`,
       prefix: `${patientToken}/`,
       actions: ['s3:GetObject'],
     };
 
     const config: STSAssumeRoleConfig = {
-      roleArn: `arn:aws:iam::123456789012:role/xase-sidecar-streaming`,
+      roleArn,
       sessionName,
       durationSeconds: ttlMinutes * 60,
     };
@@ -115,7 +155,9 @@ export class AWSSTSManager {
    * Validate credentials are still valid
    */
   isValid(credentials: STSCredentials): boolean {
-    return new Date() < credentials.expiration;
+    // Add 30-second buffer for clock skew
+    const bufferMs = 30 * 1000;
+    return new Date(Date.now() + bufferMs) < credentials.expiration;
   }
 
   /**
@@ -137,7 +179,7 @@ export class AWSSTSManager {
   }
 
   /**
-   * Generate signed URL for direct S3 access
+   * Generate REAL signed URL for direct S3 access using AWS SDK
    */
   async generateSignedUrl(
     bucket: string,
@@ -145,28 +187,67 @@ export class AWSSTSManager {
     credentials: STSCredentials,
     expiresInSeconds: number = 3600
   ): Promise<string> {
-    // In production, use AWS SDK to generate signed URL
-    const token = Buffer.from(JSON.stringify({
-      bucket,
-      key,
-      accessKey: credentials.accessKeyId,
-      exp: Math.floor(Date.now() / 1000) + expiresInSeconds,
-    })).toString('base64');
+    // Create a temporary S3 client with the provided credentials
+    const tempS3Client = new S3Client({
+      region: this.region,
+      credentials: {
+        accessKeyId: credentials.accessKeyId,
+        secretAccessKey: credentials.secretAccessKey,
+        sessionToken: credentials.sessionToken,
+      },
+    });
 
-    return `https://${bucket}.s3.amazonaws.com/${key}?X-Amz-SignedHeaders=host&X-Amz-Signature=${token}`;
+    const command = new GetObjectCommand({
+      Bucket: bucket,
+      Key: key,
+    });
+
+    // Generate real signed URL using AWS SDK
+    const signedUrl = await getSignedUrl(tempS3Client, command, {
+      expiresIn: expiresInSeconds,
+    });
+
+    return signedUrl;
   }
 
-  private generateRandom(length: number): string {
-    const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
-    let result = '';
-    for (let i = 0; i < length; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
+  /**
+   * Get AWS Account ID from caller identity
+   */
+  private async getAccountId(): Promise<string> {
+    try {
+      const identity = await this.getCallerIdentity();
+      return identity.accountId;
+    } catch {
+      return '000000000000';
     }
-    return result;
   }
 
-  private generateSessionToken(sessionName: string, expiration: Date): string {
-    const data = `${sessionName}:${expiration.toISOString()}`;
-    return Buffer.from(data).toString('base64').substring(0, 400);
+  // Legacy method names for backward compatibility
+  async assumeRole(config: STSAssumeRoleConfig): Promise<STSCredentials> {
+    const dummyPermissions: ScopedPermissions = {
+      bucket: 'dummy',
+      prefix: '',
+      actions: ['s3:GetObject'],
+    };
+    return this.assumeRoleForDataset(config, dummyPermissions);
   }
+}
+
+// Singleton instance
+let globalStsManager: AWSSTSManager | null = null;
+
+export function getAwsStsManager(region?: string): AWSSTSManager {
+  if (!globalStsManager) {
+    globalStsManager = new AWSSTSManager(region);
+  }
+  return globalStsManager;
+}
+
+export function resetAwsStsManager(): void {
+  globalStsManager = null;
+}
+
+// For tests - create fresh instance
+export function createAwsStsManager(region?: string): AWSSTSManager {
+  return new AWSSTSManager(region);
 }

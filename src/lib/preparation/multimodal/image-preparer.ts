@@ -1,7 +1,34 @@
 /**
  * Image Preparer for Medical Imaging
  * Handles resampling, windowing, and format conversion for DICOM/images
+ * With SimpleITK integration for real volume processing
  */
+
+import { spawn } from 'child_process';
+import fs from 'fs/promises';
+import path from 'path';
+
+export interface SimpleITKConfig {
+  pythonPath?: string;
+  simpleitkAvailable?: boolean;
+}
+
+export interface DicomMetadata {
+  modality: string;
+  studyInstanceUID: string;
+  seriesInstanceUID: string;
+  sopInstanceUID: string;
+  rows: number;
+  columns: number;
+  sliceThickness?: number;
+  pixelSpacing?: [number, number];
+  windowCenter?: number;
+  windowWidth?: number;
+  rescaleIntercept: number;
+  rescaleSlope: number;
+  bitsAllocated: number;
+  photometricInterpretation: string;
+}
 
 export interface ImageMetadata {
   modality: string;
@@ -49,6 +76,189 @@ export interface ImagePreparationResult {
 }
 
 export class ImagePreparer {
+  private simpleitkConfig: SimpleITKConfig;
+
+  constructor(config?: SimpleITKConfig) {
+    this.simpleitkConfig = {
+      pythonPath: config?.pythonPath || process.env.SIMPLEITK_PYTHON_PATH || 'python3',
+      simpleitkAvailable: config?.simpleitkAvailable ?? undefined,
+    };
+  }
+
+  /**
+   * Check if SimpleITK Python is available
+   */
+  async checkSimpleITKAvailable(): Promise<boolean> {
+    if (typeof this.simpleitkConfig.simpleitkAvailable === 'boolean') {
+      return this.simpleitkConfig.simpleitkAvailable;
+    }
+
+    try {
+      const result = await this.runPythonScript(`
+import sys
+try:
+    import SimpleITK as sitk
+    print("SITK_AVAILABLE")
+except ImportError:
+    print("SITK_NOT_AVAILABLE")
+    sys.exit(1)
+`);
+      this.simpleitkConfig.simpleitkAvailable = result.includes('SITK_AVAILABLE');
+      return this.simpleitkConfig.simpleitkAvailable;
+    } catch {
+      this.simpleitkConfig.simpleitkAvailable = false;
+      return false;
+    }
+  }
+
+  /**
+   * Run Python script with SimpleITK
+   */
+  private async runPythonScript(script: string): Promise<string> {
+    return new Promise((resolve, reject) => {
+      const python = spawn(this.simpleitkConfig.pythonPath!, ['-c', script]);
+      let output = '';
+      let error = '';
+
+      python.stdout.on('data', (data) => {
+        output += data.toString();
+      });
+
+      python.stderr.on('data', (data) => {
+        error += data.toString();
+      });
+
+      python.on('close', (code) => {
+        if (code !== 0) {
+          reject(new Error(`Python script failed: ${error || output}`));
+        } else {
+          resolve(output.trim());
+        }
+      });
+    });
+  }
+
+  /**
+   * Load DICOM metadata using SimpleITK
+   */
+  private async loadDicomMetadata(inputPath: string): Promise<ImageMetadata> {
+    const isAvailable = await this.checkSimpleITKAvailable();
+    
+    if (!isAvailable) {
+      console.warn('[ImagePreparer] SimpleITK not available, using fallback metadata');
+      return this.loadMetadataFallback(inputPath);
+    }
+
+    const script = `
+import SimpleITK as sitk
+import json
+import sys
+
+try:
+    # Read DICOM series or single file
+    reader = sitk.ImageFileReader()
+    reader.SetFileName('${inputPath.replace(/'/g, "\\'")}')
+    reader.ReadImageInformation()
+    
+    metadata = {
+        'modality': reader.GetMetaData('0008|0060') if reader.HasMetaDataKey('0008|0060') else 'CT',
+        'shape': [reader.GetDepth(), reader.GetHeight(), reader.GetWidth()],
+        'spacing': list(reader.GetSpacing()),
+        'origin': list(reader.GetOrigin()),
+        'direction': list(reader.GetDirection()),
+    }
+    
+    # Try to get windowing info
+    if reader.HasMetaDataKey('0028|1050'):
+        metadata['windowCenter'] = float(reader.GetMetaData('0028|1050').split('\\\\')[0])
+    else:
+        metadata['windowCenter'] = 40
+        
+    if reader.HasMetaData('0028|1051'):
+        metadata['windowWidth'] = float(reader.GetMetaData('0028|1051').split('\\\\')[0])
+    else:
+        metadata['windowWidth'] = 400
+    
+    print(json.dumps(metadata))
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+`;
+
+    try {
+      const result = await this.runPythonScript(script);
+      const parsed = JSON.parse(result);
+      
+      return {
+        modality: parsed.modality,
+        shape: parsed.shape as [number, number, number],
+        spacing: parsed.spacing as [number, number, number],
+        origin: parsed.origin as [number, number, number],
+        direction: parsed.direction,
+        windowCenter: parsed.windowCenter,
+        windowWidth: parsed.windowWidth,
+        labels: {
+          background: 0,
+          tissue: 1,
+        },
+      };
+    } catch (error) {
+      console.warn('[ImagePreparer] Failed to load with SimpleITK, using fallback:', error);
+      return this.loadMetadataFallback(inputPath);
+    }
+  }
+
+  /**
+   * Load NIfTI metadata using SimpleITK
+   */
+  private async loadNiftiMetadata(inputPath: string): Promise<ImageMetadata> {
+    const isAvailable = await this.checkSimpleITKAvailable();
+    
+    if (!isAvailable) {
+      return this.loadMetadataFallback(inputPath);
+    }
+
+    const script = `
+import SimpleITK as sitk
+import json
+import sys
+
+try:
+    image = sitk.ReadImage('${inputPath.replace(/'/g, "\\'")}')
+    
+    metadata = {
+        'modality': 'MRI',  # NIfTI usually doesn't store modality
+        'shape': [image.GetDepth(), image.GetHeight(), image.GetWidth()],
+        'spacing': list(image.GetSpacing()),
+        'origin': list(image.GetOrigin()),
+        'direction': list(image.GetDirection()),
+        'windowCenter': 0,
+        'windowWidth': 1000,
+    }
+    
+    print(json.dumps(metadata))
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+`;
+
+    try {
+      const result = await this.runPythonScript(script);
+      const parsed = JSON.parse(result);
+      
+      return {
+        modality: parsed.modality,
+        shape: parsed.shape as [number, number, number],
+        spacing: parsed.spacing as [number, number, number],
+        origin: parsed.origin as [number, number, number],
+        direction: parsed.direction,
+        windowCenter: parsed.windowCenter,
+        windowWidth: parsed.windowWidth,
+      };
+    } catch {
+      return this.loadMetadataFallback(inputPath);
+    }
+  }
   async prepareImage(
     inputPath: string,
     outputPath: string,
@@ -112,8 +322,19 @@ export class ImagePreparer {
   }
 
   private async loadMetadata(inputPath: string): Promise<ImageMetadata> {
-    // In production, parse DICOM/NIfTI headers
-    // For now, return simulated metadata
+    const ext = path.extname(inputPath).toLowerCase();
+    
+    if (ext === '.dcm' || ext === '.dicom') {
+      return this.loadDicomMetadata(inputPath);
+    } else if (ext === '.nii' || ext === '.nii.gz' || ext === '.nifti') {
+      return this.loadNiftiMetadata(inputPath);
+    } else {
+      return this.loadMetadataFallback(inputPath);
+    }
+  }
+
+  private loadMetadataFallback(inputPath: string): ImageMetadata {
+    // Fallback to simulated metadata for testing
     return {
       modality: 'CT',
       shape: [128, 256, 256],
@@ -130,16 +351,69 @@ export class ImagePreparer {
     };
   }
 
+  private async resampleImageWithSimpleITK(
+    inputPath: string,
+    metadata: ImageMetadata,
+    config: ImagePreparationConfig
+  ): Promise<Float32Array> {
+    const isAvailable = await this.checkSimpleITKAvailable();
+    
+    if (!isAvailable || !config.targetShape) {
+      // Fallback to simulation
+      const shape = config.targetShape ?? metadata.shape;
+      const totalVoxels = shape[0] * shape[1] * shape[2];
+      return new Float32Array(totalVoxels).map(() => Math.random() * 1000);
+    }
+
+    const outputPath = `${inputPath}.resampled.raw`;
+    const script = `
+import SimpleITK as sitk
+import numpy as np
+import sys
+
+try:
+    # Read image
+    image = sitk.ReadImage('${inputPath.replace(/'/g, "\\'")}')
+    
+    # Resample if target shape specified
+    target_shape = [${config.targetShape?.join(', ') ?? metadata.shape.join(', ')}]
+    if target_shape != [image.GetDepth(), image.GetHeight(), image.GetWidth()]:
+        reference_image = sitk.Image(target_shape[::-1], image.GetPixelID())
+        reference_image.SetSpacing([
+            image.GetWidth() * image.GetSpacing()[0] / target_shape[2],
+            image.GetHeight() * image.GetSpacing()[1] / target_shape[1],
+            image.GetDepth() * image.GetSpacing()[2] / target_shape[0]
+        ])
+        image = sitk.Resample(image, reference_image, sitk.Transform(), sitk.sitkLinear)
+    
+    # Convert to numpy and save as raw
+    arr = sitk.GetArrayFromImage(image)
+    arr.astype(np.float32).tofile('${outputPath.replace(/'/g, "\\'")}')
+    print(f'SHAPE:{arr.shape}')
+except Exception as e:
+    print(f'ERROR: {e}', file=sys.stderr)
+    sys.exit(1)
+`;
+
+    try {
+      await this.runPythonScript(script);
+      const buffer = await fs.readFile(outputPath);
+      await fs.unlink(outputPath).catch(() => {});
+      return new Float32Array(buffer.buffer, buffer.byteOffset, buffer.byteLength / 4);
+    } catch (error) {
+      console.warn('[ImagePreparer] SimpleITK resampling failed, using fallback:', error);
+      const shape = config.targetShape ?? metadata.shape;
+      const totalVoxels = shape[0] * shape[1] * shape[2];
+      return new Float32Array(totalVoxels).map(() => Math.random() * 1000);
+    }
+  }
+
   private async resampleImage(
     inputPath: string,
     metadata: ImageMetadata,
     config: ImagePreparationConfig
   ): Promise<Float32Array> {
-    // In production, use proper resampling (linear, nearest, etc.)
-    // For now, simulate the resampled data
-    const shape = config.targetShape ?? metadata.shape;
-    const totalVoxels = shape[0] * shape[1] * shape[2];
-    return new Float32Array(totalVoxels).map(() => Math.random() * 1000);
+    return this.resampleImageWithSimpleITK(inputPath, metadata, config);
   }
 
   private async applyWindowing(

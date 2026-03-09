@@ -35,6 +35,17 @@ export interface PreparationConfig {
   input_field?: string;
   output_field?: string;
   label_field?: string;
+  // Campos adicionais conforme Apêndice A
+  max_samples?: number;
+  max_tokens_per_example?: number;
+  min_tokens?: number;
+  shuffle?: boolean;
+  balance?: boolean;
+  chosen_field?: string;
+  rejected_field?: string;
+  embedding_provider?: 'openai' | 'cohere' | 'local' | 'huggingface';
+  embedding_model?: string;
+  include_metadata?: boolean;
   // Allow additional properties for flexibility
   [key: string]: unknown;
 }
@@ -43,6 +54,11 @@ export interface PreparationLicense {
   type: string;
   attribution?: string;
   restrictions?: string[];
+  // Additional fields for compatibility
+  allowCommercial?: boolean;
+  allowResearch?: boolean;
+  allowTraining?: boolean;
+  requireAttribution?: boolean;
 }
 
 export interface PreparationPrivacy {
@@ -50,6 +66,8 @@ export interface PreparationPrivacy {
   patientTokenization?: 'none' | 'hmac-sha256';
   retentionHours?: number;
   auditLogRequired?: boolean;
+  // Additional fields for compatibility
+  anonymize?: boolean;
 }
 
 export interface PreparationOutputContract {
@@ -103,6 +121,8 @@ export interface NormalizationResult {
   deduplicatedCount: number;
   deidApplied: boolean;
   qualityReport?: QualityReport;
+  // Alias for compatibility
+  recordCount?: number;
 }
 
 export interface CompilationResult {
@@ -120,6 +140,9 @@ export interface DeliveryResult {
   readmePath: string;
   downloadUrls: string[];
   expiresAt: Date;
+  // Additional fields for tests
+  checksums?: Record<string, string>;
+  recordCount?: number;
 }
 
 export interface PreparationResult {

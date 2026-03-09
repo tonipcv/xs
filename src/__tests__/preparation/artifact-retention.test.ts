@@ -12,6 +12,8 @@ import {
 import { prisma } from '@/lib/prisma';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
+type MockType = ReturnType<typeof vi.fn>;
+
 // Mock Prisma
 vi.mock('@/lib/prisma', () => ({
   prisma: {
@@ -86,12 +88,11 @@ describe('ArtifactRetentionManager', () => {
         completedAt: new Date('2023-01-01'), // Very old
       });
 
-      (prisma.preparationJob.findMany as vi.Mock)
-        .mockResolvedValueOnce([oldJob]) // completed jobs
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValueOnce([oldJob]) // completed jobs
         .mockResolvedValueOnce([]) // failed jobs
         .mockResolvedValueOnce([]); // cancelled jobs
 
-      (prisma.dataset.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.dataset.findMany as unknown as MockType).mockResolvedValue([]);
 
       const result = await manager.runCleanup('tenant-001');
 
@@ -107,12 +108,12 @@ describe('ArtifactRetentionManager', () => {
         updatedAt: new Date('2023-01-01'),
       });
 
-      (prisma.preparationJob.findMany as vi.Mock)
+      (prisma.preparationJob.findMany as unknown as MockType)
         .mockResolvedValueOnce([]) // completed jobs
         .mockResolvedValueOnce([failedJob]) // failed jobs
         .mockResolvedValueOnce([]); // cancelled jobs
 
-      (prisma.dataset.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.dataset.findMany as unknown as MockType).mockResolvedValue([]);
 
       const result = await manager.runCleanup('tenant-001');
 
@@ -128,12 +129,12 @@ describe('ArtifactRetentionManager', () => {
         completedAt: new Date('2023-01-01'),
       });
 
-      (prisma.preparationJob.findMany as vi.Mock)
+      (prisma.preparationJob.findMany as unknown as MockType)
         .mockResolvedValueOnce([oldJob])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      (prisma.dataset.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.dataset.findMany as unknown as MockType).mockResolvedValue([]);
 
       const result = await manager.runCleanup('tenant-001');
 
@@ -146,16 +147,16 @@ describe('ArtifactRetentionManager', () => {
       const job1 = createMockJob({ id: 'job-001' });
       const job2 = createMockJob({ id: 'job-002' });
 
-      (prisma.preparationJob.findMany as vi.Mock)
+      (prisma.preparationJob.findMany as unknown as MockType)
         .mockResolvedValueOnce([job1, job2])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      (prisma.preparationJob.update as vi.Mock)
+      (prisma.preparationJob.update as unknown as MockType)
         .mockResolvedValueOnce({})
         .mockRejectedValueOnce(new Error('Update failed'));
 
-      (prisma.dataset.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.dataset.findMany as unknown as MockType).mockResolvedValue([]);
 
       const result = await manager.runCleanup('tenant-001');
 
@@ -195,7 +196,7 @@ describe('ArtifactRetentionManager', () => {
         },
       ];
 
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue(mockJobs);
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue(mockJobs);
 
       const stats = await manager.getStorageStats('tenant-001');
 
@@ -209,7 +210,7 @@ describe('ArtifactRetentionManager', () => {
     });
 
     it('should handle empty storage stats', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.preparationJob.findMany as unknown as MockType).mockResolvedValue([]);
 
       const stats = await manager.getStorageStats('tenant-001');
 
@@ -291,21 +292,21 @@ describe('ArtifactRetentionManager', () => {
         normalizationResult: { recordCount: 10 },
       }));
 
-      (prisma.preparationJob.findMany as vi.Mock)
+      (prisma.preparationJob.findMany as unknown as MockType)
         .mockResolvedValueOnce([]) // no expired
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
       // Mock dataset query
-      (prisma.dataset.findMany as vi.Mock).mockResolvedValue([
+      (prisma.dataset.findMany as unknown as MockType).mockResolvedValue([
         { id: 'dataset-001' },
       ]);
 
       // Mock jobs per dataset (returning oldest 10 that should be deleted)
-      (prisma.preparationJob.findMany as vi.Mock)
+      (prisma.preparationJob.findMany as unknown as MockType)
         .mockResolvedValueOnce(manyJobs.slice(0, 10));
 
-      (prisma.preparationJob.update as vi.Mock).mockResolvedValue({});
+      (prisma.preparationJob.update as unknown as MockType).mockResolvedValue({});
 
       const result = await manager.runCleanup('tenant-001');
 
@@ -325,16 +326,16 @@ describe('ArtifactRetentionManager', () => {
         normalizationResult: { recordCount: 100 },
       };
 
-      (prisma.preparationJob.findMany as vi.Mock)
+      (prisma.preparationJob.findMany as unknown as MockType)
         .mockResolvedValueOnce([]) // expired completed
         .mockResolvedValueOnce([]) // expired failed
         .mockResolvedValueOnce([]) // expired cancelled
         .mockResolvedValueOnce([oldSoftDeletedJob]); // old soft deleted
 
-      (prisma.dataset.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.dataset.findMany as unknown as MockType).mockResolvedValue([]);
 
-      (prisma.jobLog.deleteMany as vi.Mock).mockResolvedValue({});
-      (prisma.preparationJob.delete as vi.Mock).mockResolvedValue({});
+      (prisma.jobLog.deleteMany as unknown as MockType).mockResolvedValue({});
+      (prisma.preparationJob.delete as unknown as MockType).mockResolvedValue({});
 
       const result = await manager.runCleanup('tenant-001');
 
@@ -344,7 +345,7 @@ describe('ArtifactRetentionManager', () => {
 
   describe('Error Handling', () => {
     it('should handle database errors gracefully', async () => {
-      (prisma.preparationJob.findMany as vi.Mock).mockRejectedValue(
+      (prisma.preparationJob.findMany as unknown as MockType).mockRejectedValue(
         new Error('Database connection failed')
       );
 
@@ -360,12 +361,12 @@ describe('ArtifactRetentionManager', () => {
         normalizationResult: { recordCount: 100 },
       };
 
-      (prisma.preparationJob.findMany as vi.Mock)
+      (prisma.preparationJob.findMany as unknown as MockType)
         .mockResolvedValueOnce([job])
         .mockResolvedValueOnce([])
         .mockResolvedValueOnce([]);
 
-      (prisma.dataset.findMany as vi.Mock).mockResolvedValue([]);
+      (prisma.dataset.findMany as unknown as MockType).mockResolvedValue([]);
 
       // S3 client exists but may fail
       const result = await manager.runCleanup('tenant-001');

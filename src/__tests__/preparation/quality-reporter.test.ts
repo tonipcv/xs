@@ -50,6 +50,113 @@ describe('QualityReporter', () => {
     });
   });
 
+  describe('score distribution', () => {
+    it('should calculate score distribution with histogram', () => {
+      const scores = [
+        0.95, 0.92, 0.88, 0.85, 0.82, // excellent (5)
+        0.78, 0.75, 0.72, // good (3)
+        0.65, 0.62, // acceptable (2)
+        0.45, 0.42, // poor (2)
+        0.25, 0.22, 0.15, // critical (3)
+      ];
+
+      const distribution = reporter.calculateScoreDistribution(scores);
+
+      expect(distribution.histogram.buckets).toHaveLength(10);
+      expect(distribution.histogram.bucketSize).toBe(0.1);
+      expect(distribution.percentiles.p50).toBeDefined();
+      expect(distribution.percentiles.p75).toBeDefined();
+      expect(distribution.percentiles.p90).toBeDefined();
+      expect(distribution.percentiles.p95).toBeDefined();
+      expect(distribution.percentiles.p99).toBeDefined();
+      expect(distribution.byRange.excellent).toBe(5);
+      expect(distribution.byRange.good).toBe(3);
+      expect(distribution.byRange.acceptable).toBe(2);
+      expect(distribution.byRange.poor).toBe(2);
+      expect(distribution.byRange.critical).toBe(3);
+    });
+
+    it('should handle empty scores array', () => {
+      const distribution = reporter.calculateScoreDistribution([]);
+
+      expect(distribution.histogram.buckets).toHaveLength(0);
+      expect(distribution.percentiles.p50).toBe(0);
+      expect(distribution.byRange.excellent).toBe(0);
+    });
+
+    it('should calculate correct percentiles', () => {
+      const scores = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0];
+
+      const distribution = reporter.calculateScoreDistribution(scores);
+
+      expect(distribution.percentiles.p50).toBe(0.5);
+      expect(distribution.percentiles.p75).toBe(0.8);
+      expect(distribution.percentiles.p90).toBe(0.9);
+      expect(distribution.percentiles.p99).toBe(1.0);
+    });
+
+    it('should include histogram in quality report metrics', () => {
+      const scores = [0.95, 0.85, 0.75, 0.65, 0.55, 0.45, 0.35, 0.25, 0.15, 0.05];
+      const distribution = reporter.calculateScoreDistribution(scores);
+
+      const metrics: QualityMetrics = {
+        totalRecords: 1000,
+        recordsProcessed: 950,
+        recordsFiltered: 50,
+        deduplicatedCount: 20,
+        qualityScoreAvg: 0.55,
+        qualityScoreMin: 0.05,
+        qualityScoreMax: 0.95,
+        qualityScoreDistribution: distribution,
+        filterReasons: {},
+      };
+
+      const report = reporter.generateReport(
+        'dataset-123',
+        'job-456',
+        metrics,
+        { deduplicate: true, quality_threshold: 0.7 }
+      );
+
+      expect(report.metrics.qualityScoreDistribution).toBeDefined();
+      expect(report.metrics.qualityScoreDistribution?.histogram.buckets).toHaveLength(10);
+      expect(report.metrics.qualityScoreDistribution?.byRange.excellent).toBeGreaterThanOrEqual(0);
+    });
+
+    it('should render distribution in HTML report', () => {
+      const scores = [0.95, 0.85, 0.75, 0.65, 0.55];
+      const distribution = reporter.calculateScoreDistribution(scores);
+
+      const metrics: QualityMetrics = {
+        totalRecords: 100,
+        recordsProcessed: 95,
+        recordsFiltered: 5,
+        deduplicatedCount: 2,
+        qualityScoreAvg: 0.75,
+        qualityScoreMin: 0.55,
+        qualityScoreMax: 0.95,
+        qualityScoreDistribution: distribution,
+        filterReasons: {},
+      };
+
+      const report = reporter.generateReport(
+        'dataset-1',
+        'job-1',
+        metrics,
+        { deduplicate: true, quality_threshold: 0.7 }
+      );
+
+      const html = reporter.generateHTML(report);
+
+      expect(html).toContain('Quality Score Distribution');
+      expect(html).toContain('Percentiles');
+      expect(html).toContain('P50');
+      expect(html).toContain('histogram');
+      expect(html).toContain('Excellent');
+      expect(html).toContain('Good');
+    });
+  });
+
   describe('recommendations', () => {
     it('should recommend lowering threshold for high filter rate', () => {
       const metrics: QualityMetrics = {

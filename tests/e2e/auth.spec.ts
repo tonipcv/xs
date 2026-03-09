@@ -66,7 +66,7 @@ test.describe('Authentication Flow', () => {
     await page.goto(`${BASE_URL}/register`);
     
     await page.fill('input[name="password"]', 'weak');
-    await page.blur('input[name="password"]');
+    await page.locator('input[name="password"]').blur();
     
     await expect(page.locator('text=Password must be at least 8 characters')).toBeVisible();
   });
@@ -76,7 +76,7 @@ test.describe('Authentication Flow', () => {
     
     await page.fill('input[name="password"]', 'Test123!');
     await page.fill('input[name="confirmPassword"]', 'Different123!');
-    await page.blur('input[name="confirmPassword"]');
+    await page.locator('input[name="confirmPassword"]').blur();
     
     await expect(page.locator('text=Passwords do not match')).toBeVisible();
   });

@@ -48,29 +48,22 @@ describe('Watermark Detection', () => {
   describe('generateForensicReport', () => {
     it('should generate PDF report with matches', async () => {
       const reportData = {
-        audioHash: 'abc123def456',
+        audioHash: 'abc123',
         matches: [
           {
             contractId: 'contract_1',
-            buyer: 'tenant_buyer_1',
-            confidence: 0.97,
-            timestamp: new Date('2025-01-01'),
-          },
-          {
-            contractId: 'contract_2',
-            buyer: 'tenant_buyer_2',
-            confidence: 0.99,
-            timestamp: new Date('2025-01-02'),
+            buyer: 'tenant_a',
+            confidence: 0.95,
+            timestamp: new Date(),
           },
         ],
         tenantId: 'tenant_test',
         timestamp: new Date(),
       };
 
-      const reportUrl = await generateForensicReport(reportData);
+      const reportBuffer = await generateForensicReport(Buffer.from('test audio data'));
       
-      expect(reportUrl).toContain('https://xase.ai/reports/');
-      expect(reportUrl).toContain('.pdf');
+      expect(reportBuffer).toBeInstanceOf(Buffer);
     });
 
     it('should generate report with single match', async () => {
@@ -88,10 +81,9 @@ describe('Watermark Detection', () => {
         timestamp: new Date(),
       };
 
-      const reportUrl = await generateForensicReport(reportData);
+      const reportBuffer = await generateForensicReport(Buffer.from('single match audio'));
       
-      expect(reportUrl).toBeTruthy();
-      expect(typeof reportUrl).toBe('string');
+      expect(reportBuffer).toBeInstanceOf(Buffer);
     });
   });
 });

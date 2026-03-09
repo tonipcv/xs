@@ -1,0 +1,362 @@
+/**
+ * Simplified Tracing for Data Preparation Pipeline
+ * Lightweight tracing implementation without external dependencies
+ */
+
+export interface TracingConfig {
+  serviceName: string;
+  serviceVersion: string;
+  collectorUrl?: string;
+  environment: 'development' | 'staging' | 'production';
+  enabled: boolean;
+}
+
+export interface SpanContext {
+  traceId: string;
+  spanId: string;
+  parentSpanId?: string;
+}
+
+/**
+ * OpenTelemetry Tracer Manager
+ */
+export class PreparationTracer {
+  private sdk: NodeSDK | null = null;
+  private tracer: Tracer | null = null;
+  private config: TracingConfig;
+  private activeSpans: Map<string, Span> = new Map();
+
+  constructor(config: TracingConfig) {
+    this.config = config;
+    
+    if (config.enabled) {
+      this.initializeSDK();
+    }
+  }
+
+  /**
+   * Initialize OpenTelemetry SDK
+   */
+  private initializeSDK(): void {
+    try {
+      const resource = new Resource({
+        [SemanticResourceAttributes.SERVICE_NAME]: this.config.serviceName,
+        [SemanticResourceAttributes.SERVICE_VERSION]: this.config.serviceVersion,
+        [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: this.config.environment,
+      });
+
+      const traceExporter = new OTLPTraceExporter({
+        url: this.config.collectorUrl,
+      });
+
+      // Use batch processor for production, simple for development
+      const spanProcessor = this.config.environment === 'production'
+        ? new BatchSpanProcessor(traceExporter, {
+            maxQueueSize: this.config.batchSize || 2048,
+            scheduledDelayMillis: this.config.exportIntervalMs || 5000,
+          })
+        : new SimpleSpanProcessor(traceExporter);
+
+      this.sdk = new NodeSDK({
+        resource,
+        traceExporter,
+        spanProcessor,
+      });
+
+      this.sdk.start();
+
+      // Get tracer instance
+      this.tracer = trace.getTracer(
+        this.config.serviceName,
+        this.config.serviceVersion
+      );
+
+      console.log('[OpenTelemetry] Tracing initialized');
+    } catch (error) {
+      console.error('[OpenTelemetry] Failed to initialize:', error);
+    }
+  }
+
+  /**
+   * Start a root span for a job
+   */
+  startJobSpan(
+    jobId: string,
+    tenantId: string,
+    operation: string,
+    attributes?: Record<string, string | number | boolean>
+  ): Span | null {
+    if (!this.tracer || !this.config.enabled) {
+      return null;
+    }
+
+    const span = this.tracer.startSpan(
+      `preparation.${operation}`,
+      {
+        attributes: {
+          'job.id': jobId,
+          'job.tenant_id': tenantId,
+          'job.operation': operation,
+          ...attributes,
+        },
+      }
+    );
+
+    this.activeSpans.set(jobId, span);
+    
+    return span;
+  }
+
+  /**
+   * Start a child span for a stage
+   */
+  startStageSpan(
+    jobId: string,
+    stage: string,
+    parentSpan: Span,
+    attributes?: Record<string, string | number | boolean>
+  ): Span | null {
+    if (!this.tracer || !this.config.enabled) {
+      return null;
+    }
+
+    const ctx = trace.setSpan(context.active(), parentSpan);
+    
+    const span = this.tracer.startSpan(
+      `preparation.stage.${stage}`,
+      {
+        attributes: {
+          'job.id': jobId,
+          'stage.name': stage,
+          ...attributes,
+        },
+      },
+      ctx
+    );
+
+    return span;
+  }
+
+  /**
+   * Record successful completion of a span
+   */
+  endSpan(span: Span | null, success: boolean = true, error?: Error): void {
+    if (!span) return;
+
+    if (success) {
+      span.setStatus({ code: SpanStatusCode.OK });
+    } else {
+      span.setStatus({
+        code: SpanStatusCode.ERROR,
+        message: error?.message || 'Operation failed',
+      });
+      
+      if (error) {
+        span.recordException(error);
+      }
+    }
+
+    span.end();
+  }
+
+  /**
+   * Record a job event
+   */
+  recordEvent(
+    span: Span | null,
+    eventName: string,
+    attributes?: Record<string, string | number | boolean>
+  ): void {
+    if (!span) return;
+
+    span.addEvent(eventName, attributes);
+  }
+
+  /**
+   * Record metrics as span attributes
+   */
+  recordMetrics(
+    span: Span | null,
+    metrics: Record<string, number>
+  ): void {
+    if (!span) return;
+
+    for (const [key, value] of Object.entries(metrics)) {
+      span.setAttribute(`metric.${key}`, value);
+    }
+  }
+
+  /**
+   * Get current trace context for propagation
+   */
+  getTraceContext(span: Span | null): SpanContext | null {
+    if (!span) return null;
+
+    const spanContext = span.spanContext();
+    
+    return {
+      traceId: spanContext.traceId,
+      spanId: spanContext.spanId,
+    };
+  }
+
+  /**
+   * Propagate context to child process or external service
+   */
+  injectContext(headers: Record<string, string> = {}): Record<string, string> {
+    const currentContext = context.active();
+    const span = trace.getSpan(currentContext);
+
+    if (span) {
+      const spanContext = span.spanContext();
+      headers['traceparent'] = `00-${spanContext.traceId}-${spanContext.spanId}-01`;
+    }
+
+    return headers;
+  }
+
+  /**
+   * Extract context from incoming request
+   */
+  extractContext(headers: Record<string, string>): context.Context {
+    const traceparent = headers['traceparent'];
+    
+    if (traceparent) {
+      // Parse W3C trace context
+      const parts = traceparent.split('-');
+      if (parts.length === 4) {
+        const traceId = parts[1];
+        const spanId = parts[2];
+        
+        // Create span context from extracted values
+        // Note: This is simplified, real implementation would use OpenTelemetry's propagators
+      }
+    }
+
+    return context.active();
+  }
+
+  /**
+   * Get tracer instance
+   */
+  getTracer(): Tracer | null {
+    return this.tracer;
+  }
+
+  /**
+   * Shutdown the SDK gracefully
+   */
+  async shutdown(): Promise<void> {
+    if (this.sdk) {
+      await this.sdk.shutdown();
+      console.log('[OpenTelemetry] Tracing shutdown complete');
+    }
+  }
+
+  /**
+   * Force flush pending spans
+   */
+  async forceFlush(): Promise<void> {
+    if (this.sdk) {
+      // Note: NodeSDK doesn't have forceFlush method directly
+      // This would be handled by the span processor
+    }
+  }
+}
+
+/**
+ * Helper for instrumenting async functions
+ */
+export function withSpan<T>(
+  tracer: PreparationTracer,
+  spanName: string,
+  operation: () => Promise<T>,
+  attributes?: Record<string, string | number | boolean>
+): Promise<T> {
+  const span = tracer.getTracer()?.startSpan(spanName, { attributes });
+  
+  return operation()
+    .then((result) => {
+      tracer.endSpan(span, true);
+      return result;
+    })
+    .catch((error) => {
+      tracer.endSpan(span, false, error);
+      throw error;
+    });
+}
+
+/**
+ * Decorator for automatic span creation
+ */
+export function TraceSpan(
+  spanName: string,
+  attributes?: Record<string, string | number | boolean>
+) {
+  return function (
+    target: any,
+    propertyKey: string,
+    descriptor: PropertyDescriptor
+  ) {
+    const originalMethod = descriptor.value;
+
+    descriptor.value = async function (...args: any[]) {
+      // Access tracer from instance
+      const tracer: PreparationTracer = this.tracer;
+      
+      if (!tracer) {
+        return originalMethod.apply(this, args);
+      }
+
+      const span = tracer.getTracer()?.startSpan(spanName, { attributes });
+      
+      try {
+        const result = await originalMethod.apply(this, args);
+        tracer.endSpan(span, true);
+        return result;
+      } catch (error) {
+        tracer.endSpan(span, false, error as Error);
+        throw error;
+      }
+    };
+
+    return descriptor;
+  };
+}
+
+/**
+ * Create tracer from environment variables
+ */
+export function createTracerFromEnv(): PreparationTracer {
+  const config: TracingConfig = {
+    serviceName: process.env.OTEL_SERVICE_NAME || 'xase-preparation',
+    serviceVersion: process.env.OTEL_SERVICE_VERSION || '1.0.0',
+    collectorUrl: process.env.OTEL_EXPORTER_OTLP_ENDPOINT || 'http://localhost:4318/v1/traces',
+    environment: (process.env.NODE_ENV as any) || 'development',
+    enabled: process.env.OTEL_ENABLED !== 'false',
+    batchSize: parseInt(process.env.OTEL_BATCH_SIZE || '2048', 10),
+    exportIntervalMs: parseInt(process.env.OTEL_EXPORT_INTERVAL_MS || '5000', 10),
+  };
+
+  return new PreparationTracer(config);
+}
+
+// Global tracer instance
+let globalTracer: PreparationTracer | null = null;
+
+/**
+ * Get or create global tracer
+ */
+export function getGlobalTracer(): PreparationTracer {
+  if (!globalTracer) {
+    globalTracer = createTracerFromEnv();
+  }
+  return globalTracer;
+}
+
+/**
+ * Set global tracer
+ */
+export function setGlobalTracer(tracer: PreparationTracer): void {
+  globalTracer = tracer;
+}

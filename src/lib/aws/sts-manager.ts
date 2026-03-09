@@ -112,8 +112,8 @@ export class AwsStsManager {
       this.scheduleRefresh(cacheKey, temporaryCreds);
 
       return temporaryCreds;
-    } catch (error) {
-      logger.error('[AwsStsManager] AssumeRole failed:', error);
+    } catch (error: unknown) {
+      logger.error('[AwsStsManager] AssumeRole failed:', error instanceof Error ? error : undefined);
       throw new Error(`Failed to assume role: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -151,8 +151,8 @@ export class AwsStsManager {
         expiration: creds.Expiration || new Date(Date.now() + 3600 * 1000),
         roleArn,
       };
-    } catch (error) {
-      logger.error('[AwsStsManager] AssumeRoleWithWebIdentity failed:', error);
+    } catch (error: unknown) {
+      logger.error('[AwsStsManager] AssumeRoleWithWebIdentity failed:', error instanceof Error ? error : undefined);
       throw new Error(`Failed to assume role with web identity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -170,8 +170,8 @@ export class AwsStsManager {
         arn: response.Arn || '',
         userId: response.UserId || '',
       };
-    } catch (error) {
-      logger.error('[AwsStsManager] GetCallerIdentity failed:', error);
+    } catch (error: unknown) {
+      logger.error('[AwsStsManager] GetCallerIdentity failed:', error instanceof Error ? error : undefined);
       throw new Error(`Failed to get caller identity: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   }
@@ -210,8 +210,8 @@ export class AwsStsManager {
       }
 
       return { success: true, credentials: newCreds };
-    } catch (error) {
-      logger.error('[AwsStsManager] Credential refresh failed:', error);
+    } catch (error: unknown) {
+      logger.error('[AwsStsManager] Credential refresh failed:', error instanceof Error ? error : undefined);
       return {
         success: false,
         error: error instanceof Error ? error.message : 'Unknown error',

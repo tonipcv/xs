@@ -22,7 +22,7 @@ import { DataPreparer } from '@/lib/preparation/data-preparer';
 import { getVersionManager } from '@/lib/preparation/versioning/dataset-version-manager';
 import { getRetentionManager } from '@/lib/preparation/retention/artifact-retention';
 import { getManifestValidator } from '@/lib/preparation/validation/manifest-validator';
-import { getTextGoldenDataset } from '@/__tests__/fixtures/golden-datasets';
+import { getGoldenDataset } from '@/__tests__/fixtures/golden-datasets';
 import { JobLogger } from '@/lib/preparation/job-logger';
 import { PreparationRequest, PreparationJob } from '@/lib/preparation/preparation.types';
 import * as fs from 'fs/promises';
@@ -66,7 +66,7 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
 
     // Limpa leases
     await prisma.accessLease.deleteMany({
-      where: { tenantId: testTenantId },
+      where: { clientTenantId: testTenantId },
     });
 
     // Limpa datasets
@@ -91,7 +91,7 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
 
   describe('Step 1: Dataset Creation', () => {
     it('should create a text dataset with golden data', async () => {
-      const goldenData = getTextGoldenDataset(TEST_DATASET_SIZE);
+    const goldenData = getGoldenDataset('TEXT_WITH_PII_100');
       
       const dataset = await prisma.dataset.create({
         data: {
@@ -137,9 +137,10 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
     it('should create active access lease', async () => {
       const lease = await prisma.accessLease.create({
         data: {
+          leaseId: `lease-${Date.now()}`,
           datasetId: testDatasetId,
-          tenantId: testTenantId,
-          purpose: 'pre-training',
+          clientTenantId: testTenantId,
+          policyId: 'default-policy',
           status: 'ACTIVE',
           expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24h
         },
@@ -157,6 +158,7 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
     it('should create preparation job in database', async () => {
       const request: PreparationRequest = {
         leaseId: testLeaseId,
+        version: '1.0',
         task: 'pre-training',
         modality: 'text',
         target: {
@@ -169,19 +171,18 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
         },
         license: {
           type: 'academic',
-          allowCommercial: false,
-          attributionRequired: true,
+          attribution: 'Required for academic use',
+          restrictions: ['non-commercial'],
         },
         privacy: {
-          piiHandling: 'redact',
-          phiAllowed: false,
-          anonymize: true,
+          piiHandling: 'mask',
         },
         output: {
           layout: 'prepared/{datasetId}/{jobId}',
           manifestFile: 'manifest.json',
           checksumFile: 'checksums.txt',
           readmeFile: 'README.md',
+          checksumAlgorithm: 'sha256',
         },
       };
 
@@ -244,6 +245,7 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
     it('should execute full preparation pipeline', async () => {
       const request: PreparationRequest = {
         leaseId: testLeaseId,
+        version: '1.0',
         task: 'pre-training',
         modality: 'text',
         target: {
@@ -256,19 +258,18 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
         },
         license: {
           type: 'academic',
-          allowCommercial: false,
-          attributionRequired: true,
+          attribution: 'Required for academic use',
+          restrictions: ['non-commercial'],
         },
         privacy: {
-          piiHandling: 'redact',
-          phiAllowed: false,
-          anonymize: true,
+          piiHandling: 'mask',
         },
         output: {
           layout: outputDir,
           manifestFile: 'manifest.json',
           checksumFile: 'checksums.txt',
           readmeFile: 'README.md',
+          checksumAlgorithm: 'sha256',
         },
       };
 
@@ -278,7 +279,7 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
         tenantId: testTenantId,
         request,
         startTime: Date.now(),
-        status: 'processing',
+        status: 'normalizing',
         progress: 0,
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -310,7 +311,7 @@ describe('Text Preparation Pipeline - End-to-End Integration', () => {
       expect(result.delivery.manifestPath).toBeDefined();
 
       console.log(`[Step 5] Pipeline completed`);
-      console.log(`  - Normalized: ${result.normalization.recordCount} records`);
+      console.log(`  - Normalized: ${result.normalization.recordsProcessed} records`);
       console.log(`  - Shards: ${result.compilation.shardCount}`);
       console.log(`  - Manifest: ${result.delivery.manifestPath}`);
     }, TEST_TIMEOUT);

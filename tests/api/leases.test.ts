@@ -19,37 +19,26 @@ describe('Leases API', () => {
   beforeAll(async () => {
     // Create test user
     const email = `lease-test-${Date.now()}@example.com`;
+    const registerRes = await fetch(`${BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        password: 'TestPassword123!',
+        name: 'Test User',
+        companyName: 'Test Company',
+        companyType: 'STARTUP',
+        tenantType: 'STARTUP',
+      }),
+    });
+    const registerData = await registerRes.json();
+    console.log('Register response:', registerRes.status, registerData);
     
-    await fetch(`${BASE_URL}/api/auth/register`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        name: 'Lease Test User',
-        email,
-        password: 'SecurePassword123!',
-        region: 'US',
-      }),
-    });
+    // Extract token from register response
+    authToken = registerData.token || registerData.accessToken;
+    testTenantId = registerData.tenantId || registerData.tenant?.id;
 
-    const loginRes = await fetch(`${BASE_URL}/api/auth/login`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        email,
-        password: 'SecurePassword123!',
-      }),
-    });
-
-    const loginData = await loginRes.json();
-    authToken = loginData.token;
-
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { tenantId: true },
-    });
-    testTenantId = user?.tenantId || '';
-
-    // Create test dataset
+    // Create a test dataset
     const datasetRes = await fetch(`${BASE_URL}/api/datasets`, {
       method: 'POST',
       headers: {
@@ -57,12 +46,13 @@ describe('Leases API', () => {
         'Authorization': `Bearer ${authToken}`,
       },
       body: JSON.stringify({
-        name: 'Lease Test Dataset',
+        name: 'Test Dataset for Leases',
         dataType: 'AUDIO',
       }),
     });
     const datasetData = await datasetRes.json();
-    testDatasetId = datasetData.dataset.id;
+    console.log('Dataset response:', datasetRes.status, datasetData);
+    testDatasetId = datasetData.dataset?.id;
 
     // Create test policy
     const policyRes = await fetch(`${BASE_URL}/api/policies`, {
@@ -79,7 +69,8 @@ describe('Leases API', () => {
       }),
     });
     const policyData = await policyRes.json();
-    testPolicyId = policyData.policy.id;
+    console.log('Policy response:', policyRes.status, policyData);
+    testPolicyId = policyData.policy?.id;
   });
 
   afterAll(async () => {

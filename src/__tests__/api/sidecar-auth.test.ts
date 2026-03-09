@@ -39,7 +39,7 @@ describe('Sidecar Auth API', () => {
 
   it('should determine trust level based on attestation', () => {
     const withAttestation = { attestationReport: { sgx: 'data' } }
-    const withoutAttestation = {}
+    const withoutAttestation = {} as { attestationReport?: { sgx: string } }
 
     const trustLevel1 = withAttestation.attestationReport ? 'ATTESTED' : 'SELF_REPORTED'
     const trustLevel2 = withoutAttestation.attestationReport ? 'ATTESTED' : 'SELF_REPORTED'

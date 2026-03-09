@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { DeidEnforcement } from '@/lib/preparation/deid/deid-enforcement';
+import { DeidEnforcement, DeidEnforcementConfig } from '@/lib/preparation/deid/deid-enforcement';
 import { AuditLogger } from '@/lib/preparation/audit/audit-logger';
 
 describe('DeidEnforcement', () => {
@@ -7,7 +7,7 @@ describe('DeidEnforcement', () => {
     log: vi.fn().mockResolvedValue(undefined),
   } as unknown as AuditLogger);
 
-  const createEnforcement = (config?: Parameters<typeof DeidEnforcement>[0]) => {
+  const createEnforcement = (config?: Partial<DeidEnforcementConfig>) => {
     return new DeidEnforcement(
       {
         requireDeidForPurpose: ['research', 'training'],

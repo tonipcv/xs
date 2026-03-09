@@ -30,6 +30,136 @@ describe('QualityGate', () => {
     mockDeleteMany.mockReset();
   });
 
+  describe('detailed filtering', () => {
+    it('should track filtered records with detailed reasons', async () => {
+      const records = [
+        { id: '1', content: 'Good quality content here' },
+        { id: '2', content: 'Good quality content here' }, // Duplicate
+        { id: '3', content: 'xyz' }, // Too short
+        { id: '4', content: '!!!!!!!!!!!!!!!!!!!!!!!!!!!!' }, // Low quality
+        { id: '5', content: '' }, // Empty
+      ];
+
+      mockGetRecords.mockResolvedValue(records);
+      mockDeleteMany.mockResolvedValue({ count: 4 });
+
+      const result = await qualityGate.filterDetailed('dataset-1', {
+        deduplicate: true,
+        threshold: 0.7,
+        trackFiltered: true,
+        maxFilteredSamples: 10,
+      });
+
+      expect(result.recordsFiltered).toBe(4);
+      expect(result.deduplicatedCount).toBe(1);
+      expect(result.reasonCounts.duplicate).toBe(1);
+      expect(result.reasonCounts.low_quality).toBe(1);
+      expect(result.reasonCounts.too_short).toBe(1);
+      expect(result.reasonCounts.incomplete_record).toBe(1);
+
+      // Verify filtered records have details
+      expect(result.filteredRecords.length).toBe(4);
+      
+      const duplicateRecord = result.filteredRecords.find(r => r.reason === 'duplicate');
+      expect(duplicateRecord?.details.duplicateOf).toBe('1');
+      expect(duplicateRecord?.details.contentHash).toBeDefined();
+
+      const lowQualityRecord = result.filteredRecords.find(r => r.reason === 'low_quality');
+      expect(lowQualityRecord?.details.qualityScore).toBeDefined();
+      expect(lowQualityRecord?.details.threshold).toBe(0.7);
+
+      // Check samples
+      expect(result.samples.byReason.duplicate.length).toBe(1);
+      expect(result.samples.byReason.low_quality.length).toBe(1);
+    });
+
+    it('should respect maxFilteredSamples limit', async () => {
+      const records = Array.from({ length: 20 }, (_, i) => ({
+        id: String(i + 1),
+        content: i === 0 ? 'original content' : 'duplicate content',
+      }));
+
+      mockGetRecords.mockResolvedValue(records);
+      mockDeleteMany.mockResolvedValue({ count: 19 });
+
+      const result = await qualityGate.filterDetailed('dataset-1', {
+        deduplicate: true,
+        threshold: 0.5,
+        trackFiltered: true,
+        maxFilteredSamples: 5,
+      });
+
+      expect(result.recordsFiltered).toBe(19);
+      expect(result.reasonCounts.duplicate).toBe(19);
+      
+      // Samples should be limited to 5
+      expect(result.samples.byReason.duplicate.length).toBe(5);
+    });
+
+    it('should not track filtered records when trackFiltered is false', async () => {
+      const records = [
+        { id: '1', content: 'Good content' },
+        { id: '2', content: 'Good content' }, // Duplicate
+      ];
+
+      mockGetRecords.mockResolvedValue(records);
+      mockDeleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await qualityGate.filterDetailed('dataset-1', {
+        deduplicate: true,
+        threshold: 0.7,
+        trackFiltered: false,
+      });
+
+      expect(result.recordsFiltered).toBe(1);
+      expect(result.filteredRecords.length).toBe(0);
+      expect(result.reasonCounts.duplicate).toBe(1);
+    });
+
+    it('should include timestamps in filtered record details', async () => {
+      const records = [
+        { id: '1', content: 'Good content' },
+        { id: '2', content: '' }, // Empty
+      ];
+
+      mockGetRecords.mockResolvedValue(records);
+      mockDeleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await qualityGate.filterDetailed('dataset-1', {
+        deduplicate: false,
+        threshold: 0.7,
+        trackFiltered: true,
+      });
+
+      expect(result.filteredRecords.length).toBe(1);
+      expect(result.filteredRecords[0].details.timestamp).toBeDefined();
+      expect(new Date(result.filteredRecords[0].details.timestamp)).toBeInstanceOf(Date);
+    });
+
+    it('should include content preview in filtered record details', async () => {
+      const longContent = 'A'.repeat(500);
+      const records = [
+        { id: '1', content: 'Good content' },
+        { id: '2', content: longContent }, // Too long but will be filtered by quality
+      ];
+
+      mockGetRecords.mockResolvedValue(records);
+      mockDeleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await qualityGate.filterDetailed('dataset-1', {
+        deduplicate: false,
+        threshold: 0.9, // High threshold to filter
+        trackFiltered: true,
+      });
+
+      const filteredRecord = result.filteredRecords.find(r => r.recordId === '2');
+      if (filteredRecord) {
+        expect(filteredRecord.details.contentPreview).toBeDefined();
+        expect(filteredRecord.details.contentPreview!.length).toBeLessThanOrEqual(200);
+      }
+    });
+  });
+
   describe('deduplication', () => {
     it('should remove exact duplicate records', async () => {
       const records = [

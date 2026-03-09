@@ -6,7 +6,7 @@
  */
 
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
-import { AudioPreparer, getAudioPreparer, resetAudioPreparer } from '@/lib/preparation/audio/audio-preparer';
+import { AudioPreparer, getAudioPreparer, resetAudioPreparer, createAudioPreparer } from '@/lib/preparation/audio/audio-preparer';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 
@@ -42,8 +42,7 @@ describe('AudioPreparer - REAL Audio Processing', () => {
   });
 
   beforeEach(() => {
-    resetAudioPreparer();
-    preparer = getAudioPreparer({
+    preparer = createAudioPreparer({
       targetFormat: 'wav',
       targetSampleRate: 16000,
       normalize: true,
@@ -176,7 +175,7 @@ describe('AudioPreparer - REAL Audio Processing', () => {
 
   describe('Audio Conversion', () => {
     it('should convert to target format', async () => {
-      const converter = getAudioPreparer({ targetFormat: 'wav' });
+      const converter = createAudioPreparer({ targetFormat: 'wav' });
       const audioPath = path.join(audioDir, 'test_audio_1.wav');
       
       const result = await converter.prepareAudio(audioPath, outputDir);
@@ -188,7 +187,7 @@ describe('AudioPreparer - REAL Audio Processing', () => {
     });
 
     it('should resample to target sample rate', async () => {
-      const resampler = getAudioPreparer({ targetSampleRate: 16000 });
+      const resampler = createAudioPreparer({ targetSampleRate: 16000 });
       const audioPath = path.join(audioDir, 'test_audio_1.wav');
       
       const result = await resampler.prepareAudio(audioPath, outputDir);
@@ -245,7 +244,7 @@ describe('AudioPreparer - REAL Audio Processing', () => {
 
   describe('Configuration Options', () => {
     it('should respect transcribe configuration', async () => {
-      const noTranscribe = getAudioPreparer({ transcribe: false });
+      const noTranscribe = createAudioPreparer({ transcribe: false });
       const audioPath = path.join(audioDir, 'test_audio_1.wav');
       
       const result = await noTranscribe.prepareAudio(audioPath, outputDir);
@@ -255,7 +254,7 @@ describe('AudioPreparer - REAL Audio Processing', () => {
     });
 
     it('should respect detectPii configuration', async () => {
-      const noPii = getAudioPreparer({ detectPii: false });
+      const noPii = createAudioPreparer({ detectPii: false });
       const audioPath = path.join(audioDir, 'test_audio_1.wav');
       
       const result = await noPii.prepareAudio(audioPath, outputDir);

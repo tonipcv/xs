@@ -11,9 +11,31 @@ const BASE_URL = process.env.TEST_API_URL || 'http://localhost:3000';
 
 let authToken: string;
 let testTenantId: string;
+let serverAvailable = false;
+
+async function checkServer(): Promise<void> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch(`${BASE_URL}/api/health`, { signal: controller.signal });
+    clearTimeout(timeout);
+    serverAvailable = res.status === 200;
+  } catch {
+    serverAvailable = false;
+  }
+  
+  if (!serverAvailable) {
+    throw new Error(
+      `Server not available at ${BASE_URL}. ` +
+      `Start the server with 'npm run dev' before running API tests.`
+    );
+  }
+}
 
 describe('Billing API', () => {
   beforeAll(async () => {
+    await checkServer();
+
     const email = `billing-test-${Date.now()}@example.com`;
     
     await fetch(`${BASE_URL}/api/auth/register`, {

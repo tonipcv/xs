@@ -6,6 +6,7 @@
  */
 
 import { prisma } from '@/lib/prisma';
+import type { PreparationJob } from '@prisma/client';
 
 // JobStatus baseado no schema Prisma
 export type JobStatus = 'pending' | 'normalizing' | 'compiling' | 'delivering' | 'completed' | 'failed';
@@ -22,6 +23,8 @@ export interface RetentionPolicy {
   completedJobRetentionDays: number;
   /** Dias para manter jobs falhos */
   failedJobRetentionDays: number;
+  /** Dias para manter jobs cancelados */
+  cancelledJobRetentionDays: number;
   /** Máximo de artefatos por dataset */
   maxArtifactsPerDataset: number;
   /** Tamanho máximo total de storage por tenant (GB) */
@@ -223,7 +226,7 @@ export class ArtifactRetentionManager {
     let bytesFreed = 0;
 
     // Calcula tamanho dos artefatos (do resultado ou estimativa)
-    if (job.results?.delivery?.manifestPath) {
+    if (job.deliveryResult && typeof job.deliveryResult === 'object' && 'manifestPath' in job.deliveryResult) {
       // Em produção, buscaria tamanho real do S3
       bytesFreed = this.estimateArtifactSize(job);
     }
@@ -406,10 +409,11 @@ export class ArtifactRetentionManager {
       totalSizeGB: 0,
       byStatus: {
         pending: { count: 0, sizeBytes: 0 },
-        processing: { count: 0, sizeBytes: 0 },
+        normalizing: { count: 0, sizeBytes: 0 },
+        compiling: { count: 0, sizeBytes: 0 },
+        delivering: { count: 0, sizeBytes: 0 },
         completed: { count: 0, sizeBytes: 0 },
         failed: { count: 0, sizeBytes: 0 },
-        cancelled: { count: 0, sizeBytes: 0 },
       },
       byDataset: {},
       oldestArtifact: new Date(),

@@ -259,15 +259,24 @@ function generateWebhookSecret(): string {
  * Get webhook by ID
  */
 async function getWebhook(webhookId: string): Promise<WebhookConfig | null> {
+  // Get the most recent log for this webhook (could be REGISTERED, UPDATED, or DELETED)
   const log = await prisma.auditLog.findFirst({
     where: {
       resourceType: 'webhook',
       resourceId: webhookId,
-      action: 'WEBHOOK_REGISTERED',
+      action: { in: ['WEBHOOK_REGISTERED', 'WEBHOOK_UPDATED', 'WEBHOOK_DELETED'] },
+    },
+    orderBy: {
+      timestamp: 'desc',
     },
   });
 
   if (!log || !log.metadata) {
+    return null;
+  }
+
+  // If webhook was deleted, return null
+  if (log.action === 'WEBHOOK_DELETED') {
     return null;
   }
 

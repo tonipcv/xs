@@ -1,68 +1,78 @@
-/**
- * Lease Manual Renew API
- * F2-011: Auto-renew de Lease via UI
- */
-
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { PrismaClient } from '@prisma/client';
+import { prisma } from '@/lib/prisma';
+import jwt from 'jsonwebtoken';
 
-const prisma = new PrismaClient();
-
-/**
- * POST /api/leases/[leaseId]/renew
- * Manually renew a lease
- */
 export async function POST(
   request: NextRequest,
   { params }: { params: { leaseId: string } }
 ) {
   try {
-    const session = await getServerSession();
+    const authHeader = request.headers.get('Authorization') || '';
+    const token = authHeader.replace('Bearer ', '');
 
-    if (!session?.user?.email) {
+    if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { leaseId } = params;
+    let tenantId: string;
+    try {
+      const decoded = jwt.verify(token, process.env.NEXTAUTH_SECRET || 'fallback-secret') as any;
+      tenantId = decoded.tenantId;
+    } catch {
+      return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
+    }
 
-    // Fetch current lease (placeholder - would use actual lease model)
-    const currentLease = await prisma.auditLog.findFirst({
+    const { leaseId } = params;
+    const body = await request.json().catch(() => ({}));
+    const durationDays = body.durationDays || 7;
+
+    // Find the lease
+    const lease = await prisma.accessLease.findFirst({
       where: {
-        resourceType: 'lease',
-        resourceId: leaseId,
-      },
-      orderBy: {
-        timestamp: 'desc',
+        leaseId,
+        clientTenantId: tenantId,
       },
     });
 
-    if (!currentLease) {
+    if (!lease) {
       return NextResponse.json({ error: 'Lease not found' }, { status: 404 });
     }
 
-    // Calculate new expiration (extend by original duration)
+    // Calculate new expiration
     const now = new Date();
-    const newExpiresAt = new Date(now.getTime() + 24 * 60 * 60 * 1000); // 24 hours
+    const newExpiresAt = new Date(now.getTime() + durationDays * 24 * 60 * 60 * 1000);
+
+    // Update lease
+    const updatedLease = await prisma.accessLease.update({
+      where: { id: lease.id },
+      data: {
+        expiresAt: newExpiresAt,
+        status: 'ACTIVE',
+      },
+    });
 
     // Log renewal
     await prisma.auditLog.create({
       data: {
         action: 'LEASE_RENEWED',
-        resourceType: 'lease',
+        resourceType: 'LEASE',
         resourceId: leaseId,
-        userId: session.user.email,
-        metadata: JSON.stringify({
-          renewedAt: now,
-          newExpiresAt,
-          renewalType: 'manual',
-        }),
-        status: 'SUCCESS',
-        timestamp: now,
+        userId: tenantId,
+        errorMessage: null,
       },
     });
 
     return NextResponse.json({
+      lease: {
+        id: updatedLease.leaseId,
+        leaseId: updatedLease.leaseId,
+        datasetId: updatedLease.datasetId,
+        policyId: updatedLease.policyId,
+        status: updatedLease.status,
+        issuedAt: updatedLease.issuedAt,
+        expiresAt: updatedLease.expiresAt,
+        clientTenantId: updatedLease.clientTenantId,
+      },
       success: true,
       message: 'Lease renewed successfully',
       newExpiresAt,

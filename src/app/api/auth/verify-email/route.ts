@@ -45,4 +45,50 @@ export async function GET(request: Request) {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+export async function POST(request: Request) {
+  try {
+    const body = await request.json().catch(() => ({}));
+    const { token } = body;
+
+    if (!token) {
+      return NextResponse.json(
+        { message: 'Token é obrigatório' },
+        { status: 400 }
+      );
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { verificationToken: token }
+    });
+
+    if (!user) {
+      return NextResponse.json(
+        { message: 'Token inválido' },
+        { status: 404 }
+      );
+    }
+
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        emailVerified: new Date(),
+        verificationToken: null
+      }
+    });
+
+    return NextResponse.json(
+      { message: 'Email verificado com sucesso' },
+      { status: 200 }
+    );
+  } catch (error) {
+    console.error('Email verification error:', error);
+    return NextResponse.json(
+      { message: 'Erro ao verificar email' },
+      { status: 500 }
+    );
+  } finally {
+    await prisma.$disconnect();
+  }
 } 

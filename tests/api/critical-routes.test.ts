@@ -83,6 +83,64 @@ async function makeRequest(
 beforeAll(async () => {
   // Ensure database is connected
   await prisma.$connect();
+  
+  // Create user and tenant for all tests
+  const registerResponse = await makeRequest('POST', '/api/auth/register', {
+    body: {
+      email: ctx.email,
+      password: ctx.password,
+      name: 'Critical Test User',
+    },
+  });
+  
+  console.log('Registration response:', registerResponse.status, registerResponse.data);
+  
+  if (registerResponse.status === 201 && registerResponse.data?.tenantId) {
+    ctx.userId = registerResponse.data.userId;
+    ctx.tenantId = registerResponse.data.tenantId;
+    
+    console.log('Created user with tenantId:', ctx.tenantId);
+    
+    // Create API key via API (first key doesn't need auth, just tenantId)
+    const apiKeyResponse = await makeRequest('POST', '/api/v1/api-keys', {
+      body: {
+        name: 'Test API Key',
+        tenantId: ctx.tenantId,
+      },
+    });
+    
+    if (apiKeyResponse.status === 201 && apiKeyResponse.data?.key) {
+      ctx.apiKey = apiKeyResponse.data.key;
+      console.log('Created API key via API:', ctx.apiKey.substring(0, 20) + '...');
+    } else {
+      // Fallback: create API key directly in DB
+      const rawKey = crypto.randomBytes(32).toString('hex');
+      const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
+      const keyPrefix = `xase_${rawKey.substring(0, 8)}`;
+      
+      try {
+        await prisma.apiKey.create({
+          data: {
+            name: 'Test API Key',
+            tenantId: ctx.tenantId,
+            keyHash,
+            keyPrefix,
+            isActive: true,
+            permissions: 'read,write',
+          },
+        });
+        
+        ctx.apiKey = `${keyPrefix}_${rawKey}`;
+        console.log('Created API key in DB:', ctx.apiKey.substring(0, 20) + '...');
+      } catch (error) {
+        console.error('Failed to create API key:', error);
+        throw error;
+      }
+    }
+  } else {
+    console.error('Registration failed:', registerResponse.status, registerResponse.data);
+    throw new Error(`Registration failed with status ${registerResponse.status}`);
+  }
 });
 
 afterAll(async () => {
@@ -97,20 +155,19 @@ afterAll(async () => {
 
 describe('Critical Route 1: POST /api/auth/register', () => {
   it('should create a new user successfully', async () => {
+    // Use different email to avoid conflict with beforeAll
+    const uniqueEmail = `new-user-${Date.now()}@xase.ai`;
     const response = await makeRequest('POST', '/api/auth/register', {
       body: {
-        email: ctx.email,
+        email: uniqueEmail,
         password: ctx.password,
-        name: 'Critical Test User',
+        name: 'New Test User',
       },
     });
 
     expect(response.status).toBe(201);
     expect(response.data).toHaveProperty('userId');
     expect(response.data).toHaveProperty('tenantId');
-    
-    ctx.userId = response.data.userId;
-    ctx.tenantId = response.data.tenantId;
   });
 
   it('should reject duplicate email registration', async () => {
@@ -151,9 +208,9 @@ describe('Critical Route 1: POST /api/auth/register', () => {
   });
 });
 
-describe('Critical Route 2: POST /api/auth/[...nextauth] (Login)', () => {
+describe('Critical Route 2: POST /api/auth/login', () => {
   it('should authenticate with valid credentials', async () => {
-    const response = await makeRequest('POST', '/api/auth/callback/credentials', {
+    const response = await makeRequest('POST', '/api/auth/login', {
       body: {
         email: ctx.email,
         password: ctx.password,
@@ -164,7 +221,7 @@ describe('Critical Route 2: POST /api/auth/[...nextauth] (Login)', () => {
   });
 
   it('should reject invalid credentials', async () => {
-    const response = await makeRequest('POST', '/api/auth/callback/credentials', {
+    const response = await makeRequest('POST', '/api/auth/login', {
       body: {
         email: ctx.email,
         password: 'WrongPassword123!',
@@ -175,7 +232,7 @@ describe('Critical Route 2: POST /api/auth/[...nextauth] (Login)', () => {
   });
 
   it('should reject non-existent user', async () => {
-    const response = await makeRequest('POST', '/api/auth/callback/credentials', {
+    const response = await makeRequest('POST', '/api/auth/login', {
       body: {
         email: 'nonexistent@xase.ai',
         password: ctx.password,
@@ -187,27 +244,6 @@ describe('Critical Route 2: POST /api/auth/[...nextauth] (Login)', () => {
 });
 
 describe('Critical Route 3: GET /api/v1/datasets', () => {
-  beforeAll(async () => {
-    // Create API key for the user
-    const rawKey = crypto.randomBytes(32).toString('hex');
-    const keyHash = crypto.createHash('sha256').update(rawKey).digest('hex');
-    const keyPrefix = `xase_${rawKey.substring(0, 8)}`;
-    
-    await prisma.apiKey.create({
-      data: {
-        name: 'Test API Key',
-        tenantId: ctx.tenantId,
-        keyHash,
-        keyPrefix,
-        isActive: true,
-        permissions: 'read,write',
-      },
-    });
-    
-    // Store the full key for testing
-    ctx.apiKey = `${keyPrefix}_${rawKey}`;
-  });
-
   it('should list datasets with valid API key', async () => {
     const response = await makeRequest('GET', '/api/v1/datasets', {
       apiKey: ctx.apiKey,
@@ -238,6 +274,7 @@ describe('Critical Route 4: POST /api/v1/datasets', () => {
       apiKey: ctx.apiKey,
       body: {
         name: 'Test Dataset',
+        language: 'en-US',
         description: 'Critical test dataset',
         dataType: 'AUDIO',
         metadata: {
@@ -258,6 +295,7 @@ describe('Critical Route 4: POST /api/v1/datasets', () => {
     const response = await makeRequest('POST', '/api/v1/datasets', {
       apiKey: ctx.apiKey,
       body: {
+        language: 'en-US',
         description: 'No name dataset',
         dataType: 'AUDIO',
       },
@@ -271,6 +309,7 @@ describe('Critical Route 4: POST /api/v1/datasets', () => {
       apiKey: ctx.apiKey,
       body: {
         name: 'Invalid Type Dataset',
+        language: 'en-US',
         dataType: 'INVALID_TYPE',
       },
     });
@@ -294,6 +333,8 @@ describe('Critical Route 5: POST /api/v1/policies', () => {
         expiresAt: new Date(Date.now() + 86400000 * 30).toISOString(),
       },
     });
+
+    console.log('Policy creation response:', response.status, response.data);
 
     expect(response.status).toBe(201);
     expect(response.data).toHaveProperty('id');
@@ -330,6 +371,7 @@ describe('Critical Route 5: POST /api/v1/policies', () => {
 
 describe('Critical Route 6: POST /api/v1/leases', () => {
   it('should create a new lease', async () => {
+    console.log('Creating lease with datasetId:', ctx.datasetId, 'policyId:', ctx.policyId);
     const response = await makeRequest('POST', '/api/v1/leases', {
       apiKey: ctx.apiKey,
       body: {
@@ -339,6 +381,8 @@ describe('Critical Route 6: POST /api/v1/leases', () => {
         purpose: 'RESEARCH',
       },
     });
+
+    console.log('Lease creation response:', response.status, response.data);
 
     expect(response.status).toBe(201);
     expect(response.data).toHaveProperty('id');
@@ -454,6 +498,7 @@ describe('Critical Route 9: POST /api/sidecar/auth', () => {
 
 describe('Critical Route 10: POST /api/v1/billing/usage', () => {
   it('should record usage event', async () => {
+    console.log('Recording usage with leaseId:', ctx.leaseId);
     const response = await makeRequest('POST', '/api/v1/billing/usage', {
       apiKey: ctx.apiKey,
       body: {
@@ -463,6 +508,8 @@ describe('Critical Route 10: POST /api/v1/billing/usage', () => {
         eventType: 'STREAM',
       },
     });
+
+    console.log('Usage recording response:', response.status, response.data);
 
     expect([200, 201]).toContain(response.status);
   });
@@ -593,6 +640,8 @@ describe('Critical Route 15: GET /api/v1/billing/dashboard', () => {
       apiKey: ctx.apiKey,
     });
 
+    console.log('Billing dashboard response:', response.status, response.data);
+
     expect(response.status).toBe(200);
     expect(response.data).toHaveProperty('usage');
   });
@@ -640,9 +689,12 @@ describe('Critical Route 17: POST /api/auth/change-password', () => {
 
 describe('Critical Route 18: DELETE /api/v1/policies/:id', () => {
   it('should revoke policy', async () => {
+    console.log('Deleting policy with ID:', ctx.policyId);
     const response = await makeRequest('DELETE', `/api/v1/policies/${ctx.policyId}`, {
       apiKey: ctx.apiKey,
     });
+
+    console.log('Policy delete response:', response.status, response.data);
 
     expect([200, 204]).toContain(response.status);
   });
@@ -659,6 +711,8 @@ describe('Critical Route 19: GET /api/v1/access-offers', () => {
     const response = await makeRequest('GET', '/api/v1/access-offers', {
       apiKey: ctx.apiKey,
     });
+
+    console.log('Access offers response:', response.status, response.data);
 
     expect(response.status).toBe(200);
     expect(Array.isArray(response.data)).toBe(true);

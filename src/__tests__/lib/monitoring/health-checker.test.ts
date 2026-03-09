@@ -46,7 +46,7 @@ describe('Health Checker', () => {
 
     it('should return degraded status for slow database', async () => {
       vi.mocked(prisma.$queryRaw).mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve([{ '?column?': 1 }]), 150))
+        () => new Promise(resolve => setTimeout(() => resolve([{ '?column?': 1 }]), 150)) as unknown as ReturnType<typeof prisma.$queryRaw>
       )
       vi.mocked(prisma.$metrics.json).mockResolvedValue({ counters: [] })
 
@@ -120,7 +120,7 @@ describe('Health Checker', () => {
 
     it('should return degraded status if any component is degraded', async () => {
       vi.mocked(prisma.$queryRaw).mockImplementation(
-        () => new Promise(resolve => setTimeout(() => resolve([{ '?column?': 1 }]), 150))
+        () => new Promise(resolve => setTimeout(() => resolve([{ '?column?': 1 }]), 150)) as unknown as ReturnType<typeof prisma.$queryRaw>
       )
       vi.mocked(prisma.$metrics.json).mockResolvedValue({ counters: [] })
       vi.mocked(prisma.dataset.aggregate).mockResolvedValue({

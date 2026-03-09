@@ -115,7 +115,7 @@ describe('Retry Policy', () => {
 
       const result = await RetryPolicy.retryUntil(
         fn,
-        (value) => value >= 3,
+        (value: number) => value >= 3,
         { maxAttempts: 5, initialDelayMs: 10 }
       )
 
@@ -129,7 +129,7 @@ describe('Retry Policy', () => {
       await expect(
         RetryPolicy.retryUntil(
           fn,
-          (value) => value >= 10,
+          (value: number) => value >= 10,
           { maxAttempts: 3, initialDelayMs: 10 }
         )
       ).rejects.toThrow('Condition not met')

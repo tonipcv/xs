@@ -9,7 +9,9 @@ import crypto from 'crypto'
 
 const BodySchema = z.object({
   datasetId: z.string().min(1),
-  ttlSeconds: z.coerce.number().int().min(60).max(60 * 60), // 1 min - 1 hour
+  policyId: z.string().min(1).optional(),
+  duration: z.coerce.number().int().min(60).max(60 * 60 * 24), // 1 min - 24 hours
+  purpose: z.string().min(1).optional(),
 })
 
 function genLeaseId() {
@@ -104,11 +106,11 @@ export async function POST(req: NextRequest) {
     if (!parsed.success) {
       return NextResponse.json({ error: 'Invalid body', details: parsed.error.flatten() }, { status: 400 })
     }
-    const { datasetId, ttlSeconds } = parsed.data
+    const { datasetId, duration } = parsed.data
 
-    // Resolve dataset
+    // Resolve dataset by internal id
     const dataset = await prisma.dataset.findFirst({
-      where: { datasetId },
+      where: { id: datasetId },
       select: { id: true, status: true },
     })
     if (!dataset) return NextResponse.json({ error: 'Dataset not found' }, { status: 404 })
@@ -147,7 +149,7 @@ export async function POST(req: NextRequest) {
     }
 
     const leaseId = genLeaseId()
-    const expiresAt = new Date(Date.now() + ttlSeconds * 1000)
+    const expiresAt = new Date(Date.now() + duration * 1000)
 
     // Create lease (typed Prisma)
     const created = await prisma.accessLease.create({
@@ -168,12 +170,17 @@ export async function POST(req: NextRequest) {
         action: 'LEASE_MINTED',
         resourceType: 'LEASE',
         resourceId: leaseId,
-        metadata: JSON.stringify({ datasetId, ttlSeconds }),
+        metadata: JSON.stringify({ datasetId, duration }),
         status: 'SUCCESS',
       },
     }).catch(() => {})
 
-    return NextResponse.json({ leaseId: created.leaseId, status: created.status, expiresAt: created.expiresAt })
+    return NextResponse.json({ 
+      id: created.leaseId, 
+      token: created.leaseId, // Using leaseId as token for now
+      status: created.status, 
+      expiresAt: created.expiresAt 
+    }, { status: 201 })
   } catch (err: any) {
     const msg = err?.message || String(err)
     const status = err?.statusCode || 500

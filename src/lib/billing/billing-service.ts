@@ -192,19 +192,24 @@ export class BillingService {
 
     const computeHours = totalComputeSeconds / 3600
 
-    // Calculate storage GB-hours
-    const storageGbHours = await StorageService.calculateGbHours(
-      tenantId,
-      startOfMonth,
-      endOfMonth
-    )
-
-    // Get storage summary for breakdown
-    const storageSummary = await StorageService.getUsageSummary(
-      tenantId,
-      startOfMonth,
-      endOfMonth
-    )
+    // Calculate storage GB-hours (with fallback)
+    let storageGbHours = 0
+    let storageSummary = { breakdown: { byDataset: {}, byLease: {} } }
+    try {
+      storageGbHours = await StorageService.calculateGbHours(
+        tenantId,
+        startOfMonth,
+        endOfMonth
+      )
+      storageSummary = await StorageService.getUsageSummary(
+        tenantId,
+        startOfMonth,
+        endOfMonth
+      )
+    } catch (error) {
+      console.warn('[BillingService] StorageService unavailable, using fallback')
+      // Continue with empty storage data
+    }
 
     // Calculate costs
     const bytesProcessedGb = Number(totalBytesProcessed) / (1024 ** 3)
